@@ -1,0 +1,255 @@
+version: 1
+tasks:
+  - id: tk-180ce9
+    title: 1.1 Fix `s` hotkey collision (south vs scan) + regression test
+    status: ready
+    priority: high
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-766699
+    title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
+    status: ready
+    priority: high
+    blocks:
+      - tk-495cc6
+      - tk-90845e
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-efa52e
+    title: 1.3 Resolve minigame stubs (gate behind ENABLE_MINIGAMES=False)
+    status: ready
+    priority: high
+    blocks:
+      - tk-495cc6
+      - tk-a7098e
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-71d733
+    title: 1.4 Harden server.py (env CORS, debug=False, 127.0.0.1, kill orphans, no bare except)
+    status: ready
+    priority: high
+    blocks:
+      - tk-7303b8
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-3faa7c
+    title: 1.5 Replace identity-function mocks in tests
+    status: ready
+    priority: high
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-80ec19
+    title: 2.1 Consolidate packaging into pyproject.toml [project]
+    status: ready
+    priority: high
+    blocks:
+      - tk-b78acd
+      - tk-d34e62
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-b78acd
+    title: 2.2 Resolve version drift via importlib.metadata; bump to 1.1.1
+    status: blocked
+    priority: high
+    blocks: []
+    blocked_by:
+      - tk-80ec19
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-d34e62
+    title: 2.3 Add .github/workflows/test.yml
+    status: blocked
+    priority: high
+    blocks:
+      - tk-277bbc
+    blocked_by:
+      - tk-80ec19
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-0e834b
+    title: 2.4 .gitignore node_modules/; add LICENSE; bump README Node min to 18
+    status: ready
+    priority: high
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-495cc6
+    title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
+    status: blocked
+    priority: medium
+    blocks:
+      - tk-277bbc
+      - tk-ed93bd
+      - tk-a7098e
+      - tk-90845e
+    blocked_by:
+      - tk-766699
+      - tk-efa52e
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-04f43c
+    title: '3.2 Decide on data/*.json (default: delete)'
+    status: ready
+    priority: medium
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-93fa21
+    title: 3.3 Replace fuzzy matcher with difflib.get_close_matches
+    status: ready
+    priority: medium
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-277bbc
+    title: 3.4 Backfill type annotations; flip mypy to required
+    status: blocked
+    priority: medium
+    blocks: []
+    blocked_by:
+      - tk-495cc6
+      - tk-d34e62
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-ed93bd
+    title: 3.5 De-duplicate motherboard ASCII diagrams
+    status: blocked
+    priority: medium
+    blocks: []
+    blocked_by:
+      - tk-495cc6
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-df7e06
+    title: 3.6 Remove dead health-bar hasattr branch; wire to real player
+    status: ready
+    priority: medium
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-6caadf
+    title: 3.7 Centralize INVENTORY_LIMIT and shared literals in config.py
+    status: ready
+    priority: medium
+    blocks:
+      - tk-f0d6b8
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-a7098e
+    title: 4.1 Implement minigames after design doc; flip ENABLE_MINIGAMES
+    status: blocked
+    priority: low
+    blocks: []
+    blocked_by:
+      - tk-efa52e
+      - tk-495cc6
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-7303b8
+    title: 4.2 Wire GameMap.tsx to live game state via Socket.IO query event
+    status: blocked
+    priority: low
+    blocks: []
+    blocked_by:
+      - tk-71d733
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-fe893e
+    title: 4.3 Add Component.is_virus flag; replace string-sniff
+    status: ready
+    priority: low
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-9f62c1
+    title: 4.4 Fix latent NPC pop bug at player.py:58
+    status: ready
+    priority: low
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-90845e
+    title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
+    status: blocked
+    priority: low
+    blocks: []
+    blocked_by:
+      - tk-766699
+      - tk-495cc6
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-5fe152
+    title: LP.2 Guard ANSI Colors with sys.stdout.isatty()
+    status: ready
+    priority: low
+    blocks:
+      - tk-fc8e15
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-fc8e15
+    title: LP.3 Replace os.system('clear') with escape codes
+    status: blocked
+    priority: low
+    blocks: []
+    blocked_by:
+      - tk-5fe152
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-3ee2e9
+    title: LP.4 Fix README/setup.py upstream URLs
+    status: ready
+    priority: low
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
+  - id: tk-f0d6b8
+    title: LP.5 Read welcome status from self.player
+    status: blocked
+    priority: low
+    blocks: []
+    blocked_by:
+      - tk-6caadf
+    claimed_by: null
+    created: "2026-04-28"
+    notes: ""
