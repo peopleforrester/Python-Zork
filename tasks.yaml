@@ -1,14 +1,5 @@
 version: 1
 tasks:
-  - id: tk-180ce9
-    title: 1.1 Fix `s` hotkey collision (south vs scan) + regression test
-    status: ready
-    priority: high
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
   - id: tk-766699
     title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
     status: ready

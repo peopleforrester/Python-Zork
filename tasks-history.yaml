@@ -1,0 +1,6 @@
+version: 1
+completed:
+  - id: tk-180ce9
+    title: 1.1 Fix `s` hotkey collision (south vs scan) + regression test
+    completed: "2026-04-28"
+    summary: Rebound scan to 'sc'; 's' now resolves to south. Help text updated in commands.py:385, game.py:671/712, README:89. Regression tests added in TestHotkeyBindings.

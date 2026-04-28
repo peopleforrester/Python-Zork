@@ -4,7 +4,7 @@ ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Authoritative for "where are we?"; back-up to ephemeral TaskCreate/TaskUpdate.
 
 Last updated: 2026-04-28
-Branch: `master` (plan files committed here for now; implementation work moves to `staging` per CLAUDE.md)
+Branch: `staging` (plan committed on master; implementation work runs through staging)
 
 ## Current plan summary
 Remediation of senior-developer review findings (review run 2026-04-19) for Python-Zork. Plan persisted in [`plan.md`](./plan.md); checklist in [`todo.md`](./todo.md). Work is grouped Week 1 (critical bugs) → Week 2 (build/tooling) → Week 3 (refactor) → Week 4+ (features) plus a low-priority cleanup tail.
@@ -13,20 +13,16 @@ Remediation of senior-developer review findings (review run 2026-04-19) for Pyth
 All 26 tasks seeded in `tasks.yaml` with dependencies wired. Check task readiness with `/task ready` (shows only unblocked tasks). As of this snapshot, **nothing is started** — the plan was just persisted.
 
 ## Last completed step
-Persisted the senior-developer-review remediation plan to `plan.md`, `todo.md`, and this file. No code changes yet.
+**Step 1.1 — `s` hotkey collision (committed on staging, commit 7578ede).** Rebind scan to `sc`; `s` resolves to south. Help text updated in `commands.py:385`, `game.py:671/712`, `README.md:89`. Regression tests in `TestHotkeyBindings` cover the collision.
 
 ## Next step to take
-**Step 1.1 — Fix `s` hotkey collision.** Switch to (or create) the `staging` branch first:
-```
-git checkout staging 2>/dev/null || git checkout -b staging
-git pull origin staging 2>/dev/null || true
-```
-Then implement the fix described in `plan.md` (rebind scan to `sc`, keep `s` as south, add a regression test that uses the real `CommandProcessor`).
+Push `staging` to `origin/staging`, then pick the next unblocked critical task from `/task ready`. Ready Week-1 candidates: 1.2 (save/load), 1.3 (minigame stubs), 1.4 (server.py hardening), 1.5 (mock cleanup — also unblocks meaningful test signal). Recommended order: 1.5 first (so subsequent fixes get real test coverage), then 1.2 / 1.3 / 1.4 in parallel.
 
 ## Branch and test status
-- Active branch at snapshot: `master`. Implementation work must move to `staging`.
-- Tests: cannot currently run as documented — `uv run pytest` fails because `pyproject.toml` has no `[project]` table (Step 2.1). Until 2.1 lands, fall back to `pip install -e ".[dev]" && pytest`.
-- CI: none yet (added in Step 2.3).
+- Active branch at snapshot: `staging` (1 commit ahead of `master`).
+- Tests: `uv run pytest` still fails because `pyproject.toml` has no `[project]` table (Step 2.1). Workaround in use: `PYTHONPATH=. uv run --no-project --with pytest --with pytest-cov pytest <path>`.
+- Hotkey regression suite (`TestHotkeyBindings`) green (3/3). 11 unrelated `MagicMock` failures in `test_commands.py` predate this work and are scheduled for Step 1.5.
+- CI: none yet (Step 2.3).
 
 ## Verification method used (for the plan itself)
 **Research-based.** The plan was assembled from the static-analysis output of `/review-senior`. No browser, no live test execution against the current branch yet. Per-step verification is defined inline in `plan.md` and is the gate for marking each todo item done.
