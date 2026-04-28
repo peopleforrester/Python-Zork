@@ -668,7 +668,7 @@ class Game:
 │    {Colors.GREEN}drop [item]{Colors.RESET}      - Remove an item from your inventory                 │
 │                                                                          │
 │  {Colors.BOLD}Security Functions:{Colors.RESET}                                                     │
-│    {Colors.GREEN}scan, s{Colors.RESET}          - Search for viruses in current location             │
+│    {Colors.GREEN}scan, sc{Colors.RESET}         - Search for viruses in current location             │
 │    {Colors.GREEN}scan [item]{Colors.RESET}      - Check if a specific item contains a virus          │
 │    {Colors.GREEN}advscan{Colors.RESET}          - Perform advanced scan (requires decoder_tool)      │
 │    {Colors.GREEN}advscan [item]{Colors.RESET}   - Perform advanced scan on specific item             │
@@ -709,7 +709,7 @@ class Game:
 
 {Colors.BOLD}Main Shortcuts:{Colors.RESET}
   Movement: {Colors.GREEN}[N]{Colors.RESET}orth {Colors.GREEN}[S]{Colors.RESET}outh {Colors.GREEN}[E]{Colors.RESET}ast {Colors.GREEN}[W]{Colors.RESET}est {Colors.GREEN}[NE]{Colors.RESET} {Colors.GREEN}[SE]{Colors.RESET} {Colors.GREEN}[SW]{Colors.RESET} {Colors.GREEN}[NW]{Colors.RESET} {Colors.CYAN}[U]{Colors.RESET}p {Colors.CYAN}[D]{Colors.RESET}own
-  Commands: {Colors.GREEN}[L]{Colors.RESET}ook {Colors.GREEN}[I]{Colors.RESET}nventory {Colors.GREEN}[T]{Colors.RESET}ake {Colors.GREEN}[H]{Colors.RESET}elp {Colors.GREEN}[M]{Colors.RESET}ap {Colors.GREEN}[C]{Colors.RESET}lear {Colors.GREEN}[Q]{Colors.RESET}uit {Colors.GREEN}[S]{Colors.RESET}can
+  Commands: {Colors.GREEN}[L]{Colors.RESET}ook {Colors.GREEN}[I]{Colors.RESET}nventory {Colors.GREEN}[T]{Colors.RESET}ake {Colors.GREEN}[H]{Colors.RESET}elp {Colors.GREEN}[M]{Colors.RESET}ap {Colors.GREEN}[C]{Colors.RESET}lear {Colors.GREEN}[Q]{Colors.RESET}uit {Colors.GREEN}[Sc]{Colors.RESET}an
   
 Use '{Colors.GREEN}?{Colors.RESET}' for a quick command reference at any time.
 """

@@ -382,7 +382,7 @@ class QuickHelpCommand(Command):
 │    {Colors.GREEN}c{Colors.RESET} - Clear screen                                                  │
 │                                                                      │
 │  {Colors.BOLD}Security Functions:{Colors.RESET}                                                 │
-│    {Colors.GREEN}s, scan{Colors.RESET} - Scan for viruses in current location                    │
+│    {Colors.GREEN}sc, scan{Colors.RESET} - Scan for viruses in current location                   │
 │    {Colors.GREEN}scan [item]{Colors.RESET} - Check if an item contains a virus                   │
 │    {Colors.GREEN}quarantine [virus]{Colors.RESET} - Contain a discovered virus                   │
 │    {Colors.GREEN}advscan{Colors.RESET} - Perform advanced scan (requires decoder_tool)           │
@@ -457,7 +457,7 @@ class CommandProcessor:
             'inventory': InventoryCommand,
             'i': InventoryCommand,
             'scan': ScanCommand,
-            's': ScanCommand,
+            'sc': ScanCommand,
             'advscan': AdvancedScanCommand,
             'advanced-scan': AdvancedScanCommand,
             'advanced_scan': AdvancedScanCommand,

@@ -86,7 +86,7 @@ The game supports a wide range of commands, including:
 - Movement: `north` (n), `south` (s), `east` (e), `west` (w), etc.
 - Exploration: `look` (l), `map` (m), `motherboard` (mb)
 - Inventory: `inventory` (i), `take` (t), `drop` (d)
-- Security: `scan` (s), `analyze` (a), `quarantine` (q)
+- Security: `scan` (sc), `analyze` (a), `quarantine` (q)
 - Information: `help` (h), `about`, `knowledge` (k)
 - Educational: `visualize` (v), `simulate` (sim)
 

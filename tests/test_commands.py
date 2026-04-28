@@ -462,7 +462,7 @@ class TestCommandProcessor(TestCommandBase):
             'go', 'move', 'north', 'n', 'south', 's', 'east', 'e', 'west', 'w',
             'northeast', 'ne', 'northwest', 'nw', 'southeast', 'se', 'southwest', 'sw',
             'up', 'u', 'down', 'd', 'look', 'examine', 'ex', 'take', 'get', 'drop',
-            'inventory', 'i', 'scan', 'advscan', 'advanced-scan', 'advanced_scan',
+            'inventory', 'i', 'scan', 'sc', 'advscan', 'advanced-scan', 'advanced_scan',
             'analyze', 'quarantine', 'help', 'quit', 'exit', 'q', 'map', 'm',
             'motherboard', 'mb', 'read', 'about', 'status', 'progress', 'knowledge',
             'achievements', 'achieve', 'stats', 'save', 'load', 'saves', 'listsaves',
@@ -566,6 +566,34 @@ class TestCommandProcessor(TestCommandBase):
         self.assertIn("First achievement", result)
         self.assertIn("Achievement 2", result)
         self.assertIn("Second achievement", result)
+
+
+class TestHotkeyBindings(TestCommandBase):
+    """Regression tests for command-key bindings.
+
+    Guards against silent dict-key collisions where the same hotkey is bound to
+    two different commands (only the last write wins, and the documented one
+    breaks).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.command_processor = CommandProcessor(self.game)
+
+    def test_s_resolves_to_south_movement(self):
+        """`s` must invoke a south MoveCommand, not ScanCommand."""
+        factory = self.command_processor.commands['s']
+        cmd = factory(self.game)
+        self.assertIsInstance(cmd, MoveCommand)
+        self.assertEqual(cmd.args, ['south'])
+
+    def test_sc_resolves_to_scan(self):
+        """`sc` is the short form for scan after rebinding off `s`."""
+        self.assertIs(self.command_processor.commands['sc'], ScanCommand)
+
+    def test_scan_long_form_still_resolves_to_scan(self):
+        """`scan` long form must continue to resolve to ScanCommand."""
+        self.assertIs(self.command_processor.commands['scan'], ScanCommand)
 
 if __name__ == "__main__":
     unittest.main()
