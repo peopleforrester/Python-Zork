@@ -263,23 +263,6 @@ class MemoryHierarchyMinigame:
     def explain(self):
         return "Memory Hierarchy Minigame placeholder"
 
-# SaveLoadSystem placeholder (will need to be properly implemented)
-class SaveLoadSystem:
-    def __init__(self, game):
-        self.game = game
-        
-    def save_game(self, name=None):
-        return f"Game saved with name: {name or 'autosave'}"
-        
-    def load_game(self, name):
-        return f"Game loaded: {name}"
-        
-    def list_saves(self):
-        return "Available saved games: [none]"
-        
-    def delete_save(self, name):
-        return f"Deleted save: {name}"
-
 class Game:
     def __init__(self):
         """
@@ -298,22 +281,16 @@ class Game:
         self.game_over = False
         self.all_viruses_found = False
         self.victory = False
-        self.last_save_turn = 0  # Track the turn of the last save
-        self.changes_since_save = True  # Flag to track unsaved changes
-        
         # Initialize the progress tracking system
         self.progress = ProgressSystem(self)
-        
+
         # Initialize visualizer
         self.visualizer = ComponentVisualizer()
-        
+
         # Initialize minigame state
         self.current_minigame = None
         self.current_visualization = None
-        
-        # Initialize save/load system
-        self.save_load = SaveLoadSystem(self)
-        
+
         # Initialize command processor
         self.command_processor = CommandProcessor(self)
         
@@ -462,33 +439,16 @@ class Game:
             except (EOFError, KeyboardInterrupt):
                 # Handle Ctrl+D or Ctrl+C gracefully
                 print("\nInterrupted. ")
-                
-                # Check for unsaved changes
-                if self.changes_since_save:
-                    save_prompt = input("You have unsaved changes. Would you like to save before exiting? (y/n): ").lower()
-                    if save_prompt in ['y', 'yes']:
-                        # Create and execute a save command
-                        from computerquest.commands import SaveCommand
-                        save_cmd = SaveCommand(self)
-                        save_result = save_cmd.execute()
-                        print(f"\n{save_result}")
-                
                 print("Exiting...")
                 self.game_over = True
                 break
-            
+
             # Skip empty inputs
             if not user_input:
                 continue
-                
+
             # Process command through the command processor
             response = self.command_processor.process(user_input)
-            
-            # Mark that changes have been made since the last save
-            # Only set this flag if it's not a save, load, or help command
-            cmd = user_input.split()[0].lower() if user_input.split() else ""
-            if cmd not in ['save', 'load', 'saves', 'help', 'h', '?', 'clear', 'cls', 'c']:
-                self.changes_since_save = True
             
             # Clear the screen before showing the new output (except for the first command)
             import os
@@ -692,12 +652,6 @@ class Game:
 │    {Colors.GREEN}simulate step{Colors.RESET}    - Advance simulation by one step                     │
 │    {Colors.GREEN}simulate toggle{Colors.RESET}  - Toggle between simulation modes                    │
 │    {Colors.GREEN}simulate reset{Colors.RESET}   - Reset the simulation                               │
-│                                                                          │
-│  {Colors.BOLD}Save/Load:{Colors.RESET}                                                              │
-│    {Colors.GREEN}save [name]{Colors.RESET}      - Save your game progress (optional name)            │
-│    {Colors.GREEN}load [name]{Colors.RESET}      - Load a saved game                                  │
-│    {Colors.GREEN}saves{Colors.RESET}            - List all available save files                      │
-│    {Colors.GREEN}deletesave [name]{Colors.RESET} - Delete a saved game                               │
 │                                                                          │
 │  {Colors.BOLD}System:{Colors.RESET}                                                                 │
 │    {Colors.GREEN}help, h{Colors.RESET}          - Show this help message                             │

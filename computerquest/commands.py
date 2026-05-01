@@ -172,32 +172,13 @@ class HelpCommand(Command):
 class QuitCommand(Command):
     """Command to quit the game"""
     def execute(self):
-        # Check if there are unsaved changes
-        if self.game.changes_since_save:
-            confirm = input("You have unsaved changes. Would you like to save before exiting? (y/n): ").lower()
-            if confirm in ['y', 'yes']:
-                # Invoke the save command
-                save_cmd = SaveCommand(self.game)
-                save_result = save_cmd.execute()
-                print(f"\n{save_result}")
-                
-                # Now ask to confirm exit
-                confirm_exit = input("\nExit the game? (y/n): ").lower()
-                if confirm_exit in ['y', 'yes']:
-                    self.game.game_over = True
-                    return ""
-                else:
-                    return "Continuing mission..."
-        else:
-            # No unsaved changes, just confirm exit
-            confirm = input("Are you sure you want to exit? (y/n): ").lower()
-            if confirm in ['y', 'yes']:
-                self.game.game_over = True
-                # Return an empty string to avoid duplicate goodbye messages
-                # The game loop will handle the exit message
-                return ""
-            else:
-                return "Continuing mission..."
+        confirm = input("Are you sure you want to exit? (y/n): ").lower()
+        if confirm in ['y', 'yes']:
+            self.game.game_over = True
+            # Return an empty string to avoid duplicate goodbye messages —
+            # the game loop will handle the exit message.
+            return ""
+        return "Continuing mission..."
             
 class ClearCommand(Command):
     """Command to clear the screen"""
@@ -288,52 +269,6 @@ class AchievementsCommand(Command):
     def execute(self):
         return self.game.progress.get_progress_report()
 
-class SaveCommand(Command):
-    """Command to save the game"""
-    def execute(self):
-        # Get the save result
-        if len(self.args) > 0:
-            result = self.game.save_load.save_game(self.args[0])
-        else:
-            result = self.game.save_load.save_game()
-        
-        # Update save tracking
-        self.game.last_save_turn = self.game.turns
-        self.game.changes_since_save = False
-        
-        return result
-
-class LoadCommand(Command):
-    """Command to load a saved game"""
-    def can_execute(self):
-        if not self.args:
-            return False, "Please specify a save file to load. Use 'saves' to list available saves."
-        return True, None
-        
-    def execute(self):
-        result = self.game.save_load.load_game(self.args[0])
-        
-        # Update save tracking after loading
-        self.game.last_save_turn = self.game.turns
-        self.game.changes_since_save = False
-        
-        return result
-
-class SavesCommand(Command):
-    """Command to list saved games"""
-    def execute(self):
-        return self.game.save_load.list_saves()
-
-class DeleteSaveCommand(Command):
-    """Command to delete a saved game"""
-    def can_execute(self):
-        if not self.args:
-            return False, "Please specify a save file to delete."
-        return True, None
-        
-    def execute(self):
-        return self.game.save_load.delete_save(self.args[0])
-
 class VisualizeCommand(Command):
     """Command to visualize components"""
     def execute(self):
@@ -400,9 +335,6 @@ class QuickHelpCommand(Command):
 │                                                                      │
 │  {Colors.BOLD}System Commands:{Colors.RESET}                                                    │
 │    {Colors.GREEN}help, h{Colors.RESET} - Show full help message                                  │
-│    {Colors.GREEN}save [name]{Colors.RESET} - Save your game progress                             │
-│    {Colors.GREEN}load [name]{Colors.RESET} - Load a saved game                                   │
-│    {Colors.GREEN}saves{Colors.RESET} - List available save files                                 │
 │    {Colors.GREEN}q{Colors.RESET} - Quit game                                                     │
 │                                                                      │
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -482,11 +414,6 @@ class CommandProcessor:
             'achievements': AchievementsCommand,
             'achieve': AchievementsCommand,
             'stats': AchievementsCommand,
-            'save': SaveCommand,
-            'load': LoadCommand,
-            'saves': SavesCommand,
-            'listsaves': SavesCommand,
-            'deletesave': DeleteSaveCommand,
             'visualize': VisualizeCommand,
             'viz': VisualizeCommand,
             'simulate': SimulateCommand,

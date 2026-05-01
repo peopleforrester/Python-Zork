@@ -2,13 +2,13 @@ version: 1
 tasks:
   - id: tk-766699
     title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
-    status: ready
+    status: claimed
     priority: high
     blocks:
       - tk-495cc6
       - tk-90845e
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1777678286
     created: "2026-04-28"
     notes: ""
   - id: tk-efa52e
@@ -225,4 +225,13 @@ tasks:
       - tk-6caadf
     claimed_by: null
     created: "2026-04-28"
+    notes: ""
+  - id: tk-24fa9f
+    title: Implement persistent save/load (port from archive/saveload.py)
+    status: ready
+    priority: low
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-05-02"
     notes: ""

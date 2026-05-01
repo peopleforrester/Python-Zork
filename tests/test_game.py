@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch, MagicMock, call
 import io
 import sys
-from computerquest.game import Game, CPUPipelineMinigame, SaveLoadSystem
+from computerquest.game import Game, CPUPipelineMinigame
 from computerquest.models.component import Component
 from computerquest.models.player import Player
 from computerquest.commands import CommandProcessor
@@ -47,7 +47,6 @@ class TestGame(unittest.TestCase):
         self.assertIsNotNone(game.visualizer)
         self.assertIsNone(game.current_minigame)
         self.assertIsNone(game.current_visualization)
-        self.assertIsNotNone(game.save_load)
         self.assertIsNotNone(game.command_processor)
         self.assertIsNotNone(game.map_grid)
     
@@ -332,38 +331,6 @@ class TestCPUPipelineMinigame(unittest.TestCase):
         result = self.minigame.reset()
         self.assertIn("Reset pipeline simulation", result)
 
-class TestSaveLoadSystem(unittest.TestCase):
-    """Test cases for the SaveLoadSystem"""
-    
-    def setUp(self):
-        """Set up test fixtures"""
-        self.game = MagicMock()
-        self.save_system = SaveLoadSystem(self.game)
-    
-    def test_save_game(self):
-        """Test saving game"""
-        # Test with default name
-        result = self.save_system.save_game()
-        self.assertIn("Game saved with name: autosave", result)
-        
-        # Test with custom name
-        result = self.save_system.save_game("custom_save")
-        self.assertIn("Game saved with name: custom_save", result)
-    
-    def test_load_game(self):
-        """Test loading game"""
-        result = self.save_system.load_game("test_save")
-        self.assertIn("Game loaded: test_save", result)
-    
-    def test_list_saves(self):
-        """Test listing saved games"""
-        result = self.save_system.list_saves()
-        self.assertIn("Available saved games", result)
-    
-    def test_delete_save(self):
-        """Test deleting a saved game"""
-        result = self.save_system.delete_save("test_save")
-        self.assertIn("Deleted save: test_save", result)
 
 if __name__ == "__main__":
     unittest.main()

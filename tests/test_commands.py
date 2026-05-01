@@ -370,8 +370,7 @@ class TestCommandProcessor(TestCommandBase):
             'inventory', 'i', 'scan', 'sc', 'advscan', 'advanced-scan', 'advanced_scan',
             'analyze', 'quarantine', 'help', 'quit', 'exit', 'q', 'map', 'm',
             'motherboard', 'mb', 'read', 'about', 'status', 'progress', 'knowledge',
-            'achievements', 'achieve', 'stats', 'save', 'load', 'saves', 'listsaves',
-            'deletesave', 'visualize', 'viz', 'simulate', 'sim'
+            'achievements', 'achieve', 'stats', 'visualize', 'viz', 'simulate', 'sim'
         ]
         
         for cmd in command_classes:
@@ -497,6 +496,23 @@ class TestHotkeyBindings(TestCommandBase):
     def test_scan_long_form_still_resolves_to_scan(self):
         """`scan` long form must continue to resolve to ScanCommand."""
         self.assertIs(self.command_processor.commands['scan'], ScanCommand)
+
+
+class TestSaveLoadRemoved(TestCommandBase):
+    """Save/load was a placeholder that silently lost data; removed in
+    Step 1.2 until a real implementation lands."""
+
+    def setUp(self):
+        super().setUp()
+        self.command_processor = CommandProcessor(self.game)
+
+    def test_save_command_not_registered(self):
+        for verb in ("save", "load", "saves", "listsaves", "deletesave"):
+            self.assertNotIn(verb, self.command_processor.commands)
+
+    def test_save_input_returns_unknown(self):
+        result = self.command_processor.process("save")
+        self.assertIn("not recognized", result)
 
 if __name__ == "__main__":
     unittest.main()
