@@ -11,52 +11,37 @@ from computerquest.commands import (
     QuarantineCommand, HelpCommand, MapCommand, ReadCommand, StatusCommand,
     CommandProcessor
 )
-from computerquest.models.component import Component
-from computerquest.models.player import Player
 from computerquest.config import VIRUS_TYPES
+from tests._helpers import build_real_game
 
 class TestCommandBase(unittest.TestCase):
-    """Base class for command tests with common setup"""
-    
+    """Base class for command tests using a real Game instance.
+
+    The test fixture exercises real collaborators (Player, Component, world).
+    The player's starting location (cpu_package) is the component under test;
+    a few deterministic test items are seeded so legacy tests can reference
+    predictable names without depending on the world-builder's content.
+    """
+
     def setUp(self):
         """Set up test fixtures"""
-        # Create mock game object
-        self.game = MagicMock()
-        
-        # Create test component
-        self.component = Component(
-            name="Test Component",
-            description="A test component",
-            iden="TEST001"
-        )
-        
-        # Create player with some test items
-        self.player_items = {
+        # Real Game with full ComputerArchitecture, Player, CommandProcessor.
+        self.game = build_real_game()
+        self.player = self.game.player
+
+        # Use the player's real starting location as the component under test.
+        self.component = self.player.location
+
+        # Seed deterministic test items into the real player's inventory and
+        # current location so legacy tests can still reference these names.
+        self.player.items.update({
             "test_item": "A test item for the player",
-            "antivirus_tool": "A virus scanning tool"
-        }
-        
-        self.player = Player(
-            location=self.component,
-            items=self.player_items,
-            name="Test Player"
-        )
-        
-        # Add items to the component
+        })
         self.component.add_items({
             "component_item": "An item in the component",
-            "test_virus": "A test virus"
+            "test_virus": "A test virus",
         })
-        
-        # Set up game.player
-        self.game.player = self.player
-        
-        # Set up minimal game functions needed for commands
-        self.game._match_item_prefix = lambda x: x  # Identity function
-        self.game._match_inventory_item_prefix = lambda x: x  # Identity function
-        self.game._match_command_prefix = lambda x: x  # Identity function
-        self.game.progress = MagicMock()
-        self.game.progress.update.return_value = []
+        self.player_items = self.player.items
 
 class TestBaseCommand(TestCommandBase):
     """Test the base Command class"""
@@ -101,48 +86,31 @@ class TestMoveCommand(TestCommandBase):
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock move function
-        self.game.move.return_value = "Moved to new location"
-        
-        # Execute command
-        cmd = MoveCommand(self.game, ["north"])
-        result = cmd.execute()
-        
-        # Check move was called with correct direction
-        self.game.move.assert_called_once_with("north")
-        self.assertEqual(result, "Moved to new location")
+        with patch.object(self.game, 'move', return_value="Moved to new location") as mock_move:
+            cmd = MoveCommand(self.game, ["north"])
+            result = cmd.execute()
+            mock_move.assert_called_once_with("north")
+            self.assertEqual(result, "Moved to new location")
 
 class TestLookCommand(TestCommandBase):
     """Test the LookCommand class"""
     
     def test_execute_no_args(self):
         """Test looking at current location"""
-        # Set up mock look function
-        self.player.look.return_value = "Location description"
-        
-        # Execute command without args
-        cmd = LookCommand(self.game, [])
-        result = cmd.execute()
-        
-        # Check player.look was called with no args
-        self.player.look.assert_called_once_with()
-        self.assertEqual(result, "Location description")
-        
-        # Check that location was marked as visited
-        self.assertTrue(self.component.visited)
-    
+        with patch.object(self.player, 'look', return_value="Location description") as mock_look:
+            cmd = LookCommand(self.game, [])
+            result = cmd.execute()
+            mock_look.assert_called_once_with()
+            self.assertEqual(result, "Location description")
+            self.assertTrue(self.component.visited)
+
     def test_execute_with_item(self):
         """Test looking at a specific item"""
-        # Set up mock look function with arg
-        self.player.look.return_value = "Item description"
-        
-        # Execute command with arg
-        cmd = LookCommand(self.game, ["test_item"])
-        result = cmd.execute()
-        
-        # Check player.look was called with correct arg
-        self.player.look.assert_called_with("test_item")
-        self.assertEqual(result, "Item description")
+        with patch.object(self.player, 'look', return_value="Item description") as mock_look:
+            cmd = LookCommand(self.game, ["test_item"])
+            result = cmd.execute()
+            mock_look.assert_called_with("test_item")
+            self.assertEqual(result, "Item description")
 
 class TestTakeCommand(TestCommandBase):
     """Test the TakeCommand class"""
@@ -162,18 +130,12 @@ class TestTakeCommand(TestCommandBase):
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock take function
-        self.player.take.return_value = "Taken: component_item"
-        
-        # Execute command
+        # Real Player.take exercises real inventory transfer.
         cmd = TakeCommand(self.game, ["component_item"])
         result = cmd.execute()
-        
-        # Check take was called correctly
-        self.player.take.assert_called_once_with("component_item")
         self.assertEqual(result, "Taken: component_item")
-        
-        # Check turn counter increased
+        self.assertIn("component_item", self.player.items)
+        self.assertNotIn("component_item", self.component.items)
         self.assertEqual(self.game.turns, 1)
 
 class TestDropCommand(TestCommandBase):
@@ -181,40 +143,32 @@ class TestDropCommand(TestCommandBase):
     
     def test_can_execute(self):
         """Test can_execute validation"""
-        # Valid case with existing item
-        self.game._match_inventory_item_prefix.return_value = "test_item"
+        # Valid case: test_item is seeded in player inventory; real prefix
+        # matcher resolves it directly.
         cmd = DropCommand(self.game, ["test_item"])
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-        
+
         # Invalid case (no item)
         invalid_cmd = DropCommand(self.game, [])
         can_exec, error = invalid_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("drop", error)
-        
+
         # Invalid case (non-existent item)
-        self.game._match_inventory_item_prefix.return_value = "nonexistent"
         invalid_item_cmd = DropCommand(self.game, ["nonexistent"])
         can_exec, error = invalid_item_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("don't have", error)
-    
+
     def test_execute(self):
         """Test execute method"""
-        # Set up mock drop function
-        self.player.drop.return_value = "Dropped: test_item"
-        self.game._match_inventory_item_prefix.return_value = "test_item"
-        
-        # Execute command
+        # Real Player.drop exercises real inventory transfer.
         cmd = DropCommand(self.game, ["test_item"])
         result = cmd.execute()
-        
-        # Check drop was called correctly
-        self.player.drop.assert_called_once_with("test_item")
         self.assertEqual(result, "Dropped: test_item")
-        
-        # Check turn counter increased
+        self.assertNotIn("test_item", self.player.items)
+        self.assertIn("test_item", self.component.items)
         self.assertEqual(self.game.turns, 1)
 
 class TestInventoryCommand(TestCommandBase):
@@ -234,12 +188,9 @@ class TestInventoryCommand(TestCommandBase):
     
     def test_execute_with_items(self):
         """Test with items in inventory"""
-        # Execute command
         cmd = InventoryCommand(self.game)
         result = cmd.execute()
-        
-        # Check result lists items
-        self.assertIn("System Storage Contains", result)
+        self.assertIn("SYSTEM STORAGE", result)
         self.assertIn("test_item", result)
         self.assertIn("antivirus_tool", result)
 
@@ -248,46 +199,27 @@ class TestScanCommand(TestCommandBase):
     
     def test_execute_no_args(self):
         """Test scanning current location"""
-        # Set up mock scan function
-        self.player.scan.return_value = "Scan complete. No viruses detected."
-        
-        # Execute command
-        cmd = ScanCommand(self.game)
-        result = cmd.execute()
-        
-        # Check scan was called correctly
-        self.player.scan.assert_called_once_with()
-        self.assertEqual(result, "Scan complete. No viruses detected.")
-        
-        # Check turn counter increased
-        self.assertEqual(self.game.turns, 1)
-    
+        with patch.object(self.player, 'scan', return_value="Scan complete. No viruses detected.") as mock_scan:
+            cmd = ScanCommand(self.game)
+            result = cmd.execute()
+            mock_scan.assert_called_once_with()
+            self.assertEqual(result, "Scan complete. No viruses detected.")
+            self.assertEqual(self.game.turns, 1)
+
     def test_execute_with_item(self):
         """Test scanning a specific item"""
-        # Set up mock scan function
-        self.player.scan.return_value = "No virus detected in item."
-        
-        # Execute command
-        cmd = ScanCommand(self.game, ["component_item"])
-        result = cmd.execute()
-        
-        # Check scan was called with correct arg
-        self.player.scan.assert_called_once_with("component_item")
-        self.assertEqual(result, "No virus detected in item.")
-    
+        with patch.object(self.player, 'scan', return_value="No virus detected in item.") as mock_scan:
+            cmd = ScanCommand(self.game, ["component_item"])
+            result = cmd.execute()
+            mock_scan.assert_called_once_with("component_item")
+            self.assertEqual(result, "No virus detected in item.")
+
     def test_execute_finds_all_viruses(self):
         """Test when all viruses are found"""
-        # Set all viruses as found
         self.player.found_viruses = VIRUS_TYPES.copy()
-        
-        # Set up mock scan function
-        self.player.scan.return_value = "All viruses found!"
-        
-        # Execute command
-        cmd = ScanCommand(self.game)
-        result = cmd.execute()
-        
-        # Check all_viruses_found flag is set
+        with patch.object(self.player, 'scan', return_value="All viruses found!"):
+            cmd = ScanCommand(self.game)
+            cmd.execute()
         self.assertTrue(self.game.all_viruses_found)
 
 class TestQuarantineCommand(TestCommandBase):
@@ -308,32 +240,20 @@ class TestQuarantineCommand(TestCommandBase):
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock quarantine function
-        self.player.quarantine.return_value = "Success! Virus quarantined."
-        
-        # Execute command
-        cmd = QuarantineCommand(self.game, ["test_virus"])
-        result = cmd.execute()
-        
-        # Check quarantine was called correctly
-        self.player.quarantine.assert_called_once_with("test_virus")
-        self.assertEqual(result, "Success! Virus quarantined.")
-        
-        # Check turn counter increased
-        self.assertEqual(self.game.turns, 1)
-    
+        with patch.object(self.player, 'quarantine', return_value="Success! Virus quarantined.") as mock_q:
+            cmd = QuarantineCommand(self.game, ["test_virus"])
+            result = cmd.execute()
+            mock_q.assert_called_once_with("test_virus")
+            self.assertEqual(result, "Success! Virus quarantined.")
+            self.assertEqual(self.game.turns, 1)
+
     def test_execute_victory_condition(self):
         """Test victory condition when all viruses quarantined"""
-        # Setup quarantined viruses and mock functions
         self.player.quarantined_viruses = VIRUS_TYPES.copy()
-        self.player.quarantine.return_value = "Success! Virus quarantined."
-        self.game.victory_message.return_value = "Victory message!"
-        
-        # Execute command
-        cmd = QuarantineCommand(self.game, ["test_virus"])
-        result = cmd.execute()
-        
-        # Check victory condition set
+        with patch.object(self.player, 'quarantine', return_value="Success! Virus quarantined."), \
+             patch.object(self.game, 'victory_message', return_value="Victory message!"):
+            cmd = QuarantineCommand(self.game, ["test_virus"])
+            result = cmd.execute()
         self.assertTrue(self.game.victory)
         self.assertTrue(self.game.game_over)
         self.assertIn("Success! Virus quarantined.", result)
@@ -344,32 +264,22 @@ class TestHelpCommand(TestCommandBase):
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock show_help function
-        self.game.show_help.return_value = "Help text"
-        
-        # Execute command
-        cmd = HelpCommand(self.game)
-        result = cmd.execute()
-        
-        # Check show_help was called
-        self.game.show_help.assert_called_once()
-        self.assertEqual(result, "Help text")
+        with patch.object(self.game, 'show_help', return_value="Help text") as mock_help:
+            cmd = HelpCommand(self.game)
+            result = cmd.execute()
+            mock_help.assert_called_once()
+            self.assertEqual(result, "Help text")
 
 class TestMapCommand(TestCommandBase):
     """Test the MapCommand class"""
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock display_map function
-        self.game.display_map.return_value = "ASCII map"
-        
-        # Execute command
-        cmd = MapCommand(self.game)
-        result = cmd.execute()
-        
-        # Check display_map was called
-        self.game.display_map.assert_called_once()
-        self.assertEqual(result, "ASCII map")
+        with patch.object(self.game, 'display_map', return_value="ASCII map") as mock_map:
+            cmd = MapCommand(self.game)
+            result = cmd.execute()
+            mock_map.assert_called_once()
+            self.assertEqual(result, "ASCII map")
 
 class TestReadCommand(TestCommandBase):
     """Test the ReadCommand class"""
@@ -431,16 +341,11 @@ class TestStatusCommand(TestCommandBase):
     
     def test_execute(self):
         """Test execute method"""
-        # Set up mock check_progress function
-        self.player.check_progress.return_value = "Progress report"
-        
-        # Execute command
-        cmd = StatusCommand(self.game)
-        result = cmd.execute()
-        
-        # Check check_progress was called
-        self.player.check_progress.assert_called_once()
-        self.assertEqual(result, "Progress report")
+        with patch.object(self.player, 'check_progress', return_value="Progress report") as mock_cp:
+            cmd = StatusCommand(self.game)
+            result = cmd.execute()
+            mock_cp.assert_called_once()
+            self.assertEqual(result, "Progress report")
 
 class TestCommandProcessor(TestCommandBase):
     """Test the CommandProcessor class"""
@@ -554,10 +459,8 @@ class TestCommandProcessor(TestCommandBase):
         achievement2.name = "Achievement 2"
         achievement2.description = "Second achievement"
         
-        self.game.progress.update.return_value = [achievement1, achievement2]
-        
-        # Process the command
-        result = self.command_processor.process("test")
+        with patch.object(self.game.progress, 'update', return_value=[achievement1, achievement2]):
+            result = self.command_processor.process("test")
         
         # Check result includes achievements
         self.assertIn("Command executed", result)
