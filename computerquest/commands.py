@@ -283,16 +283,20 @@ class SimulateCommand(Command):
     def execute(self):
         if not self.args:
             return "Please specify a simulation type (cpu, memory) or action (step, toggle, reset, stop)."
-            
+
         sim_action = self.args[0].lower()
-        
-        if sim_action == 'cpu':
-            return self.game.start_cpu_minigame()
-        elif sim_action == 'memory':
+
+        if sim_action in ('cpu', 'memory'):
+            from computerquest import config
+            if not config.ENABLE_MINIGAMES:
+                return ("Minigames are not yet available. "
+                        "Track progress in tk-a7098e (Step 4.1).")
+            if sim_action == 'cpu':
+                return self.game.start_cpu_minigame()
             return self.game.start_memory_minigame()
-        else:
-            # This is an action for an already running simulation
-            return self.game.handle_simulation(sim_action)
+
+        # Action for an already-running simulation
+        return self.game.handle_simulation(sim_action)
 
 class QuickHelpCommand(Command):
     """Command to display a quick help overlay"""

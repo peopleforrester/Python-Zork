@@ -16,3 +16,7 @@ completed:
     title: 4.4 Fix latent NPC pop bug at player.py:58
     completed: "2026-05-01"
     summary: NPC pop bug fixed inline with tk-5dea92. player.py:58 now uses room.play.remove(self) then appends to new location.play. Verified by tests/test_player::test_go (now green).
+  - id: tk-766699
+    title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
+    completed: "2026-05-02"
+    summary: Removed SaveLoadSystem and 4 save/load commands from the codebase. Quit flow no longer prompts. README and help text updated. Filed tk-24fa9f as follow-up for porting archive/saveload.py.

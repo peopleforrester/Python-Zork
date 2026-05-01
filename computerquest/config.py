@@ -65,3 +65,8 @@ MAP_HEIGHT = 60
 
 # Performance settings
 PERFORMANCE_METRICS = ["speed", "capacity", "reliability"]
+
+# Feature flags
+# Minigames (CPU pipeline, memory hierarchy) ship as placeholder stubs.
+# Step 4.1 (tk-a7098e) flips this to True once real implementations land.
+ENABLE_MINIGAMES = False

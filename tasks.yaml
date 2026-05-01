@@ -1,25 +1,14 @@
 version: 1
 tasks:
-  - id: tk-766699
-    title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
-    status: claimed
-    priority: high
-    blocks:
-      - tk-495cc6
-      - tk-90845e
-    blocked_by: []
-    claimed_by: session-1777678286
-    created: "2026-04-28"
-    notes: ""
   - id: tk-efa52e
     title: 1.3 Resolve minigame stubs (gate behind ENABLE_MINIGAMES=False)
-    status: ready
+    status: claimed
     priority: high
     blocks:
       - tk-495cc6
       - tk-a7098e
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1777678451
     created: "2026-04-28"
     notes: ""
   - id: tk-71d733
@@ -83,7 +72,6 @@ tasks:
       - tk-a7098e
       - tk-90845e
     blocked_by:
-      - tk-766699
       - tk-efa52e
     claimed_by: null
     created: "2026-04-28"
@@ -182,7 +170,6 @@ tasks:
     priority: low
     blocks: []
     blocked_by:
-      - tk-766699
       - tk-495cc6
     claimed_by: null
     created: "2026-04-28"

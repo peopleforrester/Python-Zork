@@ -8,8 +8,8 @@ from unittest.mock import patch, MagicMock
 from computerquest.commands import (
     Command, MoveCommand, LookCommand, TakeCommand, DropCommand,
     InventoryCommand, ScanCommand, AdvancedScanCommand, AnalyzeCommand,
-    QuarantineCommand, HelpCommand, MapCommand, ReadCommand, StatusCommand,
-    CommandProcessor
+    QuarantineCommand, HelpCommand, MapCommand, ReadCommand, SimulateCommand,
+    StatusCommand, CommandProcessor
 )
 from computerquest.config import VIRUS_TYPES
 from tests._helpers import build_real_game
@@ -496,6 +496,36 @@ class TestHotkeyBindings(TestCommandBase):
     def test_scan_long_form_still_resolves_to_scan(self):
         """`scan` long form must continue to resolve to ScanCommand."""
         self.assertIs(self.command_processor.commands['scan'], ScanCommand)
+
+
+class TestSimulateGated(TestCommandBase):
+    """Step 1.3: minigames are placeholder stubs gated behind
+    config.ENABLE_MINIGAMES until Step 4.1 lands real implementations."""
+
+    def test_simulate_cpu_disabled_when_flag_off(self):
+        from computerquest import config
+        with patch.object(config, 'ENABLE_MINIGAMES', False):
+            cmd = SimulateCommand(self.game, ["cpu"])
+            result = cmd.execute()
+            self.assertIn("not yet available", result.lower())
+            self.assertIsNone(self.game.current_minigame)
+
+    def test_simulate_memory_disabled_when_flag_off(self):
+        from computerquest import config
+        with patch.object(config, 'ENABLE_MINIGAMES', False):
+            cmd = SimulateCommand(self.game, ["memory"])
+            result = cmd.execute()
+            self.assertIn("not yet available", result.lower())
+            self.assertIsNone(self.game.current_minigame)
+
+    def test_simulate_cpu_runs_when_flag_on(self):
+        from computerquest import config
+        # Need knowledge >= 3 for the existing gate inside start_cpu_minigame.
+        self.game.player.knowledge['cpu'] = 5
+        with patch.object(config, 'ENABLE_MINIGAMES', True):
+            cmd = SimulateCommand(self.game, ["cpu"])
+            result = cmd.execute()
+            self.assertNotIn("not yet available", result.lower())
 
 
 class TestSaveLoadRemoved(TestCommandBase):
