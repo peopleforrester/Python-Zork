@@ -68,8 +68,8 @@ class Game:
                     self.map_grid[room_id]["visited"] = True
                 break
 
-        # Print welcome message
-        self.display_welcome()
+        # Welcome message is shown by start(), not __init__, so the constructor
+        # has no I/O side effects and remains testable.
 
     def _init_map_grid(self) -> None:
         """Initialize the map grid for tracking visited components"""
@@ -237,8 +237,9 @@ class Game:
         """
         Main game loop
         """
-        # Note: No longer clearing the screen at startup
-        # The welcome screen is displayed in __init__
+        # Show welcome screen here (moved out of __init__ so construction
+        # has no I/O side effects).
+        self.display_welcome()
 
         # Setup readline for command history and tab completion
         has_readline = self.setup_readline()
