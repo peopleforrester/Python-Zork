@@ -20,3 +20,7 @@ completed:
     title: 1.2 Resolve SaveLoadSystem placeholder (remove commands or implement)
     completed: "2026-05-02"
     summary: Removed SaveLoadSystem and 4 save/load commands from the codebase. Quit flow no longer prompts. README and help text updated. Filed tk-24fa9f as follow-up for porting archive/saveload.py.
+  - id: tk-efa52e
+    title: 1.3 Resolve minigame stubs (gate behind ENABLE_MINIGAMES=False)
+    completed: "2026-05-02"
+    summary: Added ENABLE_MINIGAMES=False to config.py. SimulateCommand short-circuits cpu/memory branches when flag is False. Existing minigame entry points unchanged so Step 4.1 only needs to flip the flag once implementations land. Regression tests in TestSimulateGated.

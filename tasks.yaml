@@ -1,24 +1,13 @@
 version: 1
 tasks:
-  - id: tk-efa52e
-    title: 1.3 Resolve minigame stubs (gate behind ENABLE_MINIGAMES=False)
-    status: claimed
-    priority: high
-    blocks:
-      - tk-495cc6
-      - tk-a7098e
-    blocked_by: []
-    claimed_by: session-1777678451
-    created: "2026-04-28"
-    notes: ""
   - id: tk-71d733
     title: 1.4 Harden server.py (env CORS, debug=False, 127.0.0.1, kill orphans, no bare except)
-    status: ready
+    status: claimed
     priority: high
     blocks:
       - tk-7303b8
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1777678524
     created: "2026-04-28"
     notes: ""
   - id: tk-80ec19
@@ -64,15 +53,14 @@ tasks:
     notes: ""
   - id: tk-495cc6
     title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
-    status: blocked
+    status: ready
     priority: medium
     blocks:
       - tk-277bbc
       - tk-ed93bd
       - tk-a7098e
       - tk-90845e
-    blocked_by:
-      - tk-efa52e
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""
@@ -140,7 +128,6 @@ tasks:
     priority: low
     blocks: []
     blocked_by:
-      - tk-efa52e
       - tk-495cc6
     claimed_by: null
     created: "2026-04-28"

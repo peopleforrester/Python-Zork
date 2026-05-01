@@ -59,6 +59,21 @@ npm run dev
 
 Then open your browser to http://localhost:5173 to play the game.
 
+### Server Environment Variables
+
+The Flask backend reads its configuration from environment variables. Defaults are conservative — the server binds to `127.0.0.1` and rejects all browsers except `http://localhost:5173`.
+
+| Variable | Default | Notes |
+|---|---|---|
+| `CQ_HOST` | `127.0.0.1` | Bind address. Do not change unless you understand the security implications below. |
+| `CQ_PORT` | `5000` | TCP port. |
+| `CQ_CORS_ORIGINS` | `http://localhost:5173` | Comma-separated list of allowed browser origins. |
+| `CQ_DEBUG` | `false` | Set to `1`/`true`/`yes` to enable Flask debug mode. Off in production. |
+
+### Security Caveat
+
+This server is **dev-only**. Each browser connection forks a Python subprocess with no authentication or sandboxing, and the server does not support multiple concurrent users — connecting a second client kills the first. **Do not expose this server to the public internet.** A future task will add authentication and per-session isolation.
+
 ### Building for Production
 
 ```bash
