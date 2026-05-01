@@ -176,15 +176,6 @@ tasks:
     claimed_by: null
     created: "2026-04-28"
     notes: ""
-  - id: tk-9f62c1
-    title: 4.4 Fix latent NPC pop bug at player.py:58
-    status: ready
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
   - id: tk-90845e
     title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
     status: blocked
@@ -234,13 +225,4 @@ tasks:
       - tk-6caadf
     claimed_by: null
     created: "2026-04-28"
-    notes: ""
-  - id: tk-5dea92
-    title: Fix 10 pre-existing test failures in test_architecture/test_helpers/test_player/test_progress
-    status: ready
-    priority: medium
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-05-01"
     notes: ""

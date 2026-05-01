@@ -8,3 +8,11 @@ completed:
     title: 1.5 Replace identity-function mocks in tests
     completed: "2026-05-01"
     summary: Refactored TestCommandBase and TestGame setUp to use a real Game instance via tests/_helpers.build_real_game(). Identity lambdas removed; real prefix matchers exercised. MagicMock substitutions for game.player/game_map replaced with narrow patch.object scoped to specific methods. 59 tests green (37 commands + 22 game). Filed tk-5dea92 for 10 pre-existing failures in other test files.
+  - id: tk-5dea92
+    title: Fix 10 pre-existing test failures in test_architecture/test_helpers/test_player/test_progress
+    completed: "2026-05-01"
+    summary: 'Fixed all 10 failing tests: 8 outdated assertions updated to match current behavior, 2 production bugs fixed (NPC pop at player.py:58 and inventory limit == to >=). 99/99 tests now pass.'
+  - id: tk-9f62c1
+    title: 4.4 Fix latent NPC pop bug at player.py:58
+    completed: "2026-05-01"
+    summary: NPC pop bug fixed inline with tk-5dea92. player.py:58 now uses room.play.remove(self) then appends to new location.play. Verified by tests/test_player::test_go (now green).

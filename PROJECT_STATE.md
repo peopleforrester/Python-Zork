@@ -13,18 +13,21 @@ Remediation of senior-developer review findings (review run 2026-04-19) for Pyth
 All 26 tasks seeded in `tasks.yaml` with dependencies wired. Check task readiness with `/task ready` (shows only unblocked tasks). As of this snapshot, **nothing is started** — the plan was just persisted.
 
 ## Last completed step
-**Step 1.5 — Real-Game test fixtures (committed on staging, commit 1747446).** Replaced MagicMock-heavy `setUp` in `tests/test_commands.py` and `tests/test_game.py` with a `build_real_game()` builder in `tests/_helpers.py`. Identity-function lambdas removed; real prefix matchers exercised by every command test. Narrow `patch.object` used where a specific method's return value still needs to be controlled. **59 tests green (37 commands + 22 game).** Filed `tk-5dea92` for 10 pre-existing failures in `test_architecture` / `test_helpers` / `test_player` / `test_progress`.
+**Pre-existing test sweep + Step 4.4 (commit 0ba21e4).** Fixed all 10 pre-existing test failures (`tk-5dea92`). Eight were outdated test assertions updated to match current behavior (text format drift, off-by-one expectations, score calc drift, `dict_values[:n]` in Python 3, broken bidirectional-connections loop). Two were real production bugs:
+- `player.py:58` NPC pop bug — closed Step 4.4 / `tk-9f62c1` inline.
+- `player.py:120` inventory cap `==` → `>=` — fixes silent overflow when items are seeded outside `take()`.
 
-Earlier completed: Step 1.1 — `s` hotkey collision (commit 7578ede).
+**99/99 tests now pass.**
+
+Earlier completed: Step 1.5 (1747446) — real-Game fixtures; Step 1.1 (7578ede) — `s` hotkey collision.
 
 ## Next step to take
-Push `staging` to `origin/staging`, then pick the next unblocked critical task from `/task ready`. Remaining Week-1 candidates: **1.2** (save/load — decision needed), **1.3** (minigame stubs — decision needed), **1.4** (server.py hardening — independent). Recommended order: 1.4 first since it has no open decisions and is purely defensive; 1.2 and 1.3 next once you've called the implement-vs-remove / implement-vs-gate decisions.
+Push `staging` to `origin/staging`. Remaining Week-1 candidates: **1.2** (save/load — decision needed), **1.3** (minigame stubs — decision needed), **1.4** (server.py hardening — independent). Recommended next: **1.4** since it has no open decisions and is purely defensive.
 
 ## Branch and test status
-- Active branch at snapshot: `staging` (3 commits ahead of `master` after Step 1.5: 7578ede, 3d39057, 1747446).
-- Tests: `uv run pytest` still fails because `pyproject.toml` has no `[project]` table (Step 2.1). Workaround in use: `PYTHONPATH=. uv run --no-project --with pytest --with pytest-cov pytest <path>`.
-- Step-1.5 scope (test_commands.py + test_game.py): 59/59 green. `tests/_helpers.py::build_real_game` is the canonical test fixture; new tests should use it.
-- Out-of-scope: 10 pre-existing failures in test_architecture / test_helpers / test_player / test_progress remain — tracked as `tk-5dea92`.
+- Active branch at snapshot: `staging` (5 commits ahead of `master`: 7578ede, 3d39057, 1747446, 8e88897, 0ba21e4).
+- Tests: **99/99 green.** `uv run pytest` still fails because `pyproject.toml` has no `[project]` table (Step 2.1). Workaround in use: `PYTHONPATH=. uv run --no-project --with pytest --with pytest-cov pytest <path>`.
+- `tests/_helpers.py::build_real_game` is the canonical test fixture; new tests should use it.
 - CI: none yet (Step 2.3).
 
 ## Verification method used (for the plan itself)
