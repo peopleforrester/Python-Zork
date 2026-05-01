@@ -4,3 +4,7 @@ completed:
     title: 1.1 Fix `s` hotkey collision (south vs scan) + regression test
     completed: "2026-04-28"
     summary: Rebound scan to 'sc'; 's' now resolves to south. Help text updated in commands.py:385, game.py:671/712, README:89. Regression tests added in TestHotkeyBindings.
+  - id: tk-3faa7c
+    title: 1.5 Replace identity-function mocks in tests
+    completed: "2026-05-01"
+    summary: Refactored TestCommandBase and TestGame setUp to use a real Game instance via tests/_helpers.build_real_game(). Identity lambdas removed; real prefix matchers exercised. MagicMock substitutions for game.player/game_map replaced with narrow patch.object scoped to specific methods. 59 tests green (37 commands + 22 game). Filed tk-5dea92 for 10 pre-existing failures in other test files.

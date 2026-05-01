@@ -32,15 +32,6 @@ tasks:
     claimed_by: null
     created: "2026-04-28"
     notes: ""
-  - id: tk-3faa7c
-    title: 1.5 Replace identity-function mocks in tests
-    status: ready
-    priority: high
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
   - id: tk-80ec19
     title: 2.1 Consolidate packaging into pyproject.toml [project]
     status: ready
@@ -243,4 +234,13 @@ tasks:
       - tk-6caadf
     claimed_by: null
     created: "2026-04-28"
+    notes: ""
+  - id: tk-5dea92
+    title: Fix 10 pre-existing test failures in test_architecture/test_helpers/test_player/test_progress
+    status: ready
+    priority: medium
+    blocks: []
+    blocked_by: []
+    claimed_by: null
+    created: "2026-05-01"
     notes: ""

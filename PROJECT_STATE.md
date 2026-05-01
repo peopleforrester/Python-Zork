@@ -3,7 +3,7 @@
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Authoritative for "where are we?"; back-up to ephemeral TaskCreate/TaskUpdate.
 
-Last updated: 2026-04-28
+Last updated: 2026-05-01
 Branch: `staging` (plan committed on master; implementation work runs through staging)
 
 ## Current plan summary
@@ -13,15 +13,18 @@ Remediation of senior-developer review findings (review run 2026-04-19) for Pyth
 All 26 tasks seeded in `tasks.yaml` with dependencies wired. Check task readiness with `/task ready` (shows only unblocked tasks). As of this snapshot, **nothing is started** — the plan was just persisted.
 
 ## Last completed step
-**Step 1.1 — `s` hotkey collision (committed on staging, commit 7578ede).** Rebind scan to `sc`; `s` resolves to south. Help text updated in `commands.py:385`, `game.py:671/712`, `README.md:89`. Regression tests in `TestHotkeyBindings` cover the collision.
+**Step 1.5 — Real-Game test fixtures (committed on staging, commit 1747446).** Replaced MagicMock-heavy `setUp` in `tests/test_commands.py` and `tests/test_game.py` with a `build_real_game()` builder in `tests/_helpers.py`. Identity-function lambdas removed; real prefix matchers exercised by every command test. Narrow `patch.object` used where a specific method's return value still needs to be controlled. **59 tests green (37 commands + 22 game).** Filed `tk-5dea92` for 10 pre-existing failures in `test_architecture` / `test_helpers` / `test_player` / `test_progress`.
+
+Earlier completed: Step 1.1 — `s` hotkey collision (commit 7578ede).
 
 ## Next step to take
-Push `staging` to `origin/staging`, then pick the next unblocked critical task from `/task ready`. Ready Week-1 candidates: 1.2 (save/load), 1.3 (minigame stubs), 1.4 (server.py hardening), 1.5 (mock cleanup — also unblocks meaningful test signal). Recommended order: 1.5 first (so subsequent fixes get real test coverage), then 1.2 / 1.3 / 1.4 in parallel.
+Push `staging` to `origin/staging`, then pick the next unblocked critical task from `/task ready`. Remaining Week-1 candidates: **1.2** (save/load — decision needed), **1.3** (minigame stubs — decision needed), **1.4** (server.py hardening — independent). Recommended order: 1.4 first since it has no open decisions and is purely defensive; 1.2 and 1.3 next once you've called the implement-vs-remove / implement-vs-gate decisions.
 
 ## Branch and test status
-- Active branch at snapshot: `staging` (1 commit ahead of `master`).
+- Active branch at snapshot: `staging` (3 commits ahead of `master` after Step 1.5: 7578ede, 3d39057, 1747446).
 - Tests: `uv run pytest` still fails because `pyproject.toml` has no `[project]` table (Step 2.1). Workaround in use: `PYTHONPATH=. uv run --no-project --with pytest --with pytest-cov pytest <path>`.
-- Hotkey regression suite (`TestHotkeyBindings`) green (3/3). 11 unrelated `MagicMock` failures in `test_commands.py` predate this work and are scheduled for Step 1.5.
+- Step-1.5 scope (test_commands.py + test_game.py): 59/59 green. `tests/_helpers.py::build_real_game` is the canonical test fixture; new tests should use it.
+- Out-of-scope: 10 pre-existing failures in test_architecture / test_helpers / test_player / test_progress remain — tracked as `tk-5dea92`.
 - CI: none yet (Step 2.3).
 
 ## Verification method used (for the plan itself)
