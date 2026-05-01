@@ -266,27 +266,26 @@ class TestProgressSystem(unittest.TestCase):
         # Calculate score
         self.progress.update()  # Update metrics first
         score = self.progress.calculate_score()
-        
+
         # Expected components:
         # - 2 rooms visited: 2 * 10 = 20
         # - 2 viruses found: 2 * 50 = 100
         # - 1 virus quarantined: 1 * 100 = 100
         # - Knowledge total (3+2+1+0+4) = 10: 10 * 20 = 200
-        # - 3 achievements: 3 * 100 = 300
+        # - Achievements: 3 manual + 2 auto-unlocked by update()
+        #   (first_virus on found>=1, first_quarantine on quarantined>=1)
+        #   = 5 * 100 = 500
         # - No efficiency bonus (not victorious)
-        # Total: 20 + 100 + 100 + 200 + 300 = 720
-        
-        self.assertEqual(score, 720)
-        
-        # Test with efficiency bonus
+        # Total: 20 + 100 + 100 + 200 + 500 = 920
+        self.assertEqual(score, 920)
+
+        # Test with efficiency bonus (calculate_score does not re-evaluate
+        # achievements, so the 5 unlocked above remain)
         self.game.victory = True
-        self.game.turns = 10  # Low turns
-        
+        self.game.turns = 10
         score_with_bonus = self.progress.calculate_score()
-        efficiency_bonus = 500 - (10 * 5)  # 500 - (turns * 5) = 450
-        
-        # Expected: 720 (previous) + 450 (efficiency) = 1170
-        self.assertEqual(score_with_bonus, 720 + 450)
+        efficiency_bonus = 500 - (10 * 5)  # 450
+        self.assertEqual(score_with_bonus, 920 + efficiency_bonus)
     
     def test_get_progress_report(self):
         """Test progress report generation"""

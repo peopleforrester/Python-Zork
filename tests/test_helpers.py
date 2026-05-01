@@ -75,7 +75,7 @@ class TestHelpers(unittest.TestCase):
         truncated = truncate_desc(long_text, max_length=30)
         self.assertEqual(len(truncated), 30)
         self.assertTrue(truncated.endswith("..."))
-        self.assertEqual(truncated, "This is a very long text that...")
+        self.assertEqual(truncated, "This is a very long text th...")
         
         # Test sentence truncation
         sentence_text = "First sentence. Second sentence. Third sentence."

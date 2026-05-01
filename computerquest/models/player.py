@@ -55,7 +55,8 @@ class Player:
             
             # Update NPC list if this is an NPC
             if self.com:
-                self.location.play.append(room.play.pop(self))
+                room.play.remove(self)
+                self.location.play.append(self)
                 
             return True
         else:
@@ -116,8 +117,9 @@ class Player:
         item: Item to take
         Returns: Confirmation message
         """
-        # Check for inventory limit
-        if len(self.items) == 8:
+        # Check for inventory limit (>= so the cap holds even if items were
+        # seeded via construction or direct dict assignment).
+        if len(self.items) >= 8:
             return "Your inventory is full. Drop something first."
             
         # Check if item is in the room
