@@ -218,7 +218,8 @@ class Game:
                 readline.read_history_file(histfile)
                 # Set history length
                 readline.set_history_length(100)
-            except FileNotFoundError:
+            except OSError:
+                # File missing, empty, or otherwise unreadable — start fresh
                 pass
 
             # Save history on exit
