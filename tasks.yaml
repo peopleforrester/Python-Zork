@@ -1,15 +1,5 @@
 version: 1
 tasks:
-  - id: tk-71d733
-    title: 1.4 Harden server.py (env CORS, debug=False, 127.0.0.1, kill orphans, no bare except)
-    status: claimed
-    priority: high
-    blocks:
-      - tk-7303b8
-    blocked_by: []
-    claimed_by: session-1777678524
-    created: "2026-04-28"
-    notes: ""
   - id: tk-80ec19
     title: 2.1 Consolidate packaging into pyproject.toml [project]
     status: ready
@@ -134,11 +124,10 @@ tasks:
     notes: ""
   - id: tk-7303b8
     title: 4.2 Wire GameMap.tsx to live game state via Socket.IO query event
-    status: blocked
+    status: ready
     priority: low
     blocks: []
-    blocked_by:
-      - tk-71d733
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""

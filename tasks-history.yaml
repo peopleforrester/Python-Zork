@@ -24,3 +24,7 @@ completed:
     title: 1.3 Resolve minigame stubs (gate behind ENABLE_MINIGAMES=False)
     completed: "2026-05-02"
     summary: Added ENABLE_MINIGAMES=False to config.py. SimulateCommand short-circuits cpu/memory branches when flag is False. Existing minigame entry points unchanged so Step 4.1 only needs to flip the flag once implementations land. Regression tests in TestSimulateGated.
+  - id: tk-71d733
+    title: 1.4 Harden server.py (env CORS, debug=False, 127.0.0.1, kill orphans, no bare except)
+    completed: "2026-05-02"
+    summary: 'server.py hardened: env-driven CORS / debug / host / port; ProcessLookupError replaces bare except; _terminate_game_process unified for disconnect+atexit; sys.executable for subprocess. README documents env vars and dev-only security caveat. tests/test_server.py covers env helpers.'
