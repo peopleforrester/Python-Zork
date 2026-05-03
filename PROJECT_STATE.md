@@ -3,7 +3,7 @@
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Authoritative for "where are we?"; back-up to ephemeral TaskCreate/TaskUpdate.
 
-Last updated: 2026-05-02
+Last updated: 2026-05-04
 Branch: `staging` (plan committed on master; implementation work runs through staging)
 
 ## Current plan summary
@@ -13,25 +13,35 @@ Remediation of senior-developer review findings (review run 2026-04-19) for Pyth
 All 26 tasks seeded in `tasks.yaml` with dependencies wired. Check task readiness with `/task ready` (shows only unblocked tasks). As of this snapshot, **nothing is started** — the plan was just persisted.
 
 ## Last completed step
-**Week 1 critical bugs done — Steps 1.2, 1.3, 1.4 (commits 99be8ed, 1cdddf6, +server hardening).**
+**Week 2 done — Steps 2.1, 2.2, 2.3, 2.4.**
 
-- **Step 1.2 (tk-766699)** — Save/load surface removed (commit 99be8ed). SaveLoadSystem class, four save/load commands, unsaved-changes prompts in QuitCommand and the game loop, save/load help text and README advertisement all gone. Follow-up `tk-24fa9f` filed for porting `archive/saveload.py` later.
-- **Step 1.3 (tk-efa52e)** — Minigames gated behind `config.ENABLE_MINIGAMES = False` (commit 1cdddf6). SimulateCommand short-circuits cpu/memory branches when off. Placeholder classes retained; Step 4.1 only needs to flip the flag.
-- **Step 1.4 (tk-71d733)** — server.py hardened. Env-driven CORS (`CQ_CORS_ORIGINS`, default `http://localhost:5173`), `CQ_DEBUG` defaults False, `CQ_HOST` defaults `127.0.0.1`, bare `except:` replaced with `ProcessLookupError` + logging, `_terminate_game_process()` cleans up on disconnect AND atexit, Python interpreter resolved via `sys.executable`. README documents env vars and the security caveat. New `tests/test_server.py` covers the env helpers.
+- **Step 2.1 (tk-80ec19)** — Packaging consolidated into a single `pyproject.toml` `[project]` table (commit 151039f). `setup.py`, `setup.cfg`, `requirements.txt` deleted. uv.lock committed. ruff replaces black/isort/flake8/pylint. Makefile uses uv. LICENSE created (MIT, Michael Forrester, 2026). `uv run pytest` works directly — workaround retired.
+- **Step 2.2 (tk-b78acd)** — Version drift resolved (commit 2c82bd7). `computerquest.__version__` derives from `importlib.metadata.version("computerquest")`; `config.GAME_VERSION` mirrors. Bumped to 1.1.1 to mark the Week-1 critical-bug shipment. `tests/test_version.py` pins the contract.
+- **Step 2.3 (tk-d34e62)** — CI workflow added at `.github/workflows/test.yml` (commit f093274) — Python 3.11 + 3.12 matrix, uv setup, lock-honoring sync, ruff (required), mypy (soft-fail until 3.4), pytest with coverage. Codebase ruff-clean: 899 → 0 errors via auto-fix + targeted manual cleanup.
+- **Step 2.4 (tk-0e834b)** — Repo hygiene (commit 409c218). `node_modules/`, `.vite/`, `*.tsbuildinfo` gitignored; 3171 stale frontend files untracked from the index. README Python min bumped 3.8 → 3.10, Node min 14 → 18 (Vite 5 requirement), install steps switched to `uv sync --dev`.
 
-**107/107 tests green.** All five Week-1 critical tasks (1.1, 1.2, 1.3, 1.4, 1.5) plus Step 4.4 are done.
+**110/110 tests green; ruff clean.** Both Week 1 (critical bugs) and Week 2 (build/tooling) are complete.
 
-Earlier completed: pre-existing test sweep / Step 4.4 (0ba21e4); Step 1.5 (1747446) — real-Game fixtures; Step 1.1 (7578ede) — `s` hotkey collision.
+Earlier completed: Week 1 critical bugs (Steps 1.1–1.5, 4.4) plus the pre-existing test sweep.
 
 ## Next step to take
-Week 1 done. Remaining ready tasks (`/task ready`) span Week 2 (build/tooling) and onward. Recommended order: **2.1 (`tk-80ec19`)** consolidate packaging into `pyproject.toml [project]` — unblocks `uv run pytest` (currently requires the `--no-project --with` workaround) and is a prerequisite for 2.2 and 2.3. Then **2.4 (`tk-0e834b`)** lightweight repo hygiene (`.gitignore`, LICENSE, README Node version). Then 2.2 / 2.3 in either order.
+Week 2 done. Week 3 (refactor) is next. Most Week-3 tasks are independent and can be parallelized:
+- **3.2 (`tk-04f43c`)** decide on `data/*.json` (default per plan: delete unless Michael says load).
+- **3.3 (`tk-93fa21`)** replace fuzzy matcher with `difflib.get_close_matches`.
+- **3.6 (`tk-df7e06`)** wire the dead health-bar `hasattr` branch to the real player.
+- **3.7 (`tk-6caadf`)** centralize `INVENTORY_LIMIT = 8` and other shared literals in `config.py`.
+- **3.1 (`tk-495cc6`)** split `game.py` (1035 lines → mechanics/) — biggest refactor; touches every minigame/visualizer/save reference. Should be done before 3.4 (mypy) and 3.5 (motherboard de-dup).
+- **3.4 (`tk-277bbc`)** backfill type annotations and flip mypy to required (depends on 3.1 + 2.3).
+- **3.5 (`tk-ed93bd`)** de-duplicate motherboard ASCII (depends on 3.1).
 
 ## Branch and test status
-- Active branch at snapshot: `staging`, ahead of `master` by all critical-bug fixes plus Step 1.4.
-- Tests: **107/107 green.** `uv run pytest` still fails because `pyproject.toml` has no `[project]` table (Step 2.1). Workaround for now: `PYTHONPATH=. uv run --no-project --with pytest --with pytest-cov --with flask --with flask-socketio --with flask-cors pytest <path>` (the flask deps are needed since `tests/test_server.py` imports `server`).
+- Active branch at snapshot: `staging`, ahead of `master` by all of Week 1 + Week 2.
+- Tests: **110/110 green.** Plain `uv run pytest` works (Step 2.1 retired the `--no-project --with` workaround).
+- Lint: ruff clean across `computerquest/` and `tests/`. Required in CI.
+- Type-check: mypy is wired into CI but soft-fails until Step 3.4.
+- CI: `.github/workflows/test.yml` runs on push to `staging`/`master`/`main` and on PRs. Python 3.11+3.12 matrix, uv setup, lock-honoring sync.
 - `tests/_helpers.py::build_real_game` is the canonical test fixture; new tests should use it.
-- CI: none yet (Step 2.3).
-- Open decisions resolved: Step 1.2 (REMOVE save/load — saved as project memory); Step 1.3 (GATE minigames — saved as project memory). Steps 3.2 (data/*.json) and 3.6 (health bar) still have plan-default decisions awaiting Michael's confirmation when those steps come up.
+- Open decisions resolved: Step 1.2 (REMOVE save/load) and Step 1.3 (GATE minigames) — both saved as project memory. Steps 3.2 (data/*.json: default delete) and 3.6 (health bar: default wire to real player) still need Michael's call when those steps come up.
 
 ## Verification method used (for the plan itself)
 **Research-based.** The plan was assembled from the static-analysis output of `/review-senior`. No browser, no live test execution against the current branch yet. Per-step verification is defined inline in `plan.md` and is the gate for marking each todo item done.

@@ -1,14 +1,5 @@
 version: 1
 tasks:
-  - id: tk-0e834b
-    title: 2.4 .gitignore node_modules/; add LICENSE; bump README Node min to 18
-    status: claimed
-    priority: high
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1777850490
-    created: "2026-04-28"
-    notes: ""
   - id: tk-495cc6
     title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
     status: ready

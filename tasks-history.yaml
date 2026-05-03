@@ -40,3 +40,7 @@ completed:
     title: 2.3 Add .github/workflows/test.yml
     completed: "2026-05-04"
     summary: 'CI workflow at .github/workflows/test.yml triggers on push/PR with Python 3.11+3.12 matrix, uv install, uv sync --locked --dev, ruff (required), mypy (soft-fail until 3.4), pytest with coverage. Codebase ruff-clean: 899 → 0 errors.'
+  - id: tk-0e834b
+    title: 2.4 .gitignore node_modules/; add LICENSE; bump README Node min to 18
+    completed: "2026-05-04"
+    summary: node_modules/, .vite/, *.tsbuildinfo gitignored; 3171 stale files removed from index. README Python min 3.8→3.10, Node min 14→18 (Vite 5 requirement), install steps switched to uv sync. LICENSE was added in Step 2.1.
