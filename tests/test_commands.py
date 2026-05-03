@@ -4,15 +4,27 @@ Unit tests for the Command pattern implementation
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from computerquest.commands import (
-    Command, MoveCommand, LookCommand, TakeCommand, DropCommand,
-    InventoryCommand, ScanCommand, AdvancedScanCommand, AnalyzeCommand,
-    QuarantineCommand, HelpCommand, MapCommand, ReadCommand, SimulateCommand,
-    StatusCommand, CommandProcessor
+    Command,
+    CommandProcessor,
+    DropCommand,
+    HelpCommand,
+    InventoryCommand,
+    LookCommand,
+    MapCommand,
+    MoveCommand,
+    QuarantineCommand,
+    ReadCommand,
+    ScanCommand,
+    SimulateCommand,
+    StatusCommand,
+    TakeCommand,
 )
 from computerquest.config import VIRUS_TYPES
 from tests._helpers import build_real_game
+
 
 class TestCommandBase(unittest.TestCase):
     """Base class for command tests using a real Game instance.
@@ -45,23 +57,23 @@ class TestCommandBase(unittest.TestCase):
 
 class TestBaseCommand(TestCommandBase):
     """Test the base Command class"""
-    
+
     def test_init(self):
         """Test initialization of base command"""
         cmd = Command(self.game, ["arg1", "arg2"])
         self.assertEqual(cmd.game, self.game)
         self.assertEqual(cmd.args, ["arg1", "arg2"])
-        
+
         # Test with default args
         default_cmd = Command(self.game)
         self.assertEqual(default_cmd.args, [])
-    
+
     def test_can_execute(self):
         """Test can_execute method"""
         cmd = Command(self.game)
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-    
+
     def test_execute_not_implemented(self):
         """Test execute method raises NotImplementedError"""
         cmd = Command(self.game)
@@ -70,20 +82,20 @@ class TestBaseCommand(TestCommandBase):
 
 class TestMoveCommand(TestCommandBase):
     """Test the MoveCommand class"""
-    
+
     def test_can_execute(self):
         """Test can_execute validation"""
         # Valid case
         cmd = MoveCommand(self.game, ["north"])
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-        
+
         # Invalid case (no direction)
         invalid_cmd = MoveCommand(self.game, [])
         can_exec, error = invalid_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("direction", error)
-    
+
     def test_execute(self):
         """Test execute method"""
         with patch.object(self.game, 'move', return_value="Moved to new location") as mock_move:
@@ -94,7 +106,7 @@ class TestMoveCommand(TestCommandBase):
 
 class TestLookCommand(TestCommandBase):
     """Test the LookCommand class"""
-    
+
     def test_execute_no_args(self):
         """Test looking at current location"""
         with patch.object(self.player, 'look', return_value="Location description") as mock_look:
@@ -114,20 +126,20 @@ class TestLookCommand(TestCommandBase):
 
 class TestTakeCommand(TestCommandBase):
     """Test the TakeCommand class"""
-    
+
     def test_can_execute(self):
         """Test can_execute validation"""
         # Valid case
         cmd = TakeCommand(self.game, ["component_item"])
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-        
+
         # Invalid case (no item)
         invalid_cmd = TakeCommand(self.game, [])
         can_exec, error = invalid_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("take", error)
-    
+
     def test_execute(self):
         """Test execute method"""
         # Real Player.take exercises real inventory transfer.
@@ -140,7 +152,7 @@ class TestTakeCommand(TestCommandBase):
 
 class TestDropCommand(TestCommandBase):
     """Test the DropCommand class"""
-    
+
     def test_can_execute(self):
         """Test can_execute validation"""
         # Valid case: test_item is seeded in player inventory; real prefix
@@ -173,19 +185,19 @@ class TestDropCommand(TestCommandBase):
 
 class TestInventoryCommand(TestCommandBase):
     """Test the InventoryCommand class"""
-    
+
     def test_execute_empty(self):
         """Test with empty inventory"""
         # Empty the player's inventory
         self.player.items = {}
-        
+
         # Execute command
         cmd = InventoryCommand(self.game)
         result = cmd.execute()
-        
+
         # Check result indicates empty inventory
         self.assertIn("empty", result.lower())
-    
+
     def test_execute_with_items(self):
         """Test with items in inventory"""
         cmd = InventoryCommand(self.game)
@@ -196,7 +208,7 @@ class TestInventoryCommand(TestCommandBase):
 
 class TestScanCommand(TestCommandBase):
     """Test the ScanCommand class"""
-    
+
     def test_execute_no_args(self):
         """Test scanning current location"""
         with patch.object(self.player, 'scan', return_value="Scan complete. No viruses detected.") as mock_scan:
@@ -224,20 +236,20 @@ class TestScanCommand(TestCommandBase):
 
 class TestQuarantineCommand(TestCommandBase):
     """Test the QuarantineCommand class"""
-    
+
     def test_can_execute(self):
         """Test can_execute validation"""
         # Valid case
         cmd = QuarantineCommand(self.game, ["test_virus"])
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-        
+
         # Invalid case (no virus specified)
         invalid_cmd = QuarantineCommand(self.game, [])
         can_exec, error = invalid_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("which virus", error.lower())
-    
+
     def test_execute(self):
         """Test execute method"""
         with patch.object(self.player, 'quarantine', return_value="Success! Virus quarantined.") as mock_q:
@@ -261,7 +273,7 @@ class TestQuarantineCommand(TestCommandBase):
 
 class TestHelpCommand(TestCommandBase):
     """Test the HelpCommand class"""
-    
+
     def test_execute(self):
         """Test execute method"""
         with patch.object(self.game, 'show_help', return_value="Help text") as mock_help:
@@ -272,7 +284,7 @@ class TestHelpCommand(TestCommandBase):
 
 class TestMapCommand(TestCommandBase):
     """Test the MapCommand class"""
-    
+
     def test_execute(self):
         """Test execute method"""
         with patch.object(self.game, 'display_map', return_value="ASCII map") as mock_map:
@@ -283,62 +295,62 @@ class TestMapCommand(TestCommandBase):
 
 class TestReadCommand(TestCommandBase):
     """Test the ReadCommand class"""
-    
+
     def test_can_execute(self):
         """Test can_execute validation"""
         # Valid case
         cmd = ReadCommand(self.game, ["test_item"])
         can_exec, _ = cmd.can_execute()
         self.assertTrue(can_exec)
-        
+
         # Invalid case (no item)
         invalid_cmd = ReadCommand(self.game, [])
         can_exec, error = invalid_cmd.can_execute()
         self.assertFalse(can_exec)
         self.assertIn("read", error.lower())
-    
+
     def test_execute_inventory_item(self):
         """Test reading inventory item"""
         # Execute command for inventory item
         cmd = ReadCommand(self.game, ["test_item"])
         result = cmd.execute()
-        
+
         # Check result matches item description
         self.assertEqual(result, "A test item for the player")
-    
+
     def test_execute_room_item(self):
         """Test reading room item"""
         # Execute command for room item
         cmd = ReadCommand(self.game, ["component_item"])
         result = cmd.execute()
-        
+
         # Check result matches item description
         self.assertEqual(result, "An item in the component")
-    
+
     def test_execute_formatted_item(self):
         """Test reading a formatted document (starting with #)"""
         # Add formatted document
         self.player.items["document"] = "# Document Title\n\nThis is a document with formatting."
-        
+
         # Execute command
         cmd = ReadCommand(self.game, ["document"])
         result = cmd.execute()
-        
+
         # Check formatting was handled correctly
         self.assertEqual(result, "Document Title\n\nThis is a document with formatting.")
-    
+
     def test_execute_nonexistent_item(self):
         """Test reading non-existent item"""
         # Execute command for non-existent item
         cmd = ReadCommand(self.game, ["nonexistent"])
         result = cmd.execute()
-        
+
         # Check error message
         self.assertIn("no nonexistent to read", result.lower())
 
 class TestStatusCommand(TestCommandBase):
     """Test the StatusCommand class"""
-    
+
     def test_execute(self):
         """Test execute method"""
         with patch.object(self.player, 'check_progress', return_value="Progress report") as mock_cp:
@@ -349,19 +361,19 @@ class TestStatusCommand(TestCommandBase):
 
 class TestCommandProcessor(TestCommandBase):
     """Test the CommandProcessor class"""
-    
+
     def setUp(self):
         """Set up test fixtures"""
         super().setUp()
-        
+
         # Create command processor
         self.command_processor = CommandProcessor(self.game)
-    
+
     def test_init(self):
         """Test initialization"""
         # Check game reference
         self.assertEqual(self.command_processor.game, self.game)
-        
+
         # Check commands dictionary contains all expected commands
         command_classes = [
             'go', 'move', 'north', 'n', 'south', 's', 'east', 'e', 'west', 'w',
@@ -372,95 +384,95 @@ class TestCommandProcessor(TestCommandBase):
             'motherboard', 'mb', 'read', 'about', 'status', 'progress', 'knowledge',
             'achievements', 'achieve', 'stats', 'visualize', 'viz', 'simulate', 'sim'
         ]
-        
+
         for cmd in command_classes:
             self.assertIn(cmd, self.command_processor.commands)
-    
+
     def test_direction_command_factory(self):
         """Test direction command factory"""
         # Get a factory for a direction command
         north_factory = self.command_processor._direction_command('north')
-        
+
         # Create a command using the factory
         cmd = north_factory(self.game)
-        
+
         # Check it's a MoveCommand with the correct direction
         self.assertIsInstance(cmd, MoveCommand)
         self.assertEqual(cmd.args, ['north'])
-    
+
     def test_process_valid_command(self):
         """Test processing a valid command"""
         # Mock the execution result
         mock_cmd = MagicMock()
         mock_cmd.can_execute.return_value = (True, None)
         mock_cmd.execute.return_value = "Command executed successfully"
-        
+
         # Mock the command class
         mock_cmd_class = MagicMock(return_value=mock_cmd)
         self.command_processor.commands['test'] = mock_cmd_class
-        
+
         # Process the command
         result = self.command_processor.process("test arg1 arg2")
-        
+
         # Check command was created and executed correctly
         mock_cmd_class.assert_called_once_with(self.game, ['arg1', 'arg2'])
         mock_cmd.can_execute.assert_called_once()
         mock_cmd.execute.assert_called_once()
         self.assertEqual(result, "Command executed successfully")
-    
+
     def test_process_invalid_command(self):
         """Test processing an invalid command"""
         # Process non-existent command
         result = self.command_processor.process("nonexistent")
-        
+
         # Check error message
         self.assertIn("not recognized", result)
-    
+
     def test_process_validation_failure(self):
         """Test command that fails validation"""
         # Mock a command that fails validation
         mock_cmd = MagicMock()
         mock_cmd.can_execute.return_value = (False, "Validation error")
-        
+
         # Mock the command class
         mock_cmd_class = MagicMock(return_value=mock_cmd)
         self.command_processor.commands['test'] = mock_cmd_class
-        
+
         # Process the command
         result = self.command_processor.process("test")
-        
+
         # Check validation error was returned
         self.assertEqual(result, "Validation error")
         mock_cmd.execute.assert_not_called()  # Execute should not be called
-    
+
     def test_process_empty_input(self):
         """Test processing empty input"""
         result = self.command_processor.process("")
         self.assertIn("Please enter a command", result)
-    
+
     def test_process_with_achievements(self):
         """Test processing with new achievements"""
         # Mock a command
         mock_cmd = MagicMock()
         mock_cmd.can_execute.return_value = (True, None)
         mock_cmd.execute.return_value = "Command executed"
-        
+
         # Mock the command class
         mock_cmd_class = MagicMock(return_value=mock_cmd)
         self.command_processor.commands['test'] = mock_cmd_class
-        
+
         # Mock achievements
         achievement1 = MagicMock()
         achievement1.name = "Achievement 1"
         achievement1.description = "First achievement"
-        
+
         achievement2 = MagicMock()
         achievement2.name = "Achievement 2"
         achievement2.description = "Second achievement"
-        
+
         with patch.object(self.game.progress, 'update', return_value=[achievement1, achievement2]):
             result = self.command_processor.process("test")
-        
+
         # Check result includes achievements
         self.assertIn("Command executed", result)
         self.assertIn("ACHIEVEMENT UNLOCKED", result)

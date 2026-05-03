@@ -4,7 +4,8 @@ Progress tracking system
 Handles player achievements and progress tracking
 """
 
-from computerquest.config import VIRUS_TYPES, MAX_KNOWLEDGE
+from computerquest.config import MAX_KNOWLEDGE, VIRUS_TYPES
+
 
 class Achievement:
     """Represents a game achievement that can be unlocked"""
@@ -26,10 +27,10 @@ class ProgressSystem:
         self.knowledge_progress = 0    # Percentage of total knowledge gained
         self.virus_progress = 0        # Percentage of viruses found/quarantined
         self.total_score = 0
-        
+
         # Setup achievements
         self.setup_achievements()
-        
+
     def setup_achievements(self):
         """Define all achievements for the game"""
         self.achievements = [
@@ -118,7 +119,7 @@ class ProgressSystem:
                 lambda: self.game.victory and self.game.turns < 50
             ),
         ]
-    
+
     def update(self):
         """
         Update progress metrics and check for newly unlocked achievements
@@ -129,20 +130,20 @@ class ProgressSystem:
         visited_rooms = len([r for r in self.game.game_map.rooms.values() if r.visited])
         total_rooms = len(self.game.game_map.rooms)
         self.exploration_progress = int((visited_rooms / total_rooms) * 100)
-        
+
         # Update knowledge progress
         current_knowledge = sum(self.game.player.knowledge.values())
         max_knowledge = len(self.game.player.knowledge) * MAX_KNOWLEDGE  # MAX_KNOWLEDGE is max level per area
         self.knowledge_progress = int((current_knowledge / max_knowledge) * 100)
-        
+
         # Update virus progress - considered 50% for finding, 50% for quarantining
         viruses_found_pct = len(self.game.player.found_viruses) / len(VIRUS_TYPES) * 50
         viruses_quarantined_pct = len(self.game.player.quarantined_viruses) / len(VIRUS_TYPES) * 50
         self.virus_progress = int(viruses_found_pct + viruses_quarantined_pct)
-        
+
         # Calculate total score
         self.total_score = self.calculate_score()
-        
+
         # Check for newly unlocked achievements
         newly_unlocked = []
         for achievement in self.achievements:
@@ -150,13 +151,13 @@ class ProgressSystem:
                 achievement.unlocked = True
                 achievement.unlock_time = self.game.turns
                 newly_unlocked.append(achievement)
-                
+
                 # Apply any rewards
                 if achievement.reward:
                     self.apply_reward(achievement.reward)
-                    
+
         return newly_unlocked
-    
+
     def apply_reward(self, reward):
         """Apply a reward to the player"""
         if isinstance(reward, dict):
@@ -169,55 +170,55 @@ class ProgressSystem:
                 amount = reward.get('amount', 1)
                 if area in self.game.player.knowledge:
                     self.game.player.knowledge[area] = min(MAX_KNOWLEDGE, self.game.player.knowledge[area] + amount)
-    
+
     def calculate_score(self):
         """Calculate player's score based on various factors"""
         score = 0
-        
+
         # Points for exploration
         visited_rooms = len([r for r in self.game.game_map.rooms.values() if r.visited])
         score += visited_rooms * 10  # 10 points per room visited
-        
+
         # Points for viruses found and quarantined
         score += len(self.game.player.found_viruses) * 50       # 50 points per virus found
         score += len(self.game.player.quarantined_viruses) * 100  # 100 points per virus quarantined
-        
+
         # Points for knowledge gained
         knowledge_total = sum(self.game.player.knowledge.values())
         score += knowledge_total * 20  # 20 points per knowledge level
-        
+
         # Bonus for efficiency (fewer turns)
         if self.game.victory:
             efficiency_bonus = max(0, 500 - (self.game.turns * 5))
             score += efficiency_bonus
-        
+
         # Points for achievements
         score += sum(100 for a in self.achievements if a.unlocked)
-        
+
         return score
-    
+
     def get_progress_report(self):
         """Generate a detailed progress report for the player"""
         report = "PROGRESS REPORT\n"
         report += "===============\n\n"
-        
+
         report += f"Exploration: {self.exploration_progress}% of system mapped\n"
         report += f"Knowledge: {self.knowledge_progress}% of total knowledge\n"
         report += f"Security: {self.virus_progress}% of virus threats handled\n\n"
-        
+
         report += f"Current Score: {self.total_score} points\n\n"
-        
+
         # List achievements
         if any(a.unlocked for a in self.achievements):
             report += "Achievements Unlocked:\n"
             for achievement in sorted([a for a in self.achievements if a.unlocked], key=lambda a: a.unlock_time):
                 report += f"- {achievement.name}: {achievement.description}\n"
-        
+
         # List locked achievements with hints
         locked = [a for a in self.achievements if not a.unlocked]
         if locked:
             report += "\nRemaining Challenges:\n"
             for achievement in locked:
                 report += f"- ???: {achievement.description}\n"
-        
+
         return report

@@ -4,18 +4,19 @@ Command Pattern implementation
 Handles command processing through the Command pattern.
 """
 
-from computerquest.config import DIRECTION_MAPPING, VIRUS_TYPES
+from computerquest.config import VIRUS_TYPES
+
 
 class Command:
     """Base class for all commands"""
     def __init__(self, game, args=None):
         self.game = game
         self.args = args or []
-        
+
     def execute(self):
         """Execute the command - to be implemented by subclasses"""
         raise NotImplementedError("Subclasses must implement execute()")
-        
+
     def can_execute(self):
         """Check if command can be executed - optional validation"""
         return True, None
@@ -26,7 +27,7 @@ class MoveCommand(Command):
         if not self.args:
             return False, "Please specify a direction."
         return True, None
-        
+
     def execute(self):
         direction = self.args[0].lower()
         return self.game.move(direction)
@@ -40,18 +41,18 @@ class LookCommand(Command):
             return self.game.player.look()
         else:
             item_name = self.args[0].lower()
-            
+
             # Try to match item prefix
             if item_name not in self.game.player.location.items and item_name not in self.game.player.items:
                 room_match = self.game._match_item_prefix(item_name)
                 inv_match = self.game._match_inventory_item_prefix(item_name)
-                
+
                 # Use the best match found
                 if room_match in self.game.player.location.items:
                     item_name = room_match
                 elif inv_match in self.game.player.items:
                     item_name = inv_match
-                    
+
             return self.game.player.look(item_name)
 
 class TakeCommand(Command):
@@ -60,7 +61,7 @@ class TakeCommand(Command):
         if not self.args:
             return False, "What do you want to take?"
         return True, None
-        
+
     def execute(self):
         item_name = self.args[0].lower()
         # Match item prefix
@@ -78,7 +79,7 @@ class DropCommand(Command):
         if item_name not in self.game.player.items:
             return False, f"You don't have a {self.args[0]}."
         return True, None
-        
+
     def execute(self):
         item_name = self.game._match_inventory_item_prefix(self.args[0].lower())
         result = self.game.player.drop(item_name)
@@ -90,7 +91,7 @@ class InventoryCommand(Command):
     def execute(self):
         if not self.game.player.items:
             return "┏━━━━━━━━━━━━━━━ SYSTEM STORAGE ━━━━━━━━━━━━━━━┓\n  Your system storage is empty.\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
-        
+
         result = "┏━━━━━━━━━━━━━━━ SYSTEM STORAGE ━━━━━━━━━━━━━━━┓\n"
         for item, desc in self.game.player.items.items():
             # Show abbreviated description for inventory listing
@@ -112,7 +113,7 @@ class ScanCommand(Command):
         else:
             target = self.args[0].lower()
             result = self.game.player.scan(target)
-            
+
         self.game.turns += 1
         return result
 
@@ -127,7 +128,7 @@ class AdvancedScanCommand(Command):
         else:
             target = self.args[0].lower()
             result = self.game.player.advanced_scan(target)
-            
+
         self.game.turns += 1
         return result
 
@@ -137,7 +138,7 @@ class AnalyzeCommand(Command):
         if not self.args:
             return False, "What do you want to analyze? Usage: analyze [item]"
         return True, None
-        
+
     def execute(self):
         target = self.args[0].lower()
         result = self.game.player.analyze(target)
@@ -150,18 +151,18 @@ class QuarantineCommand(Command):
         if not self.args:
             return False, "Which virus do you want to quarantine?"
         return True, None
-        
+
     def execute(self):
         virus_name = self.args[0].lower()
         result = self.game.player.quarantine(virus_name)
         self.game.turns += 1
-        
+
         # Check for victory condition
         if len(self.game.player.quarantined_viruses) == len(VIRUS_TYPES):
             self.game.victory = True
             result += "\n\n" + self.game.victory_message()
             self.game.game_over = True
-            
+
         return result
 
 class HelpCommand(Command):
@@ -179,16 +180,16 @@ class QuitCommand(Command):
             # the game loop will handle the exit message.
             return ""
         return "Continuing mission..."
-            
+
 class ClearCommand(Command):
     """Command to clear the screen"""
     def execute(self):
         # Import os here to maintain encapsulation
         import os
-        
+
         # Clear screen based on OS (Windows vs Unix-like)
         os.system('cls' if os.name == 'nt' else 'clear')
-        
+
         # Return the current location description
         return self.game.player.look()
 
@@ -208,10 +209,10 @@ class ReadCommand(Command):
         if not self.args:
             return False, "What do you want to read?"
         return True, None
-        
+
     def execute(self):
         item_name = self.args[0].lower()
-        
+
         # Try to match with room items first, then inventory items
         if item_name not in self.game.player.location.items and item_name not in self.game.player.items:
             room_match = self.game._match_item_prefix(item_name)
@@ -221,7 +222,7 @@ class ReadCommand(Command):
                 item_name = room_match
             elif inv_match in self.game.player.items:
                 item_name = inv_match
-        
+
         # Check if item is in inventory
         if item_name in self.game.player.items:
             content = self.game.player.items[item_name]
@@ -230,7 +231,7 @@ class ReadCommand(Command):
                 return content.replace('# ', '').replace('#', '')
             else:
                 return content
-            
+
         # Check if item is in the room
         elif item_name in self.game.player.location.items:
             content = self.game.player.location.items[item_name]
@@ -239,7 +240,7 @@ class ReadCommand(Command):
                 return content.replace('# ', '').replace('#', '')
             else:
                 return content
-            
+
         else:
             return f"There is no {item_name} to read here."
 
@@ -249,7 +250,7 @@ class AboutCommand(Command):
         if not self.args:
             return False, "What topic would you like information about? Try 'about cpu', 'about memory', etc."
         return True, None
-        
+
     def execute(self):
         topic = self.args[0].lower()
         return self.game.get_component_info(topic)
@@ -302,7 +303,7 @@ class QuickHelpCommand(Command):
     """Command to display a quick help overlay"""
     def execute(self):
         from computerquest.utils.helpers import Colors
-        
+
         quick_help = f"""┏━━━━━━━━━━━━━━━━━━━━━ {Colors.YELLOW}{Colors.BOLD}COMMAND REFERENCE{Colors.RESET} ━━━━━━━━━━━━━━━━━━━━━┓
 │                                                                      │
 │  {Colors.BOLD}Movement:{Colors.RESET}                                                           │
@@ -350,15 +351,15 @@ class CommandProcessor:
     """Processes user commands using Command pattern"""
     def __init__(self, game):
         self.game = game
-        
+
         # List of direction words for tab completion
         self.direction_words = [
-            'north', 'south', 'east', 'west', 
+            'north', 'south', 'east', 'west',
             'northeast', 'northwest', 'southeast', 'southwest',
             'up', 'down',
             'n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw', 'u', 'd'
         ]
-        
+
         self.commands = {
             'go': MoveCommand,
             'move': MoveCommand,
@@ -426,13 +427,13 @@ class CommandProcessor:
             'cls': ClearCommand,
             'c': ClearCommand,
         }
-    
+
     def _direction_command(self, direction):
         """Create a move command with direction already specified"""
         def command_factory(game, args=None):
             return MoveCommand(game, [direction])
         return command_factory
-    
+
     def preprocess_command(self, user_input):
         """
         Preprocess command for common typos and normalization
@@ -440,7 +441,7 @@ class CommandProcessor:
         """
         # Remove extra whitespace
         processed = user_input.strip().lower()
-        
+
         # Handle common typos and variations
         typo_corrections = {
             # Direction typos
@@ -452,7 +453,7 @@ class CommandProcessor:
             'nortwest': 'northwest', 'northwet': 'northwest', 'norhtwest': 'northwest',
             'souteast': 'southeast', 'southeat': 'southeast', 'souhteast': 'southeast',
             'soutwest': 'southwest', 'southwet': 'southwest', 'souhtwest': 'southwest',
-            
+
             # Command typos
             'lok': 'look', 'loook': 'look', 'luk': 'look', 'loo': 'look',
             'invntory': 'inventory', 'invetory': 'inventory', 'inv': 'inventory',
@@ -463,52 +464,52 @@ class CommandProcessor:
             'scn': 'scan', 'sacan': 'scan',
             'clr': 'clear', 'clar': 'clear', 'clera': 'clear',
         }
-        
+
         # Check if the first word is a known typo
         words = processed.split()
         if words and words[0] in typo_corrections:
             words[0] = typo_corrections[words[0]]
             processed = ' '.join(words)
-            
+
         return processed
-        
+
     def process(self, user_input):
         """Process a user command"""
         # Skip empty inputs
         if not user_input.strip():
             return "Please enter a command. Type 'help' for available commands."
-            
+
         # Preprocess command for typos
         processed_input = self.preprocess_command(user_input)
-            
+
         # Split into command words
         cmd_words = processed_input.split()
         command = cmd_words[0]
         args = cmd_words[1:]
-        
+
         # Apply command prefix matching
         command = self.game._match_command_prefix(command)
-        
+
         # Check if command exists
         if command in self.commands:
             cmd_class = self.commands[command]
             cmd = cmd_class(self.game, args)
-            
+
             # Validate command
             can_execute, error = cmd.can_execute() if hasattr(cmd, 'can_execute') else (True, None)
             if not can_execute:
                 return error
-                
+
             # Execute command
             result = cmd.execute()
-            
+
             # Check for new achievements
             newly_unlocked = self.game.progress.update()
             if newly_unlocked:
                 result += "\n\nACHIEVEMENT UNLOCKED!\n"
                 for achievement in newly_unlocked:
                     result += f"- {achievement.name}: {achievement.description}\n"
-                    
+
             return result
         else:
             # Try to find similarly named commands (fuzzy matching)
@@ -518,7 +519,7 @@ class CommandProcessor:
                 # Simple similarity check - more than half of letters match
                 if len(cmd) > 2 and sum(c in command for c in cmd) >= len(cmd) // 2:
                     similar_commands.append(cmd)
-            
+
             if similar_commands:
                 suggestions = ', '.join([f"{Colors.GREEN}{cmd}{Colors.RESET}" for cmd in similar_commands[:3]])
                 return f"Command '{command}' not recognized. Did you mean: {suggestions}?\nType 'help' for available commands."

@@ -4,14 +4,12 @@ Unit tests for the Game class
 """
 
 import unittest
-from unittest.mock import patch, MagicMock, call
-import io
-import sys
-from computerquest.game import Game, CPUPipelineMinigame
+from unittest.mock import MagicMock, patch
+
+from computerquest.game import CPUPipelineMinigame
 from computerquest.models.component import Component
-from computerquest.models.player import Player
-from computerquest.commands import CommandProcessor
 from tests._helpers import build_real_game
+
 
 class TestGame(unittest.TestCase):
     """Test cases for the Game class.
@@ -30,7 +28,7 @@ class TestGame(unittest.TestCase):
         self.game.game_over = False
         self.game.all_viruses_found = False
         self.game.victory = False
-    
+
     def test_init(self):
         """Test game initialization"""
         game = self.game
@@ -49,7 +47,7 @@ class TestGame(unittest.TestCase):
         self.assertIsNone(game.current_visualization)
         self.assertIsNotNone(game.command_processor)
         self.assertIsNotNone(game.map_grid)
-    
+
     @patch('builtins.print')
     @patch('builtins.input', return_value="help")
     def test_start(self, mock_input, mock_print):
@@ -71,7 +69,7 @@ class TestGame(unittest.TestCase):
         # The loop prints command output, then prints a goodbye on exit;
         # confirm command output appeared (not just the final goodbye).
         mock_print.assert_any_call("\nCommand executed")
-    
+
     @patch('builtins.print')
     def test_display_welcome(self, mock_print):
         """Test welcome message display"""
@@ -82,7 +80,7 @@ class TestGame(unittest.TestCase):
         all_output = "\n".join(str(c) for c in mock_print.call_args_list)
         self.assertIn("KodeKloud Computer Architecture Quest", all_output)
         self.assertIn("MISSION BRIEFING", all_output)
-    
+
     def test_move(self):
         """Test player movement"""
         prev_location = Component(name="Previous Location", description="Starting point")
@@ -105,35 +103,35 @@ class TestGame(unittest.TestCase):
         with patch.object(self.game.player, 'go', return_value=False):
             result = self.game.move("west")
             self.assertIn("no connection", result.lower())
-    
+
     @patch('computerquest.utils.map_renderer.render_map')
     def test_display_map(self, mock_render_map):
         """Test map display"""
         mock_render_map.return_value = "ASCII Map Output"
-        
+
         # Set current location to a room in map_grid
         for room_id, room in self.game.game_map.rooms.items():
             if room_id in self.game.map_grid:
                 self.game.player.location = room
                 break
-        
+
         result = self.game.display_map()
-        
+
         # Check map renderer was called
         mock_render_map.assert_called_once()
         self.assertEqual(result, "ASCII Map Output")
-    
+
     def test_show_help(self):
         """Test help display"""
         help_text = self.game.show_help()
-        
+
         # Check help text contains important command categories
         self.assertIn("KODEKLOUD COMPUTER QUEST COMMANDS", help_text)
         self.assertIn("Movement:", help_text)
         self.assertIn("Exploration:", help_text)
         self.assertIn("Inventory:", help_text)
         self.assertIn("Security Functions:", help_text)
-    
+
     def test_start_cpu_minigame(self):
         """Test starting CPU minigame"""
         # Test without required knowledge
@@ -141,14 +139,14 @@ class TestGame(unittest.TestCase):
         result = self.game.start_cpu_minigame()
         self.assertIn("need more knowledge", result.lower())
         self.assertIsNone(self.game.current_minigame)
-        
+
         # Test with required knowledge
         self.game.player.knowledge = {"cpu": 5}  # Above required level
         result = self.game.start_cpu_minigame()
         self.assertIsNotNone(self.game.current_minigame)
         self.assertIsInstance(self.game.current_minigame, CPUPipelineMinigame)
         self.assertIn("CPU Pipeline", result)
-    
+
     def test_handle_visualization(self):
         """Test visualization handling"""
         # Without a type, returns the menu of available visualizations.
@@ -165,17 +163,17 @@ class TestGame(unittest.TestCase):
         result = self.game.handle_visualization("memory")
         self.assertEqual(self.game.current_visualization, "memory")
         self.assertIn("MEMORY", result.upper())
-        
+
         # Test stopping visualization
         prev_viz = self.game.current_visualization
         result = self.game.handle_visualization("stop")
         self.assertIsNone(self.game.current_visualization)
         self.assertIn(f"Stopped {prev_viz} visualization", result)
-        
+
         # Test unknown visualization type
         result = self.game.handle_visualization("unknown")
         self.assertIn("Unknown visualization type", result)
-    
+
     def test_handle_simulation(self):
         """Test simulation handling"""
         # Without active simulation
@@ -211,7 +209,7 @@ class TestGame(unittest.TestCase):
         self.game.start_cpu_minigame()
         result = self.game.handle_simulation("unknown")
         self.assertIn("Unknown simulation action", result)
-    
+
     def test_get_component_info(self):
         """Test educational component information"""
         # Valid topics
@@ -229,11 +227,11 @@ class TestGame(unittest.TestCase):
         # Completely unknown topic
         very_unknown = self.game.get_component_info("xyzabc")
         self.assertIn("No information available", very_unknown)
-    
+
     def test_display_motherboard(self):
         """Test motherboard diagram display"""
         result = self.game.display_motherboard()
-        
+
         # Check diagram contains key components
         self.assertIn("KodeKloud Computer Quest Motherboard Layout", result)
         self.assertIn("CPU Package", result)
@@ -242,7 +240,7 @@ class TestGame(unittest.TestCase):
         self.assertIn("RAM DIMM", result)
         self.assertIn("PCH", result)
         self.assertIn("Virus Locations", result)
-    
+
     def test_victory_message(self):
         """Test victory message generation"""
         self.game.turns = 42
@@ -258,7 +256,7 @@ class TestGame(unittest.TestCase):
         self.assertIn("CONGRATULATIONS", result)
         self.assertIn("Turns taken: 42", result)
         self.assertIn("Thank you for playing", result)
-    
+
     def test_prefix_matching(self):
         """Test helper methods for prefix matching"""
         # Setup test data
@@ -267,32 +265,32 @@ class TestGame(unittest.TestCase):
             "load": None,
             "location": None
         }
-        
+
         self.game.player.location.items = {
             "document": "A document",
             "desk": "A desk",
             "door": "A door"
         }
-        
+
         self.game.player.items = {
             "tablet": "A tablet",
             "tool": "A tool"
         }
-        
+
         # Test exact matches
         self.assertEqual(self.game._match_command_prefix("look"), "look")
         self.assertEqual(self.game._match_item_prefix("document"), "document")
         self.assertEqual(self.game._match_inventory_item_prefix("tablet"), "tablet")
-        
+
         # Test unique prefix matches
         self.assertEqual(self.game._match_command_prefix("loo"), "look")
         self.assertEqual(self.game._match_item_prefix("doc"), "document")
         self.assertEqual(self.game._match_inventory_item_prefix("ta"), "tablet")
-        
+
         # Test ambiguous prefix (should return original)
         self.assertEqual(self.game._match_command_prefix("lo"), "lo")  # Ambiguous: look, load, location
         self.assertEqual(self.game._match_item_prefix("d"), "d")       # Ambiguous: document, desk, door
-        
+
         # Test non-matching prefix
         self.assertEqual(self.game._match_command_prefix("xyz"), "xyz")
         self.assertEqual(self.game._match_item_prefix("xyz"), "xyz")
@@ -300,32 +298,32 @@ class TestGame(unittest.TestCase):
 
 class TestCPUPipelineMinigame(unittest.TestCase):
     """Test cases for the CPU Pipeline Minigame"""
-    
+
     def setUp(self):
         """Set up test fixtures"""
         self.game = MagicMock()
         self.minigame = CPUPipelineMinigame(self.game)
-    
+
     def test_explain(self):
         """Test explanation text"""
         result = self.minigame.explain()
         self.assertIn("CPU Pipeline Minigame", result)
-    
+
     def test_get_status(self):
         """Test status display"""
         result = self.minigame.get_status()
         self.assertIn("CPU Pipeline status", result)
-    
+
     def test_step(self):
         """Test stepping the simulation"""
         result = self.minigame.step()
         self.assertIn("Advanced pipeline by one step", result)
-    
+
     def test_toggle_pipeline(self):
         """Test toggling pipeline mode"""
         result = self.minigame.toggle_pipeline()
         self.assertIn("Toggled pipeline mode", result)
-    
+
     def test_reset(self):
         """Test resetting the simulation"""
         result = self.minigame.reset()

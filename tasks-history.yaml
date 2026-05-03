@@ -32,3 +32,7 @@ completed:
     title: 2.1 Consolidate packaging into pyproject.toml [project]
     completed: "2026-05-04"
     summary: 'Single pyproject.toml [project] table; uv.lock committed; setup.py/setup.cfg/requirements.txt removed; LICENSE created; ruff replaces black/isort/flake8/pylint; Makefile uses uv. uv run pytest works directly: 107/107 green.'
+  - id: tk-b78acd
+    title: 2.2 Resolve version drift via importlib.metadata; bump to 1.1.1
+    completed: "2026-05-04"
+    summary: Version derived from importlib.metadata.version('computerquest'); pyproject.toml is single source. Bumped to 1.1.1. Tests in tests/test_version.py pin the contract.

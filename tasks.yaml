@@ -1,22 +1,13 @@
 version: 1
 tasks:
-  - id: tk-b78acd
-    title: 2.2 Resolve version drift via importlib.metadata; bump to 1.1.1
-    status: claimed
-    priority: high
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1777850158
-    created: "2026-04-28"
-    notes: ""
   - id: tk-d34e62
     title: 2.3 Add .github/workflows/test.yml
-    status: ready
+    status: claimed
     priority: high
     blocks:
       - tk-277bbc
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1777850210
     created: "2026-04-28"
     notes: ""
   - id: tk-0e834b

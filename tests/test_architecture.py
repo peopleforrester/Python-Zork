@@ -5,25 +5,26 @@ Unit tests for the ComputerArchitecture class
 
 import unittest
 from unittest.mock import patch
-from computerquest.world.architecture import ComputerArchitecture
-from computerquest.models.component import Component
+
 from computerquest.models.player import Player
+from computerquest.world.architecture import ComputerArchitecture
+
 
 class TestComputerArchitecture(unittest.TestCase):
     """Test cases for the ComputerArchitecture class"""
-    
+
     def setUp(self):
         """Set up test fixtures"""
         # Create architecture with setup mocked
         with patch.object(ComputerArchitecture, 'setup'):
             self.arch = ComputerArchitecture()
-    
+
     def test_init(self):
         """Test architecture initialization"""
         self.assertIsNone(self.arch.player)
         self.assertEqual(self.arch.rooms, {})
         self.assertEqual(self.arch.name, "KodeKloud Computer Quest")
-    
+
     def test_setup(self):
         """Test full setup process"""
         # Use real setup with subcomponents mocked. patch.object on a class
@@ -39,15 +40,15 @@ class TestComputerArchitecture(unittest.TestCase):
             m_connect.assert_called_once_with()
             m_items.assert_called_once_with()
             m_player.assert_called_once_with()
-    
+
     def test_make_components(self):
         """Test making components"""
         # Call the real method
         self.arch.make_components()
-        
+
         # Check rooms dictionary
         self.assertGreater(len(self.arch.rooms), 0)
-        
+
         # Check some specific components
         self.assertIn("cpu_package", self.arch.rooms)
         self.assertIn("core1", self.arch.rooms)
@@ -57,52 +58,52 @@ class TestComputerArchitecture(unittest.TestCase):
         self.assertIn("bios", self.arch.rooms)
         self.assertIn("ssd", self.arch.rooms)
         self.assertIn("kernel", self.arch.rooms)
-        
+
         # Check component properties
         cpu = self.arch.rooms["cpu_package"]
         self.assertEqual(cpu.name, "CPU Package")
         self.assertTrue(cpu.lit)
         self.assertEqual(cpu.id, "CPU000")
-        
+
         # Check properties of other component types
         ram = self.arch.rooms["ram_dimm1"]
         self.assertEqual(ram.name, "RAM DIMM 1")
         self.assertTrue("volatile memory" in ram.desc.lower())
-        
+
         network = self.arch.rooms["network_interface"]
         self.assertTrue("network" in network.name.lower())
         self.assertTrue("packet" in network.desc.lower())
-    
+
     def test_connect_components(self):
         """Test connecting components"""
         # Make components first
         self.arch.make_components()
-        
+
         # Test initial state
         cpu = self.arch.rooms["cpu_package"]
         self.assertEqual(len(cpu.doors), 0)
         self.assertEqual(len(cpu.openDoors), 0)
-        
+
         # Connect components
         self.arch.connect_components()
-        
+
         # Check CPU connections
         cpu = self.arch.rooms["cpu_package"]
         self.assertGreater(len(cpu.doors), 0)
-        
+
         # Check specific connections
         self.assertIn("n", cpu.doors)  # North to core1
         self.assertEqual(cpu.doors["n"], self.arch.rooms["core1"])
-        
+
         self.assertIn("ne", cpu.doors)  # Northeast to core2
         self.assertEqual(cpu.doors["ne"], self.arch.rooms["core2"])
-        
+
         self.assertIn("s", cpu.doors)  # South to L3 cache
         self.assertEqual(cpu.doors["s"], self.arch.rooms["l3_cache"])
-        
+
         self.assertIn("d", cpu.doors)  # Down to PCH
         self.assertEqual(cpu.doors["d"], self.arch.rooms["pch"])
-        
+
         # Check Core 1 connections — its 's' goes to its own L1 cache, not
         # back to cpu_package. The architecture uses some intentionally
         # asymmetric passages.
@@ -130,62 +131,62 @@ class TestComputerArchitecture(unittest.TestCase):
         l3 = self.arch.rooms["l3_cache"]
         self.assertEqual(cpu.doors["s"], l3)
         self.assertEqual(l3.doors["n"], cpu)
-    
+
     def test_create_items(self):
         """Test item creation"""
         # Make components first
         self.arch.make_components()
-        
+
         # Create items
         self.arch.create_items()
-        
+
         # Check CPU package items
         cpu = self.arch.rooms["cpu_package"]
         self.assertIn("instruction_manual", cpu.items)
         self.assertTrue("Guide" in cpu.items["instruction_manual"])
-        
+
         # Check core components items
         core1_cu = self.arch.rooms["core1_cu"]
         self.assertIn("decoder_tool", core1_cu.items)
-        
+
         core1_registers = self.arch.rooms["core1_registers"]
         self.assertIn("register_log", core1_registers.items)
-        
+
         # Check virus locations
         ssd = self.arch.rooms["ssd"]
         self.assertIn("boot_sector_virus", ssd.items)
-        
+
         kernel = self.arch.rooms["kernel"]
         self.assertIn("rootkit_virus", kernel.items)
-        
+
         ram1 = self.arch.rooms["ram_dimm1"]
         self.assertIn("memory_resident_virus", ram1.items)
-        
+
         bios = self.arch.rooms["bios"]
         self.assertIn("firmware_virus", bios.items)
-        
+
         network = self.arch.rooms["network_interface"]
         self.assertIn("packet_sniffer_virus", network.items)
-    
+
     def test_create_player(self):
         """Test player creation"""
         # Make components first
         self.arch.make_components()
-        
+
         # Create player
         self.arch.create_player()
-        
+
         # Check player created
         self.assertIsNotNone(self.arch.player)
         self.assertIsInstance(self.arch.player, Player)
-        
+
         # Check starting location
         self.assertEqual(self.arch.player.location, self.arch.rooms["cpu_package"])
-        
+
         # Check starting inventory
         self.assertIn("antivirus_tool", self.arch.player.items)
         self.assertIn("system_mapper", self.arch.player.items)
-        
+
         # Check player name
         self.assertEqual(self.arch.player.name, "Security Program")
 

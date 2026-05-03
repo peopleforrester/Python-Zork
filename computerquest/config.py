@@ -4,10 +4,11 @@ KodeKloud Computer Quest Configuration
 Central configuration file for game settings and constants
 """
 
-# Game Information
-from computerquest import __version__ as GAME_VERSION  # noqa: E402
+from computerquest import __version__
 
+# Game Information
 GAME_NAME = "KodeKloud Computer Quest"
+GAME_VERSION = __version__
 
 # File System
 SAVE_DIR = ".kodekloud_quest"
@@ -41,10 +42,10 @@ DIRECTION_NAMES = {
 
 # Virus Types
 VIRUS_TYPES = [
-    "boot_sector_virus", 
-    "rootkit_virus", 
-    "memory_resident_virus", 
-    "firmware_virus", 
+    "boot_sector_virus",
+    "rootkit_virus",
+    "memory_resident_virus",
+    "firmware_virus",
     "packet_sniffer_virus"
 ]
 
