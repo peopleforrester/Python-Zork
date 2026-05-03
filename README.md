@@ -26,8 +26,8 @@ The game now includes a web interface using TypeScript, React, ReactFlow, and Vi
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- Node.js 14 or higher
+- Python 3.10 or higher
+- Node.js 18 or higher (Vite 5 requirement)
 - npm or yarn
 
 ### Installation
@@ -37,9 +37,8 @@ The game now includes a web interface using TypeScript, React, ReactFlow, and Vi
 git clone https://github.com/yourusername/kodekloud-computer-quest.git
 cd kodekloud-computer-quest
 
-# Install Python dependencies
-pip install -r requirements.txt
-pip install flask flask-socketio flask-cors
+# Install Python dependencies (uv handles the venv automatically)
+uv sync --dev
 
 # Install Node.js dependencies
 npm install

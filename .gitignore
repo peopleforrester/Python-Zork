@@ -108,3 +108,8 @@ saves/
 .vscode/
 .idea/
 .tasks.lock
+
+# Node.js / frontend build output
+node_modules/
+.vite/
+*.tsbuildinfo

@@ -1,22 +1,12 @@
 version: 1
 tasks:
-  - id: tk-d34e62
-    title: 2.3 Add .github/workflows/test.yml
-    status: claimed
-    priority: high
-    blocks:
-      - tk-277bbc
-    blocked_by: []
-    claimed_by: session-1777850210
-    created: "2026-04-28"
-    notes: ""
   - id: tk-0e834b
     title: 2.4 .gitignore node_modules/; add LICENSE; bump README Node min to 18
-    status: ready
+    status: claimed
     priority: high
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1777850490
     created: "2026-04-28"
     notes: ""
   - id: tk-495cc6
@@ -57,7 +47,6 @@ tasks:
     blocks: []
     blocked_by:
       - tk-495cc6
-      - tk-d34e62
     claimed_by: null
     created: "2026-04-28"
     notes: ""
