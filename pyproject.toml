@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "computerquest"
-version = "1.1.0"
+version = "1.1.1"
 description = "An educational text-based adventure game that teaches computer architecture concepts."
 readme = "README.md"
 license = { file = "LICENSE" }

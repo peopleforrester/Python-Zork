@@ -5,8 +5,9 @@ Central configuration file for game settings and constants
 """
 
 # Game Information
+from computerquest import __version__ as GAME_VERSION  # noqa: E402
+
 GAME_NAME = "KodeKloud Computer Quest"
-GAME_VERSION = "1.0.0"
 
 # File System
 SAVE_DIR = ".kodekloud_quest"

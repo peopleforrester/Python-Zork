@@ -28,3 +28,7 @@ completed:
     title: 1.4 Harden server.py (env CORS, debug=False, 127.0.0.1, kill orphans, no bare except)
     completed: "2026-05-02"
     summary: 'server.py hardened: env-driven CORS / debug / host / port; ProcessLookupError replaces bare except; _terminate_game_process unified for disconnect+atexit; sys.executable for subprocess. README documents env vars and dev-only security caveat. tests/test_server.py covers env helpers.'
+  - id: tk-80ec19
+    title: 2.1 Consolidate packaging into pyproject.toml [project]
+    completed: "2026-05-04"
+    summary: 'Single pyproject.toml [project] table; uv.lock committed; setup.py/setup.cfg/requirements.txt removed; LICENSE created; ruff replaces black/isort/flake8/pylint; Makefile uses uv. uv run pytest works directly: 107/107 green.'
