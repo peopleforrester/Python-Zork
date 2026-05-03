@@ -1,4 +1,4 @@
-.PHONY: clean clean-build clean-pyc clean-test coverage lint test format install dev-install
+.PHONY: clean clean-build clean-pyc clean-test coverage lint test format install typecheck run
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -20,30 +20,24 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr htmlcov/
 	rm -fr .pytest_cache
 
-lint: ## check style with flake8 and pylint
-	flake8 computerquest tests
-	pylint --rcfile=.pylintrc computerquest tests
+lint: ## check style with ruff
+	uv run ruff check computerquest tests
 
 test: ## run tests with pytest
-	pytest
+	uv run pytest
 
 coverage: ## check code coverage with pytest-cov
-	pytest --cov=computerquest --cov-report=html
+	uv run pytest --cov=computerquest --cov-report=html
 	@echo "Open htmlcov/index.html to view the coverage report"
 
-format: ## format code with black and isort
-	black computerquest tests
-	isort computerquest tests
+format: ## format code with ruff
+	uv run ruff format computerquest tests
 
 typecheck: ## run static type checker
-	mypy computerquest tests
+	uv run mypy computerquest tests
 
-install: ## install the package
-	pip install -e .
-
-dev-install: ## install the package and dev dependencies
-	pip install -e ".[dev]"
-	pip install -r requirements.txt
+install: ## install the package and dev dependencies via uv
+	uv sync --dev
 
 run: ## run the game
-	python main.py
+	uv run python main.py

@@ -1,34 +1,63 @@
 [build-system]
-requires = ["setuptools>=42", "wheel"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.black]
-line-length = 100
-target-version = ["py38"]
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+[project]
+name = "computerquest"
+version = "1.1.0"
+description = "An educational text-based adventure game that teaches computer architecture concepts."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Michael Forrester" },
+]
+keywords = ["education", "game", "computer-architecture", "text-adventure"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Games/Entertainment",
+]
 
-[tool.isort]
-profile = "black"
-line_length = 100
-known_first_party = ["computerquest"]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
+# Core game (CLI) has no third-party runtime dependencies.
+dependencies = []
+
+[project.optional-dependencies]
+# Web interface (Flask + Socket.IO front-end)
+web = [
+    "flask>=2.3.0",
+    "flask-socketio>=5.3.0",
+    "flask-cors>=4.0.0",
+    "eventlet>=0.35.0",
+]
+
+# uv `--dev` reads this PEP 735 group; matches the CLAUDE.md command
+# `uv sync --dev`. Web deps are included so tests/test_server.py imports.
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.4.0",
+    "mypy>=1.0.0",
+    "flask>=2.3.0",
+    "flask-socketio>=5.3.0",
+    "flask-cors>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/peopleforrester/Python-Zork"
+Repository = "https://github.com/peopleforrester/Python-Zork"
+
+[tool.setuptools.packages.find]
+include = ["computerquest*"]
+exclude = ["tests*", "archive*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -37,8 +66,16 @@ python_functions = "test_*"
 python_classes = "Test*"
 addopts = "--cov=computerquest --cov-report=term --cov-report=html"
 
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # line-length already enforced by formatter
+
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
