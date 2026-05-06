@@ -139,7 +139,7 @@ def format_list(items, prefix="- "):
     return "\n".join(f"{prefix}{item}" for item in items)
 
 
-def format_look_output(location, connections, items, technical_details=None):
+def format_look_output(location, connections, items, technical_details=None, player=None):
     """
     Format the look command output for better readability.
 
@@ -148,6 +148,8 @@ def format_look_output(location, connections, items, technical_details=None):
         connections: Dictionary of directions and connected components
         items: Dictionary of items in the location
         technical_details: Optional list of technical details to display
+        player: Optional Player; when provided, the status bar reflects real
+            health and inventory size instead of placeholder defaults.
 
     Returns:
         str: Formatted look output
@@ -304,21 +306,28 @@ def format_look_output(location, connections, items, technical_details=None):
             output.append(f"  {line}")
         output.append("┗" + "━" * 51 + "┛")
 
-    # Enhanced status bar with more game information from player
-    total_viruses = 5  # Total number of viruses from config
+    # Enhanced status bar with real game state from player.
+    from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH, VIRUS_TYPES
 
-    # Get health from player if available
-    if hasattr(location, "game") and hasattr(location.game, "player"):
-        player = location.game.player
+    total_viruses = len(VIRUS_TYPES)
+
+    if player is not None:
         max_health = player.max_health
         current_health = player.health
+        inventory_size = len(player.items)
+        found_viruses = len(player.found_viruses)
+        quar_viruses = len(player.quarantined_viruses)
     else:
-        # Use defaults if player not available
-        max_health = 20
-        current_health = 20
+        # Pre-game / no-player surfaces fall back to a full-health, empty bag
+        # snapshot rather than feeding stale or fabricated state.
+        max_health = MAX_HEALTH
+        current_health = MAX_HEALTH
+        inventory_size = len(items) if items else 0
+        found_viruses = 0
+        quar_viruses = 0
 
     # Set color based on health percentage
-    health_percent = current_health / max_health
+    health_percent = current_health / max_health if max_health else 0
     if health_percent > 0.7:
         health_color = Colors.GREEN
     elif health_percent > 0.3:
@@ -326,15 +335,12 @@ def format_look_output(location, connections, items, technical_details=None):
     else:
         health_color = Colors.RED
 
-    found_viruses = len(location.items.get("found_viruses", []))
-    quar_viruses = len(location.items.get("quarantined_viruses", []))
-
     virus_color = Colors.RED if found_viruses > quar_viruses else Colors.GREEN
 
     # Create a compact status bar with more game state information
     output.append("\n" + "━" * 70)
     output.append(
-        f"  {Colors.BOLD}STATUS:{Colors.RESET} Health: {health_color}{current_health}/{max_health}{Colors.RESET} | Items: {len(items)}/8 | Viruses: {virus_color}{found_viruses}/{total_viruses} Found, {quar_viruses}/{total_viruses} Quarantined{Colors.RESET}"
+        f"  {Colors.BOLD}STATUS:{Colors.RESET} Health: {health_color}{current_health}/{max_health}{Colors.RESET} | Items: {inventory_size}/{INVENTORY_LIMIT} | Viruses: {virus_color}{found_viruses}/{total_viruses} Found, {quar_viruses}/{total_viruses} Quarantined{Colors.RESET}"
     )
 
     # Add system location info to status bar

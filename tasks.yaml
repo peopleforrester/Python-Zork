@@ -62,12 +62,12 @@ tasks:
     notes: ""
   - id: tk-6caadf
     title: 3.7 Centralize INVENTORY_LIMIT and shared literals in config.py
-    status: ready
+    status: claimed
     priority: medium
     blocks:
       - tk-f0d6b8
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1778073443
     created: "2026-04-28"
     notes: ""
   - id: tk-a7098e

@@ -109,5 +109,47 @@ class TestHelpers(unittest.TestCase):
         # Test with None
         self.assertEqual(format_list(None), "")
 
+class TestStatusBarReadsRealPlayer(unittest.TestCase):
+    """Step 3.6: format_look_output's status bar must reflect the real
+    player's health and inventory size, not hardcoded placeholders."""
+
+    def _build_inputs(self):
+        from computerquest.models.component import Component
+        from computerquest.models.player import Player
+
+        location = Component(name="Test Loc", description="for status-bar test")
+        player = Player(location=location, items={"a": "x", "b": "y"}, name="Tester")
+        return location, player
+
+    def test_health_bar_reflects_player_state(self):
+        from computerquest.config import INVENTORY_LIMIT
+        from computerquest.utils.helpers import format_look_output
+
+        location, player = self._build_inputs()
+        player.health = 7  # below the green/yellow threshold
+
+        out = format_look_output(
+            location=location,
+            connections=location.doors,
+            items=list(location.items.keys()),
+            player=player,
+        )
+        self.assertIn(f"7/{player.max_health}", out)
+        self.assertIn(f"2/{INVENTORY_LIMIT}", out)  # two seeded items
+
+    def test_status_bar_falls_back_when_player_is_none(self):
+        from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH
+        from computerquest.utils.helpers import format_look_output
+
+        location, _ = self._build_inputs()
+        out = format_look_output(
+            location=location,
+            connections=location.doors,
+            items=[],
+        )
+        self.assertIn(f"{MAX_HEALTH}/{MAX_HEALTH}", out)
+        self.assertIn(f"0/{INVENTORY_LIMIT}", out)
+
+
 if __name__ == "__main__":
     unittest.main()

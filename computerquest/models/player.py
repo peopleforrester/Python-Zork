@@ -4,7 +4,7 @@ Player class
 Represents the player character in the game.
 """
 
-from computerquest.config import MAX_KNOWLEDGE
+from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH, MAX_KNOWLEDGE
 
 
 class Player:
@@ -18,8 +18,8 @@ class Player:
         """
         self.location = location  # Current component location
         self.items = items or {}  # Player inventory
-        self.max_health = 20  # Maximum health points
-        self.health = 20  # Current health points
+        self.max_health = MAX_HEALTH
+        self.health = MAX_HEALTH
         self.com = NPC  # Is this an NPC?
         self.name = name  # Player name
         self.death = False  # Is player dead?
@@ -109,7 +109,8 @@ class Player:
                 location=room,
                 connections=room.doors,
                 items=list(room.items.keys()),
-                technical_details=technical_details
+                technical_details=technical_details,
+                player=self,
             )
 
     def take(self, item):
@@ -120,7 +121,7 @@ class Player:
         """
         # Check for inventory limit (>= so the cap holds even if items were
         # seeded via construction or direct dict assignment).
-        if len(self.items) >= 8:
+        if len(self.items) >= INVENTORY_LIMIT:
             return "Your inventory is full. Drop something first."
 
         # Check if item is in the room

@@ -585,14 +585,19 @@ class Game:
         print("│                                                                    │")
         print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
 
-        # Enhanced status bar with key game information
-        total_viruses = 5  # Total number of viruses from config
-        max_health = 20  # Maximum health points
-        current_health = 20  # Current health points (placeholder)
+        # Welcome status bar reads from the real player so values stay in
+        # sync with mid-game state if display_welcome is ever re-invoked.
+        from computerquest.config import INVENTORY_LIMIT, VIRUS_TYPES
+        total_viruses = len(VIRUS_TYPES)
+        max_health = self.player.max_health
+        current_health = self.player.health
+        items_carried = len(self.player.items)
+        found = len(self.player.found_viruses)
+        quarantined = len(self.player.quarantined_viruses)
 
         print("\n" + "━" * 78)
         print(
-            f"  {Colors.BOLD}STATUS:{Colors.RESET} Health: {Colors.GREEN}{current_health}/{max_health}{Colors.RESET} | Items: 0/8 | Viruses: {Colors.GREEN}0/{total_viruses} Found, 0/{total_viruses} Quarantined{Colors.RESET}"
+            f"  {Colors.BOLD}STATUS:{Colors.RESET} Health: {Colors.GREEN}{current_health}/{max_health}{Colors.RESET} | Items: {items_carried}/{INVENTORY_LIMIT} | Viruses: {Colors.GREEN}{found}/{total_viruses} Found, {quarantined}/{total_viruses} Quarantined{Colors.RESET}"
         )
         print("━" * 78)
 
@@ -605,7 +610,7 @@ class Game:
         from computerquest.utils.helpers import format_look_output
 
         print(
-            f"\n{format_look_output(self.player.location, self.player.location.doors, list(self.player.location.items.keys()))}"
+            f"\n{format_look_output(self.player.location, self.player.location.doors, list(self.player.location.items.keys()), player=self.player)}"
         )
 
     def move(self, direction):
@@ -670,6 +675,7 @@ class Game:
                     connections=curr_location.doors,
                     items=list(curr_location.items.keys()),
                     technical_details=technical_details,
+                    player=self.player,
                 )
 
                 # Handle any NPCs or hostile entities

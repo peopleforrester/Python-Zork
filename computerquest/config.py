@@ -68,6 +68,10 @@ MAP_HEIGHT = 60
 # Performance settings
 PERFORMANCE_METRICS = ["speed", "capacity", "reliability"]
 
+# Player limits (single source of truth for the cap and the health bar)
+INVENTORY_LIMIT = 8
+MAX_HEALTH = 20
+
 # Feature flags
 # Minigames (CPU pipeline, memory hierarchy) ship as placeholder stubs.
 # Step 4.1 (tk-a7098e) flips this to True once real implementations land.
