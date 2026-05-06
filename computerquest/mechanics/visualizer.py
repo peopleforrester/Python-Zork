@@ -203,49 +203,78 @@ class ComponentVisualizer:
         return result
 
     def render_motherboard_layout_text(self):
-        """Visualize the motherboard layout in text-only mode"""
-        result = "++" + "-" * 50 + "++\n"
-        result += "|" + "MODERN MOTHERBOARD LAYOUT".center(52) + "|\n"
-        result += "+" + "-" * 50 + "+\n\n"
+        """Visualize the full motherboard layout in text-only mode.
 
-        # Create ASCII representation of the motherboard layout
-        layout = [
-            "                  CPU PACKAGE                    ",
-            "     +-------------------------------------+     ",
-            "     |                                     |     ",
-            "     |    +-------+          +-------+    |     ",
-            "     |    | Core1 |          | Core2 |    |     ",
-            "     |    +-------+          +-------+    |     ",
-            "     |                                     |     ",
-            "     |    +---------------------------+    |     ",
-            "     |    |      L3 Cache (Shared)    |    |     ",
-            "     |    +---------------------------+    |     ",
-            "     +-------------------------------------+     ",
-            "                      |                          ",
-            "                 DMI Link                        ",
-            "                      |                          ",
-            "     +-------------------------------------+     ",
-            "     |             PCH CHIPSET             |     ",
-            "     |                                     |     ",
-            "     |  +--------+  +-------+  +--------+ |     ",
-            "     |  |Storage |  | PCIe  |  |Network | |     ",
-            "     |  |Control |  |Control|  |Interface| |     ",
-            "     |  +--------+  +-------+  +--------+ |     ",
-            "     |                                     |     ",
-            "     |  +--------+                         |     ",
-            "     |  |BIOS/UEFI|                        |     ",
-            "     |  +--------+                         |     ",
-            "     +-------------------------------------+     ",
+        This is the single canonical motherboard renderer. The detailed
+        layout below replaces an earlier simpler variant; both 'motherboard'
+        and 'viz motherboard' commands route here.
+        """
+        motherboard = [
+            "+------------------------------------------------------------------+",
+            "|               KodeKloud Computer Quest Motherboard Layout       |",
+            "+------------------------------------------------------------------+",
+            "|                                                                  |",
+            "|   +----------+     +----------------------------------+          |",
+            "|   |          |     |                                  |          |",
+            "|   | OS Kernel|     |           CPU Package            |          |",
+            "|   | (In RAM) |     |  +--------+        +--------+   |          |",
+            "|   +----------+     |  | Core 1 |        | Core 2 |   |          |",
+            "|                    |  | CU|ALU |        | CU|ALU |   |          |",
+            "|   +----------+     |  | Reg|L1 |        | Reg|L1 |   |          |",
+            "|   | Virtual  |     |  +--------+        +--------+   |          |",
+            "|   | Memory   |     |                                  |          |",
+            "|   |          |     |  +--------+        +--------+   |          |",
+            "|   +----------+     |  |L2 Cache|        |L2 Cache|   |          |",
+            "|                    |  +--------+        +--------+   |          |",
+            "|                    |                                  |          |",
+            "|   +----------+     |  +----------------------------+  |          |",
+            "|   |RAM DIMM 1|-----|  |      L3 Cache (Shared)     |  |          |",
+            "|   +----------+     |  +----------------------------+  |          |",
+            "|                    +----------------------------------+          |",
+            "|   +----------+                      |                            |",
+            "|   |RAM DIMM 2|                      |                            |",
+            "|   +----------+                DMI Link                           |",
+            "|                                     |                            |",
+            "|   +----------+                      |                            |",
+            "|   |RAM DIMM 3|     +----------------------------------+          |",
+            "|   +----------+     |                                  |          |",
+            "|                    |               PCH                |          |",
+            "|   +----------+     |     (Platform Controller Hub)    |          |",
+            "|   |RAM DIMM 4|     |  +----------+      +----------+  |          |",
+            "|   +----------+     |  | Storage  |      |   PCIe   |  |          |",
+            "|                    |  |Controller|      |Controller|  |          |",
+            "|                    |  +----------+      +----------+  |          |",
+            "|   +------+         |                                  |          |",
+            "|   | SSD  |---------|  +----------+      +----------+  |          |",
+            "|   +------+         |  | Network  |      |BIOS/UEFI |  |          |",
+            "|                    |  |Interface |      |  Flash   |  |          |",
+            "|   +------+         |  +----------+      +----------+  |          |",
+            "|   | HDD  |---+     +----------------------------------+          |",
+            "|   +------+   |                 |               |                 |",
+            "|              |                 |               |                 |",
+            "|              |     +-----------+     +---------+                 |",
+            "|              |     |                 |                           |",
+            "|              +-----|  SATA Ports     |    USB Ports    Ethernet |",
+            "|                    +-----------------+---------+--------+        |",
+            "|                                                                  |",
+            "|   +------+         +----------------+                            |",
+            "|   | GPU  |---------|  PCIe x16 Slot |                            |",
+            "|   +------+         +----------------+                            |",
+            "|                                                                  |",
+            "|                    +----------------+                            |",
+            "|                    |  PCIe x1 Slot  |                            |",
+            "|                    +----------------+                            |",
+            "|                                                                  |",
+            "|                    +----------------+                            |",
+            "|                    |  PCIe x1 Slot  |                            |",
+            "|                    +----------------+                            |",
+            "|                                                                  |",
+            "+------------------------------------------------------------------+",
+            "| Virus Locations:                                                 |",
+            "| * Rootkit Virus: OS Kernel         * Firmware Virus: BIOS/UEFI   |",
+            "| * Memory Resident Virus: RAM DIMM1 * Packet Sniffer: Network Int |",
+            "| * Boot Sector Virus: SSD                                         |",
+            "+------------------------------------------------------------------+",
         ]
 
-        for line in layout:
-            result += line + "\n"
-
-        result += "\nVirus Locations:\n"
-        result += "- Boot Sector Virus: SSD\n"
-        result += "- Rootkit Virus: OS Kernel (in RAM)\n"
-        result += "- Memory Resident Virus: RAM DIMM 1\n"
-        result += "- Firmware Virus: BIOS/UEFI Flash\n"
-        result += "- Packet Sniffer Virus: Network Interface\n"
-
-        return result
+        return "\n".join(motherboard)

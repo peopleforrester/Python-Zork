@@ -1,45 +1,29 @@
 version: 1
 tasks:
-  - id: tk-495cc6
-    title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
-    status: claimed
-    priority: medium
-    blocks:
-      - tk-277bbc
-      - tk-ed93bd
-      - tk-a7098e
-      - tk-90845e
-    blocked_by: []
-    claimed_by: session-1778073681
-    created: "2026-04-28"
-    notes: ""
   - id: tk-277bbc
     title: 3.4 Backfill type annotations; flip mypy to required
-    status: blocked
+    status: ready
     priority: medium
     blocks: []
-    blocked_by:
-      - tk-495cc6
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""
   - id: tk-ed93bd
     title: 3.5 De-duplicate motherboard ASCII diagrams
-    status: blocked
+    status: claimed
     priority: medium
     blocks: []
-    blocked_by:
-      - tk-495cc6
-    claimed_by: null
+    blocked_by: []
+    claimed_by: session-1778073827
     created: "2026-04-28"
     notes: ""
   - id: tk-a7098e
     title: 4.1 Implement minigames after design doc; flip ENABLE_MINIGAMES
-    status: blocked
+    status: ready
     priority: low
     blocks: []
-    blocked_by:
-      - tk-495cc6
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""
@@ -63,11 +47,10 @@ tasks:
     notes: ""
   - id: tk-90845e
     title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
-    status: blocked
+    status: ready
     priority: low
     blocks: []
-    blocked_by:
-      - tk-495cc6
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""

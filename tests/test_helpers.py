@@ -109,6 +109,31 @@ class TestHelpers(unittest.TestCase):
         # Test with None
         self.assertEqual(format_list(None), "")
 
+class TestMotherboardSingleSource(unittest.TestCase):
+    """Step 3.5: motherboard ASCII lives in one place. Game.display_motherboard
+    and ComponentVisualizer.render_motherboard_layout_text must return the
+    same string."""
+
+    def test_renderers_agree(self):
+        from computerquest.mechanics.visualizer import ComponentVisualizer
+        from tests._helpers import build_real_game
+
+        game = build_real_game()
+        viz = ComponentVisualizer()
+
+        self.assertEqual(
+            game.display_motherboard(),
+            viz.render_motherboard_layout_text(),
+        )
+
+    def test_diagram_contains_known_landmarks(self):
+        from computerquest.mechanics.visualizer import ComponentVisualizer
+
+        diagram = ComponentVisualizer().render_motherboard_layout_text()
+        for landmark in ("CPU Package", "L3 Cache", "RAM DIMM", "PCH", "Virus Locations"):
+            self.assertIn(landmark, diagram)
+
+
 class TestStatusBarReadsRealPlayer(unittest.TestCase):
     """Step 3.6: format_look_output's status bar must reflect the real
     player's health and inventory size, not hardcoded placeholders."""

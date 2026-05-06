@@ -60,3 +60,7 @@ completed:
     title: '3.2 Decide on data/*.json (default: delete)'
     completed: "2026-05-06"
     summary: Deleted three dead JSON files and the now-empty data/ directory. Grep confirmed zero consumers. Source of truth remains architecture.py::make_components().
+  - id: tk-495cc6
+    title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
+    completed: "2026-05-06"
+    summary: ComponentVisualizer → mechanics/visualizer.py; CPUPipelineMinigame → mechanics/minigames/cpu.py; MemoryHierarchyMinigame → mechanics/minigames/memory.py. game.py 1104 → 833 lines. game.py re-exports for backward-compat with existing imports.

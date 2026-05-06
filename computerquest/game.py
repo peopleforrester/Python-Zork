@@ -703,77 +703,12 @@ Viruses typically attempt to hide their presence and propagate to other systems.
                 return f"No information available about '{topic}'. Try topics like: cpu, memory, cache, storage, bus, network, firmware, gpu, kernel, or virus."
 
     def display_motherboard(self):
-        """Display the full motherboard layout of the computer system"""
-        motherboard = [
-            "+------------------------------------------------------------------+",
-            "|               KodeKloud Computer Quest Motherboard Layout       |",
-            "+------------------------------------------------------------------+",
-            "|                                                                  |",
-            "|   +----------+     +----------------------------------+          |",
-            "|   |          |     |                                  |          |",
-            "|   | OS Kernel|     |           CPU Package            |          |",
-            "|   | (In RAM) |     |  +--------+        +--------+   |          |",
-            "|   +----------+     |  | Core 1 |        | Core 2 |   |          |",
-            "|                    |  | CU|ALU |        | CU|ALU |   |          |",
-            "|   +----------+     |  | Reg|L1 |        | Reg|L1 |   |          |",
-            "|   | Virtual  |     |  +--------+        +--------+   |          |",
-            "|   | Memory   |     |                                  |          |",
-            "|   |          |     |  +--------+        +--------+   |          |",
-            "|   +----------+     |  |L2 Cache|        |L2 Cache|   |          |",
-            "|                    |  +--------+        +--------+   |          |",
-            "|                    |                                  |          |",
-            "|   +----------+     |  +----------------------------+  |          |",
-            "|   |RAM DIMM 1|-----|  |      L3 Cache (Shared)     |  |          |",
-            "|   +----------+     |  +----------------------------+  |          |",
-            "|                    +----------------------------------+          |",
-            "|   +----------+                      |                            |",
-            "|   |RAM DIMM 2|                      |                            |",
-            "|   +----------+                DMI Link                           |",
-            "|                                     |                            |",
-            "|   +----------+                      |                            |",
-            "|   |RAM DIMM 3|     +----------------------------------+          |",
-            "|   +----------+     |                                  |          |",
-            "|                    |               PCH                |          |",
-            "|   +----------+     |     (Platform Controller Hub)    |          |",
-            "|   |RAM DIMM 4|     |  +----------+      +----------+  |          |",
-            "|   +----------+     |  | Storage  |      |   PCIe   |  |          |",
-            "|                    |  |Controller|      |Controller|  |          |",
-            "|                    |  +----------+      +----------+  |          |",
-            "|   +------+         |                                  |          |",
-            "|   | SSD  |---------|  +----------+      +----------+  |          |",
-            "|   +------+         |  | Network  |      |BIOS/UEFI |  |          |",
-            "|                    |  |Interface |      |  Flash   |  |          |",
-            "|   +------+         |  +----------+      +----------+  |          |",
-            "|   | HDD  |---+     +----------------------------------+          |",
-            "|   +------+   |                 |               |                 |",
-            "|              |                 |               |                 |",
-            "|              |     +-----------+     +---------+                 |",
-            "|              |     |                 |                           |",
-            "|              +-----|  SATA Ports     |    USB Ports    Ethernet |",
-            "|                    +-----------------+---------+--------+        |",
-            "|                                                                  |",
-            "|   +------+         +----------------+                            |",
-            "|   | GPU  |---------|  PCIe x16 Slot |                            |",
-            "|   +------+         +----------------+                            |",
-            "|                                                                  |",
-            "|                    +----------------+                            |",
-            "|                    |  PCIe x1 Slot  |                            |",
-            "|                    +----------------+                            |",
-            "|                                                                  |",
-            "|                    +----------------+                            |",
-            "|                    |  PCIe x1 Slot  |                            |",
-            "|                    +----------------+                            |",
-            "|                                                                  |",
-            "+------------------------------------------------------------------+",
-            "| Virus Locations:                                                 |",
-            "| * Rootkit Virus: OS Kernel         * Firmware Virus: BIOS/UEFI   |",
-            "| * Memory Resident Virus: RAM DIMM1 * Packet Sniffer: Network Int |",
-            "| * Boot Sector Virus: SSD                                         |",
-            "+------------------------------------------------------------------+",
-        ]
+        """Display the full motherboard layout of the computer system.
 
-        # Return the motherboard layout as a string
-        return "\n".join(motherboard)
+        Single source of truth lives in ComponentVisualizer; both this
+        method and `viz motherboard` route through it.
+        """
+        return self.visualizer.render_motherboard_layout_text()
 
     def victory_message(self):
         """Generate victory message when all viruses are quarantined"""
