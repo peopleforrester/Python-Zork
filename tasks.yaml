@@ -2,7 +2,7 @@ version: 1
 tasks:
   - id: tk-495cc6
     title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
-    status: ready
+    status: claimed
     priority: medium
     blocks:
       - tk-277bbc
@@ -10,16 +10,7 @@ tasks:
       - tk-a7098e
       - tk-90845e
     blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-04f43c
-    title: '3.2 Decide on data/*.json (default: delete)'
-    status: claimed
-    priority: medium
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1778073662
+    claimed_by: session-1778073681
     created: "2026-04-28"
     notes: ""
   - id: tk-277bbc
