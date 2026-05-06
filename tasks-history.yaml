@@ -52,3 +52,7 @@ completed:
     title: 3.6 Remove dead health-bar hasattr branch; wire to real player
     completed: "2026-05-06"
     summary: Health bar wired to real player. format_look_output now accepts player=; status bar reads health, items, found/quarantined counts from the live player. Dead hasattr branch removed. Tests in TestStatusBarReadsRealPlayer cover both player-passed and fallback paths.
+  - id: tk-93fa21
+    title: 3.3 Replace fuzzy matcher with difflib.get_close_matches
+    completed: "2026-05-06"
+    summary: Replaced custom set-membership similarity with difflib.get_close_matches(n=3, cutoff=0.6). Two new regression tests cover near-miss and garbage-input branches.

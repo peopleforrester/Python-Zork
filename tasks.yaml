@@ -15,20 +15,11 @@ tasks:
     notes: ""
   - id: tk-04f43c
     title: '3.2 Decide on data/*.json (default: delete)'
-    status: ready
-    priority: medium
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-93fa21
-    title: 3.3 Replace fuzzy matcher with difflib.get_close_matches
     status: claimed
     priority: medium
     blocks: []
     blocked_by: []
-    claimed_by: session-1778073591
+    claimed_by: session-1778073662
     created: "2026-04-28"
     notes: ""
   - id: tk-277bbc
