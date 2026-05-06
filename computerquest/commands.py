@@ -512,16 +512,19 @@ class CommandProcessor:
 
             return result
         else:
-            # Try to find similarly named commands (fuzzy matching)
+            # difflib uses Ratcliff-Obershelp similarity — proper edit-distance-style
+            # matching, unlike the previous set-membership heuristic that
+            # mis-ranked short candidates (e.g. 'h'/'p' both happening to be
+            # in 'help' scored unrelated 'hp' as a match).
+            from difflib import get_close_matches
+
             from computerquest.utils.helpers import Colors
-            similar_commands = []
-            for cmd in self.commands.keys():
-                # Simple similarity check - more than half of letters match
-                if len(cmd) > 2 and sum(c in command for c in cmd) >= len(cmd) // 2:
-                    similar_commands.append(cmd)
+
+            similar_commands = get_close_matches(
+                command, list(self.commands.keys()), n=3, cutoff=0.6
+            )
 
             if similar_commands:
-                suggestions = ', '.join([f"{Colors.GREEN}{cmd}{Colors.RESET}" for cmd in similar_commands[:3]])
+                suggestions = ', '.join(f"{Colors.GREEN}{cmd}{Colors.RESET}" for cmd in similar_commands)
                 return f"Command '{command}' not recognized. Did you mean: {suggestions}?\nType 'help' for available commands."
-            else:
-                return f"Command '{command}' not recognized. Type 'help' for available commands."
+            return f"Command '{command}' not recognized. Type 'help' for available commands."

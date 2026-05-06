@@ -44,3 +44,11 @@ completed:
     title: 2.4 .gitignore node_modules/; add LICENSE; bump README Node min to 18
     completed: "2026-05-04"
     summary: node_modules/, .vite/, *.tsbuildinfo gitignored; 3171 stale files removed from index. README Python min 3.8→3.10, Node min 14→18 (Vite 5 requirement), install steps switched to uv sync. LICENSE was added in Step 2.1.
+  - id: tk-6caadf
+    title: 3.7 Centralize INVENTORY_LIMIT and shared literals in config.py
+    completed: "2026-05-06"
+    summary: Centralized INVENTORY_LIMIT=8 and MAX_HEALTH=20 in config.py. Player and helpers consume the constants. Welcome banner uses them. Bundled with Step 3.6 since both touched the same status bar.
+  - id: tk-df7e06
+    title: 3.6 Remove dead health-bar hasattr branch; wire to real player
+    completed: "2026-05-06"
+    summary: Health bar wired to real player. format_look_output now accepts player=; status bar reads health, items, found/quarantined counts from the live player. Dead hasattr branch removed. Tests in TestStatusBarReadsRealPlayer cover both player-passed and fallback paths.

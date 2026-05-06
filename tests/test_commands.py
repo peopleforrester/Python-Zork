@@ -428,6 +428,24 @@ class TestCommandProcessor(TestCommandBase):
         # Check error message
         self.assertIn("not recognized", result)
 
+    def test_typo_suggests_close_match_via_difflib(self):
+        """A near-miss typo should surface a difflib suggestion.
+
+        Use 'iventory' (one missing letter) — close enough that difflib
+        scores it above the 0.6 cutoff but not in the typo-correction
+        preprocess table.
+        """
+        result = self.command_processor.process("iventory")
+        self.assertIn("not recognized", result)
+        self.assertIn("Did you mean", result)
+        self.assertIn("inventory", result)
+
+    def test_garbage_input_returns_no_suggestions(self):
+        """Inputs that don't resemble any command skip the 'Did you mean' line."""
+        result = self.command_processor.process("xyzqqqq")
+        self.assertIn("not recognized", result)
+        self.assertNotIn("Did you mean", result)
+
     def test_process_validation_failure(self):
         """Test command that fails validation"""
         # Mock a command that fails validation

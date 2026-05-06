@@ -24,11 +24,11 @@ tasks:
     notes: ""
   - id: tk-93fa21
     title: 3.3 Replace fuzzy matcher with difflib.get_close_matches
-    status: ready
+    status: claimed
     priority: medium
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1778073591
     created: "2026-04-28"
     notes: ""
   - id: tk-277bbc
@@ -49,25 +49,6 @@ tasks:
     blocked_by:
       - tk-495cc6
     claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-df7e06
-    title: 3.6 Remove dead health-bar hasattr branch; wire to real player
-    status: ready
-    priority: medium
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-6caadf
-    title: 3.7 Centralize INVENTORY_LIMIT and shared literals in config.py
-    status: claimed
-    priority: medium
-    blocks:
-      - tk-f0d6b8
-    blocked_by: []
-    claimed_by: session-1778073443
     created: "2026-04-28"
     notes: ""
   - id: tk-a7098e
@@ -139,11 +120,10 @@ tasks:
     notes: ""
   - id: tk-f0d6b8
     title: LP.5 Read welcome status from self.player
-    status: blocked
+    status: ready
     priority: low
     blocks: []
-    blocked_by:
-      - tk-6caadf
+    blocked_by: []
     claimed_by: null
     created: "2026-04-28"
     notes: ""
