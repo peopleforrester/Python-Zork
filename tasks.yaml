@@ -2,20 +2,11 @@ version: 1
 tasks:
   - id: tk-277bbc
     title: 3.4 Backfill type annotations; flip mypy to required
-    status: ready
-    priority: medium
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-ed93bd
-    title: 3.5 De-duplicate motherboard ASCII diagrams
     status: claimed
     priority: medium
     blocks: []
     blocked_by: []
-    claimed_by: session-1778073827
+    claimed_by: session-1778073922
     created: "2026-04-28"
     notes: ""
   - id: tk-a7098e

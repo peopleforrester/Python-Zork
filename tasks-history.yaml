@@ -64,3 +64,7 @@ completed:
     title: 3.1 Split game.py (extract Visualizer, minigames, SaveLoad to mechanics/)
     completed: "2026-05-06"
     summary: ComponentVisualizer → mechanics/visualizer.py; CPUPipelineMinigame → mechanics/minigames/cpu.py; MemoryHierarchyMinigame → mechanics/minigames/memory.py. game.py 1104 → 833 lines. game.py re-exports for backward-compat with existing imports.
+  - id: tk-ed93bd
+    title: 3.5 De-duplicate motherboard ASCII diagrams
+    completed: "2026-05-06"
+    summary: ComponentVisualizer.render_motherboard_layout_text now holds the single canonical diagram (the detailed one). Game.display_motherboard delegates. Snapshot test pins landmarks; agreement test ensures both call paths stay in sync.

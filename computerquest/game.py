@@ -4,6 +4,8 @@ Game controller for KodeKloud Computer Quest
 Main game logic and controller
 """
 
+from __future__ import annotations
+
 from computerquest.commands import CommandProcessor
 from computerquest.config import DIRECTION_MAPPING
 from computerquest.mechanics.minigames import CPUPipelineMinigame, MemoryHierarchyMinigame
@@ -17,7 +19,7 @@ __all__ = ["CPUPipelineMinigame", "ComponentVisualizer", "Game", "MemoryHierarch
 
 
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Constructor: Create a KodeKloud Computer Quest game
         Initialize the game world and components
@@ -60,7 +62,7 @@ class Game:
         # Print welcome message
         self.display_welcome()
 
-    def _init_map_grid(self):
+    def _init_map_grid(self) -> None:
         """Initialize the map grid for tracking visited components"""
         self.map_grid = {}
 
@@ -127,7 +129,7 @@ class Game:
         for component in all_components:
             self.map_grid[component] = {"visited": False}
 
-    def setup_readline(self):
+    def setup_readline(self) -> bool:
         """
         Setup readline for command history and tab completion
         """
@@ -136,7 +138,7 @@ class Game:
             import rlcompleter  # noqa: F401  # imported for tab-complete side effects
 
             # Define our custom completer function for game commands
-            def completer(text, state):
+            def completer(text: str, state: int) -> str | None:
                 # First, try to complete commands
                 command_options = [
                     cmd for cmd in self.command_processor.commands.keys() if cmd.startswith(text)
@@ -221,7 +223,7 @@ class Game:
             print("Note: Command history and tab completion are not available on this system.")
             return False
 
-    def start(self):
+    def start(self) -> None:
         """
         Main game loop
         """
@@ -270,14 +272,14 @@ class Game:
             replay = input("> ").lower()
             if replay in ["y", "yes"]:
                 # Reset and start new game
-                self.__init__()
+                Game.__init__(self)
                 self.start()
             else:
                 print("\nThank you for playing KodeKloud Computer Quest! Goodbye!")
         else:
             print("\nExiting KodeKloud Computer Quest. Goodbye!")
 
-    def display_welcome(self):
+    def display_welcome(self) -> None:
         """Display welcome message and game introduction"""
         from computerquest.utils.helpers import Colors
 
@@ -342,7 +344,7 @@ class Game:
             f"\n{format_look_output(self.player.location, self.player.location.doors, list(self.player.location.items.keys()), player=self.player)}"
         )
 
-    def move(self, direction):
+    def move(self, direction: str) -> str:
         """
         Move the player in the specified direction
         direction: Direction to move (n, s, e, w, etc.)
@@ -420,7 +422,7 @@ class Game:
             # Failed to move
             return f"┏━━━━━━━━━━━━━━━━━━━━ ERROR ━━━━━━━━━━━━━━━━━━━━┓\n  There is no connection to the {direction} from {self.player.location.name}.\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
 
-    def display_map(self):
+    def display_map(self) -> str:
         """
         Display an interactive map of visited rooms
         Returns: ASCII map showing explored components
@@ -437,7 +439,7 @@ class Game:
         # Generate and return the map
         return render_map(self, self.map_grid)
 
-    def show_help(self):
+    def show_help(self) -> str:
         """Show available commands"""
         from computerquest.utils.helpers import Colors
 
@@ -501,7 +503,7 @@ Use '{Colors.GREEN}?{Colors.RESET}' for a quick command reference at any time.
 """
         return help_text
 
-    def start_cpu_minigame(self):
+    def start_cpu_minigame(self) -> str:
         """Start the CPU pipeline simulation minigame"""
         if self.player.knowledge["cpu"] < 3:
             return "You need more knowledge about CPU architecture to understand this simulation. Explore CPU components and learn more first."
@@ -515,7 +517,7 @@ Use '{Colors.GREEN}?{Colors.RESET}' for a quick command reference at any time.
             + "\n\nUse 'simulate step' to advance the simulation, 'simulate toggle' to switch modes, and 'simulate reset' to restart."
         )
 
-    def start_memory_minigame(self):
+    def start_memory_minigame(self) -> str:
         """Start the memory hierarchy simulation minigame"""
         if self.player.knowledge["memory"] < 3:
             return "You need more knowledge about memory systems to understand this simulation. Explore memory components and learn more first."
@@ -524,7 +526,7 @@ Use '{Colors.GREEN}?{Colors.RESET}' for a quick command reference at any time.
 
         return self.current_minigame.explain()
 
-    def handle_visualization(self, viz_type=None):
+    def handle_visualization(self, viz_type: str | None = None) -> str:
         """Handle visualization commands"""
         if not viz_type or viz_type in ["help", "list", "?"]:
             return """Available visualizations:
@@ -582,7 +584,7 @@ Usage: viz [type] (e.g., 'viz cpu')"""
         else:
             return f"Unknown visualization type: {viz_type}. Try 'cpu', 'memory', 'network', 'storage', or 'motherboard'."
 
-    def handle_simulation(self, action=None):
+    def handle_simulation(self, action: str | None = None) -> str:
         """Handle simulation commands"""
         if not self.current_minigame:
             return "No active simulation. Start one with 'simulate cpu' or 'simulate memory'."
@@ -611,7 +613,7 @@ Usage: viz [type] (e.g., 'viz cpu')"""
         else:
             return f"Unknown simulation action: {action}. Try 'step', 'toggle', 'reset', or 'stop'."
 
-    def get_component_info(self, topic):
+    def get_component_info(self, topic: str) -> str:
         """Provide educational information about computer components"""
         topics = {
             "cpu": """CPU (Central Processing Unit):
@@ -702,7 +704,7 @@ Viruses typically attempt to hide their presence and propagate to other systems.
             else:
                 return f"No information available about '{topic}'. Try topics like: cpu, memory, cache, storage, bus, network, firmware, gpu, kernel, or virus."
 
-    def display_motherboard(self):
+    def display_motherboard(self) -> str:
         """Display the full motherboard layout of the computer system.
 
         Single source of truth lives in ComponentVisualizer; both this
@@ -710,7 +712,7 @@ Viruses typically attempt to hide their presence and propagate to other systems.
         """
         return self.visualizer.render_motherboard_layout_text()
 
-    def victory_message(self):
+    def victory_message(self) -> str:
         """Generate victory message when all viruses are quarantined"""
         return """
 CONGRATULATIONS! MISSION SUCCESSFUL!
@@ -734,7 +736,7 @@ Thank you for playing KodeKloud Computer Quest!
             knowledge_level=sum(self.player.knowledge.values()),
         )
 
-    def _match_command_prefix(self, cmd):
+    def _match_command_prefix(self, cmd: str) -> str:
         """Match command prefix with valid commands, return full command if unique match found"""
         if len(cmd) < 2:
             return cmd  # Don't try to match single-letter commands
@@ -745,7 +747,7 @@ Thank you for playing KodeKloud Computer Quest!
         # Use the helper function
         return prefix_match(cmd, valid_commands)
 
-    def _match_item_prefix(self, item_prefix):
+    def _match_item_prefix(self, item_prefix: str) -> str:
         """Match item prefix with items in current room, return full item name if unique match found"""
         if len(item_prefix) < 2:
             return item_prefix  # Don't try to match single-letter items
@@ -756,7 +758,7 @@ Thank you for playing KodeKloud Computer Quest!
         # Use the helper function
         return prefix_match(item_prefix, room_items)
 
-    def _match_inventory_item_prefix(self, item_prefix):
+    def _match_inventory_item_prefix(self, item_prefix: str) -> str:
         """Match item prefix with items in inventory, return full item name if unique match found"""
         if len(item_prefix) < 2:
             return item_prefix  # Don't try to match single-letter items

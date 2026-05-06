@@ -81,7 +81,18 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
+# Strict-ish checks on the four modules called out in the senior review.
+# Step 3.4 backfilled annotations here; CI's mypy step gates further drift.
+# warn_return_any stays off because the cross-module game/command/player
+# graph is circular — the `game` parameter has to stay Any to avoid
+# import cycles, and `Any` propagates through return values.
 [[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+module = [
+    "computerquest.commands",
+    "computerquest.game",
+    "computerquest.models.player",
+    "computerquest.utils.helpers",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = false

@@ -4,37 +4,41 @@ Command Pattern implementation
 Handles command processing through the Command pattern.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 from computerquest.config import VIRUS_TYPES
 
 
 class Command:
     """Base class for all commands"""
-    def __init__(self, game, args=None):
+    def __init__(self, game: Any, args: list[str] | None = None) -> None:
         self.game = game
-        self.args = args or []
+        self.args: list[str] = args or []
 
-    def execute(self):
+    def execute(self) -> str:
         """Execute the command - to be implemented by subclasses"""
         raise NotImplementedError("Subclasses must implement execute()")
 
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         """Check if command can be executed - optional validation"""
         return True, None
 
 class MoveCommand(Command):
     """Command to move player between components"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "Please specify a direction."
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         direction = self.args[0].lower()
         return self.game.move(direction)
 
 class LookCommand(Command):
     """Command to look around or examine an item"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.args:
             # Mark component as visited to reveal more technical details
             self.game.player.location.mark_visited()
@@ -57,12 +61,12 @@ class LookCommand(Command):
 
 class TakeCommand(Command):
     """Command to take an item"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "What do you want to take?"
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         item_name = self.args[0].lower()
         # Match item prefix
         item_name = self.game._match_item_prefix(item_name)
@@ -72,7 +76,7 @@ class TakeCommand(Command):
 
 class DropCommand(Command):
     """Command to drop an item"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "What do you want to drop?"
         item_name = self.game._match_inventory_item_prefix(self.args[0].lower())
@@ -80,7 +84,7 @@ class DropCommand(Command):
             return False, f"You don't have a {self.args[0]}."
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         item_name = self.game._match_inventory_item_prefix(self.args[0].lower())
         result = self.game.player.drop(item_name)
         self.game.turns += 1
@@ -88,7 +92,7 @@ class DropCommand(Command):
 
 class InventoryCommand(Command):
     """Command to show player's inventory"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.game.player.items:
             return "┏━━━━━━━━━━━━━━━ SYSTEM STORAGE ━━━━━━━━━━━━━━━┓\n  Your system storage is empty.\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
 
@@ -104,7 +108,7 @@ class InventoryCommand(Command):
 
 class ScanCommand(Command):
     """Command to scan for viruses"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.args:
             result = self.game.player.scan()
             # Check for game winning conditions
@@ -119,7 +123,7 @@ class ScanCommand(Command):
 
 class AdvancedScanCommand(Command):
     """Command to perform advanced scan"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.args:
             result = self.game.player.advanced_scan()
             # Check for game winning conditions
@@ -134,12 +138,12 @@ class AdvancedScanCommand(Command):
 
 class AnalyzeCommand(Command):
     """Command to deeply analyze an item"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "What do you want to analyze? Usage: analyze [item]"
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         target = self.args[0].lower()
         result = self.game.player.analyze(target)
         self.game.turns += 1
@@ -147,12 +151,12 @@ class AnalyzeCommand(Command):
 
 class QuarantineCommand(Command):
     """Command to quarantine a virus"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "Which virus do you want to quarantine?"
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         virus_name = self.args[0].lower()
         result = self.game.player.quarantine(virus_name)
         self.game.turns += 1
@@ -167,12 +171,12 @@ class QuarantineCommand(Command):
 
 class HelpCommand(Command):
     """Command to show help message"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.show_help()
 
 class QuitCommand(Command):
     """Command to quit the game"""
-    def execute(self):
+    def execute(self) -> str:
         confirm = input("Are you sure you want to exit? (y/n): ").lower()
         if confirm in ['y', 'yes']:
             self.game.game_over = True
@@ -183,7 +187,7 @@ class QuitCommand(Command):
 
 class ClearCommand(Command):
     """Command to clear the screen"""
-    def execute(self):
+    def execute(self) -> str:
         # Import os here to maintain encapsulation
         import os
 
@@ -195,22 +199,22 @@ class ClearCommand(Command):
 
 class MapCommand(Command):
     """Command to display map"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.display_map()
 
 class MotherboardCommand(Command):
     """Command to display motherboard diagram"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.display_motherboard()
 
 class ReadCommand(Command):
     """Command to read text content of an item"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "What do you want to read?"
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         item_name = self.args[0].lower()
 
         # Try to match with room items first, then inventory items
@@ -246,33 +250,33 @@ class ReadCommand(Command):
 
 class AboutCommand(Command):
     """Command to get information about computer components"""
-    def can_execute(self):
+    def can_execute(self) -> tuple[bool, str | None]:
         if not self.args:
             return False, "What topic would you like information about? Try 'about cpu', 'about memory', etc."
         return True, None
 
-    def execute(self):
+    def execute(self) -> str:
         topic = self.args[0].lower()
         return self.game.get_component_info(topic)
 
 class StatusCommand(Command):
     """Command to check progress"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.player.check_progress()
 
 class KnowledgeCommand(Command):
     """Command to check knowledge levels"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.player.knowledge_report()
 
 class AchievementsCommand(Command):
     """Command to check achievements"""
-    def execute(self):
+    def execute(self) -> str:
         return self.game.progress.get_progress_report()
 
 class VisualizeCommand(Command):
     """Command to visualize components"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.args:
             return self.game.handle_visualization()
         else:
@@ -281,7 +285,7 @@ class VisualizeCommand(Command):
 
 class SimulateCommand(Command):
     """Command to run simulations"""
-    def execute(self):
+    def execute(self) -> str:
         if not self.args:
             return "Please specify a simulation type (cpu, memory) or action (step, toggle, reset, stop)."
 
@@ -293,15 +297,15 @@ class SimulateCommand(Command):
                 return ("Minigames are not yet available. "
                         "Track progress in tk-a7098e (Step 4.1).")
             if sim_action == 'cpu':
-                return self.game.start_cpu_minigame()
-            return self.game.start_memory_minigame()
+                return str(self.game.start_cpu_minigame())
+            return str(self.game.start_memory_minigame())
 
         # Action for an already-running simulation
-        return self.game.handle_simulation(sim_action)
+        return str(self.game.handle_simulation(sim_action))
 
 class QuickHelpCommand(Command):
     """Command to display a quick help overlay"""
-    def execute(self):
+    def execute(self) -> str:
         from computerquest.utils.helpers import Colors
 
         quick_help = f"""┏━━━━━━━━━━━━━━━━━━━━━ {Colors.YELLOW}{Colors.BOLD}COMMAND REFERENCE{Colors.RESET} ━━━━━━━━━━━━━━━━━━━━━┓
@@ -349,7 +353,7 @@ class QuickHelpCommand(Command):
 
 class CommandProcessor:
     """Processes user commands using Command pattern"""
-    def __init__(self, game):
+    def __init__(self, game: Any) -> None:
         self.game = game
 
         # List of direction words for tab completion
@@ -428,13 +432,13 @@ class CommandProcessor:
             'c': ClearCommand,
         }
 
-    def _direction_command(self, direction):
+    def _direction_command(self, direction: str) -> Any:
         """Create a move command with direction already specified"""
-        def command_factory(game, args=None):
+        def command_factory(game: Any, args: list[str] | None = None) -> MoveCommand:
             return MoveCommand(game, [direction])
         return command_factory
 
-    def preprocess_command(self, user_input):
+    def preprocess_command(self, user_input: str) -> str:
         """
         Preprocess command for common typos and normalization
         Returns corrected command string
@@ -473,7 +477,7 @@ class CommandProcessor:
 
         return processed
 
-    def process(self, user_input):
+    def process(self, user_input: str) -> str:
         """Process a user command"""
         # Skip empty inputs
         if not user_input.strip():
@@ -498,7 +502,7 @@ class CommandProcessor:
             # Validate command
             can_execute, error = cmd.can_execute() if hasattr(cmd, 'can_execute') else (True, None)
             if not can_execute:
-                return error
+                return error or ""
 
             # Execute command
             result = cmd.execute()

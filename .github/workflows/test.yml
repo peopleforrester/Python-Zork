@@ -31,9 +31,7 @@ jobs:
         run: uv run ruff check computerquest tests
 
       - name: Type-check with mypy
-        # Soft-fail until Step 3.4 lands strict annotations on the four
-        # target modules; revisit after that step is merged.
-        run: uv run mypy computerquest || true
+        run: uv run mypy computerquest
 
       - name: Run pytest
         run: uv run pytest --cov=computerquest --cov-report=term --cov-report=xml

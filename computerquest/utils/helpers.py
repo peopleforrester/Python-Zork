@@ -2,7 +2,10 @@
 Helper utilities for KodeKloud Computer Quest
 """
 
+from __future__ import annotations
+
 import textwrap
+from typing import Any, Iterable, Mapping, Sequence
 
 from computerquest.config import DIRECTION_NAMES
 
@@ -23,7 +26,7 @@ class Colors:
     REVERSED = "\033[7m"
 
 
-def prefix_match(prefix, candidates):
+def prefix_match(prefix: str, candidates: Iterable[str]) -> str:
     """
     Match a prefix with candidates, return the full string if unique match is found
 
@@ -51,7 +54,7 @@ def prefix_match(prefix, candidates):
         return prefix
 
 
-def format_box(title, content, width=70):
+def format_box(title: str, content: str, width: int = 70) -> str:
     """
     Create a nicely formatted text box
 
@@ -74,7 +77,7 @@ def format_box(title, content, width=70):
     return result
 
 
-def format_fancy_box(title, content, width=70, border_char="━"):
+def format_fancy_box(title: str, content: str, width: int = 70, border_char: str = "━") -> str:
     """
     Create a fancy formatted text box with unicode characters
 
@@ -98,7 +101,7 @@ def format_fancy_box(title, content, width=70, border_char="━"):
     return result
 
 
-def truncate_desc(desc, max_length=50):
+def truncate_desc(desc: str | None, max_length: int = 50) -> str:
     """
     Truncate description to a reasonable length
 
@@ -122,7 +125,7 @@ def truncate_desc(desc, max_length=50):
     return short_desc
 
 
-def format_list(items, prefix="- "):
+def format_list(items: Sequence[Any] | None, prefix: str = "- ") -> str:
     """
     Format a list of items with prefixes
 
@@ -139,7 +142,13 @@ def format_list(items, prefix="- "):
     return "\n".join(f"{prefix}{item}" for item in items)
 
 
-def format_look_output(location, connections, items, technical_details=None, player=None):
+def format_look_output(
+    location: Any,
+    connections: Mapping[str, Any],
+    items: Sequence[str],
+    technical_details: list[str] | None = None,
+    player: Any | None = None,
+) -> str:
     """
     Format the look command output for better readability.
 
@@ -230,13 +239,17 @@ def format_look_output(location, connections, items, technical_details=None, pla
             and direction in direction_map
             and direction_map[direction]
         ):
-            row, col = direction_map[direction]
+            pos = direction_map[direction]
+            assert pos is not None  # narrowed by the `direction_map[direction]` truthiness check
+            row, col = pos
             compass_grid[row][col] = "█"  # Blocker for unavailable direction
 
     # Then add arrows for available directions
     for direction in available_directions:
         if direction in direction_map and direction_map[direction]:
-            row, col = direction_map[direction]
+            pos = direction_map[direction]
+            assert pos is not None  # narrowed by the `direction_map[direction]` truthiness check
+            row, col = pos
             # Replace with colored arrow
             if direction == "n":
                 compass_grid[row][col] = f"{Colors.GREEN}↑{Colors.RESET}"
@@ -276,7 +289,7 @@ def format_look_output(location, connections, items, technical_details=None, pla
 
     # Add breadcrumb path display with highlighting
     if hasattr(location, "parent") and location.parent:
-        path_parts = []
+        path_parts: list[str] = []
         current = location
         while hasattr(current, "parent") and current.parent:
             path_parts.insert(0, current.parent.name)

@@ -4,11 +4,21 @@ Player class
 Represents the player character in the game.
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH, MAX_KNOWLEDGE
 
 
 class Player:
-    def __init__(self, location=None, items=None, NPC=False, name=None):
+    def __init__(
+        self,
+        location: Any = None,
+        items: dict[str, Any] | None = None,
+        NPC: bool = False,
+        name: str | None = None,
+    ) -> None:
         """
         Player constructor
         location: starting location for the player
@@ -25,8 +35,8 @@ class Player:
         self.death = False  # Is player dead?
 
         # System-specific attributes
-        self.found_viruses = []  # List of discovered viruses
-        self.quarantined_viruses = []  # List of neutralized viruses
+        self.found_viruses: list[str] = []
+        self.quarantined_viruses: list[str] = []
         self.knowledge = {
             "cpu": 0,
             "memory": 0,
@@ -39,11 +49,11 @@ class Player:
         if self.com:
             self.location.play.append(self)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String representation of Player"""
         return self.name if self.name else "Security Program"
 
-    def go(self, direction):
+    def go(self, direction: str) -> bool:
         """
         Move in a direction
         Returns: True if successful, False otherwise
@@ -63,7 +73,7 @@ class Player:
         else:
             return False
 
-    def look(self, item=None):
+    def look(self, item: str | None = None) -> str:
         """
         Look around, or look at a specific item
         item: Optional item to examine
@@ -113,7 +123,7 @@ class Player:
                 player=self,
             )
 
-    def take(self, item):
+    def take(self, item: str) -> str:
         """
         Take an item from the current location
         item: Item to take
@@ -140,7 +150,7 @@ class Player:
 
         return f"There is no {item} here to take."
 
-    def drop(self, item):
+    def drop(self, item: str) -> str:
         """
         Drop an item from inventory to current location
         item: Item to drop
@@ -158,7 +168,7 @@ class Player:
         else:
             return f"You don't have {item} in your inventory."
 
-    def scan(self, target=None):
+    def scan(self, target: str | None = None) -> str:
         """
         Scan for viruses in current location or specific item
         target: Optional item to scan
@@ -205,7 +215,7 @@ class Player:
                 self._increase_component_knowledge()
                 return "Scan complete. No viruses detected in this location."
 
-    def advanced_scan(self, target=None):
+    def advanced_scan(self, target: str | None = None) -> str:
         """
         Perform advanced scan for hidden threats
         target: Optional item to scan
@@ -246,7 +256,7 @@ class Player:
         # Scanning the entire location
         return self._advanced_scan_location()
 
-    def _advanced_scan_item(self, target):
+    def _advanced_scan_item(self, target: str) -> str:
         """Helper method for advanced scanning an item"""
         # Check in room
         if target in self.location.items:
@@ -261,7 +271,7 @@ class Player:
         else:
             return f"There's no {target} here to scan."
 
-    def _advanced_scan_location(self):
+    def _advanced_scan_location(self) -> str:
         """Helper method for advanced scanning current location"""
         # Find obvious viruses
         viruses_here = [item for item in self.location.items if 'virus' in item.lower()]
@@ -293,7 +303,7 @@ class Player:
             self._increase_component_knowledge()
             return f"Advanced scan complete. No threats detected in {self.location.name}."
 
-    def _analyze_item_for_threats(self, item_name, item_desc, in_inventory=False):
+    def _analyze_item_for_threats(self, item_name: str, item_desc: str, in_inventory: bool = False) -> str:
         """Analyze an item for virus signatures"""
         location = "in your inventory" if in_inventory else ""
 
@@ -312,7 +322,7 @@ class Player:
         else:
             return f"Advanced scan complete. No threats detected in {item_name}."
 
-    def _detect_virus_type(self, item_name, item_desc):
+    def _detect_virus_type(self, item_name: str, item_desc: str) -> str | None:
         """Determine virus type from item characteristics"""
         if 'boot' in item_name.lower() or 'boot' in item_desc.lower():
             return "boot_sector_virus"
@@ -326,7 +336,7 @@ class Player:
             return "packet_sniffer_virus"
         return None
 
-    def _determine_component_type(self):
+    def _determine_component_type(self) -> str:
         """Determine the type of the current component"""
         loc_name = self.location.name.lower()
 
@@ -342,13 +352,13 @@ class Player:
             return 'firmware'
         return 'other'
 
-    def _record_virus_found(self, virus):
+    def _record_virus_found(self, virus: str) -> None:
         """Record a found virus and update knowledge"""
         if virus not in self.found_viruses:
             self.found_viruses.append(virus)
             self.knowledge['security'] = min(MAX_KNOWLEDGE, self.knowledge['security'] + 1)
 
-    def quarantine(self, virus_name):
+    def quarantine(self, virus_name: str) -> str:
         """
         Quarantine a detected virus
         virus_name: Name of virus to quarantine
@@ -401,7 +411,7 @@ class Player:
         else:
             return f"The {virus_name} is not in this location. You need to find where it's hiding."
 
-    def analyze(self, target):
+    def analyze(self, target: str) -> str:
         """
         Deeply analyze an item to reveal hidden properties
         target: Item to analyze
@@ -418,7 +428,7 @@ class Player:
         else:
             return f"There's no {target} here to analyze."
 
-    def _analyze_item(self, item_name, item_desc, in_inventory=False):
+    def _analyze_item(self, item_name: str, item_desc: str, in_inventory: bool = False) -> str:
         """Helper method to analyze an item"""
         location = " in your inventory" if in_inventory else ""
 
@@ -433,7 +443,7 @@ class Player:
             # Generic analysis
             return self._analyze_generic(item_name, item_desc, location)
 
-    def _analyze_log(self, name, desc):
+    def _analyze_log(self, name: str, desc: str) -> str:
         """Analyze a log file"""
         suspicious = 'suspicious' in desc or 'unusual' in desc
         activity_type = 'suspicious' if suspicious else 'normal'
@@ -442,7 +452,7 @@ class Player:
                f"The log contains entries showing {desc}\n" + \
                f"Pattern analysis reveals evidence of {activity_type} activity."
 
-    def _analyze_calculation(self, name, desc):
+    def _analyze_calculation(self, name: str, desc: str) -> str:
         """Analyze calculation or anomaly data"""
         suspicious = 'suspicious' in desc or 'unusual' in desc
         finding = 'virus attempting to hide its operations' if suspicious else 'normal system process'
@@ -451,7 +461,7 @@ class Player:
                f"The data patterns show {desc}\n" + \
                f"This could be a sign of a {finding}."
 
-    def _analyze_packet(self, name, desc):
+    def _analyze_packet(self, name: str, desc: str) -> str:
         """Analyze network packet data"""
         suspicious = 'suspicious' in desc or 'unusual' in desc
         traffic_type = 'data exfiltration' if suspicious else 'normal network traffic'
@@ -460,7 +470,7 @@ class Player:
                f"The packet contains {desc}\n" + \
                f"Traffic analysis indicates this may be {traffic_type}."
 
-    def _analyze_generic(self, name, desc, location=""):
+    def _analyze_generic(self, name: str, desc: str, location: str = "") -> str:
         """Generic item analysis"""
         suspicious_terms = ['suspicious', 'unusual', 'strange', 'abnormal', 'unexpected']
         is_suspicious = any(term in desc.lower() for term in suspicious_terms)
@@ -477,7 +487,7 @@ class Player:
                   f"No suspicious patterns detected. This appears to be a normal {name}.\n" + \
                   f"Description: {desc}"
 
-    def _get_virus_hint(self, desc):
+    def _get_virus_hint(self, desc: str) -> str:
         """Get hint about potential virus type"""
         if 'boot' in desc.lower():
             return "This may be related to a boot sector infection."
@@ -491,7 +501,7 @@ class Player:
             return "This is characteristic of network traffic interception."
         return ""
 
-    def check_progress(self):
+    def check_progress(self) -> str:
         """Check progress on virus discovery and quarantine"""
         from computerquest.config import VIRUS_TYPES
 
@@ -523,7 +533,7 @@ class Player:
 
         return result
 
-    def knowledge_report(self):
+    def knowledge_report(self) -> str:
         """Display knowledge gained about computer architecture"""
         total = sum(self.knowledge.values())
 
@@ -545,7 +555,7 @@ class Player:
 
         return result
 
-    def _increase_component_knowledge(self):
+    def _increase_component_knowledge(self) -> None:
         """Increase knowledge based on current component type"""
         component_type = self._determine_component_type()
 
