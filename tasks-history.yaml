@@ -68,3 +68,7 @@ completed:
     title: 3.5 De-duplicate motherboard ASCII diagrams
     completed: "2026-05-06"
     summary: ComponentVisualizer.render_motherboard_layout_text now holds the single canonical diagram (the detailed one). Game.display_motherboard delegates. Snapshot test pins landmarks; agreement test ensures both call paths stay in sync.
+  - id: tk-277bbc
+    title: 3.4 Backfill type annotations; flip mypy to required
+    completed: "2026-05-06"
+    summary: Annotated commands.py, models/player.py, game.py, helpers.py. Per-module mypy override enables disallow_untyped_defs and disallow_incomplete_defs on the four files. CI flipped mypy from soft-fail to required. mypy clean across 18 source files.
