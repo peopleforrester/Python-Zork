@@ -4,26 +4,31 @@ Helper utilities for KodeKloud Computer Quest
 
 from __future__ import annotations
 
+import sys
 import textwrap
 from typing import Any, Iterable, Mapping, Sequence
 
 from computerquest.config import DIRECTION_NAMES
 
+# ANSI color codes for terminal output. Escapes are emitted only when stdout
+# is an interactive TTY; redirected stdout (pipes, files, test capture) gets
+# empty strings so the output stays grep-friendly.
+_USE_ANSI = sys.stdout.isatty()
 
-# ANSI color codes for terminal output
+
 class Colors:
-    RESET = "\033[0m"
-    BLACK = "\033[30m"
-    RED = "\033[31m"
-    GREEN = "\033[32m"
-    YELLOW = "\033[33m"
-    BLUE = "\033[34m"
-    MAGENTA = "\033[35m"
-    CYAN = "\033[36m"
-    WHITE = "\033[37m"
-    BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
-    REVERSED = "\033[7m"
+    RESET = "\033[0m" if _USE_ANSI else ""
+    BLACK = "\033[30m" if _USE_ANSI else ""
+    RED = "\033[31m" if _USE_ANSI else ""
+    GREEN = "\033[32m" if _USE_ANSI else ""
+    YELLOW = "\033[33m" if _USE_ANSI else ""
+    BLUE = "\033[34m" if _USE_ANSI else ""
+    MAGENTA = "\033[35m" if _USE_ANSI else ""
+    CYAN = "\033[36m" if _USE_ANSI else ""
+    WHITE = "\033[37m" if _USE_ANSI else ""
+    BOLD = "\033[1m" if _USE_ANSI else ""
+    UNDERLINE = "\033[4m" if _USE_ANSI else ""
+    REVERSED = "\033[7m" if _USE_ANSI else ""
 
 
 def prefix_match(prefix: str, candidates: Iterable[str]) -> str:

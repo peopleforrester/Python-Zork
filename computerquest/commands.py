@@ -188,11 +188,14 @@ class QuitCommand(Command):
 class ClearCommand(Command):
     """Command to clear the screen"""
     def execute(self) -> str:
-        # Import os here to maintain encapsulation
-        import os
+        import sys
 
-        # Clear screen based on OS (Windows vs Unix-like)
-        os.system('cls' if os.name == 'nt' else 'clear')
+        # Emit ANSI clear-screen + home-cursor on a TTY; no-op otherwise so
+        # piped/captured output stays clean. Avoids spawning a shell via
+        # os.system, which was the previous (slower, less portable) approach.
+        if sys.stdout.isatty():
+            sys.stdout.write("\033[2J\033[H")
+            sys.stdout.flush()
 
         # Return the current location description
         return self.game.player.look()

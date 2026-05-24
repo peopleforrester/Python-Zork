@@ -109,6 +109,21 @@ class TestHelpers(unittest.TestCase):
         # Test with None
         self.assertEqual(format_list(None), "")
 
+class TestAnsiColorGate(unittest.TestCase):
+    """Step LP.2: ANSI escapes only render when stdout is a TTY."""
+
+    def test_colors_empty_when_not_a_tty(self):
+        """Tests capture stdout, so isatty() is False — escapes should be empty."""
+        from computerquest.utils.helpers import Colors
+
+        # When stdout isn't a TTY, every color attribute is an empty string
+        # rather than an ANSI escape, keeping captured output grep-friendly.
+        self.assertEqual(Colors.RESET, "")
+        self.assertEqual(Colors.RED, "")
+        self.assertEqual(Colors.GREEN, "")
+        self.assertEqual(Colors.BOLD, "")
+
+
 class TestIsVirusName(unittest.TestCase):
     """Step 4.3: canonical-name detection replaces the old substring sniff
     so non-virus items containing 'virus' in their name don't false-positive."""

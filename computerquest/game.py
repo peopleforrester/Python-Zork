@@ -258,10 +258,14 @@ class Game:
             # Process command through the command processor
             response = self.command_processor.process(user_input)
 
-            # Clear the screen before showing the new output (except for the first command)
-            import os
+            # Clear the screen before showing the new output. ANSI escapes on
+            # a TTY only — keeps piped output (e.g. server.py's pty wrapper,
+            # test capture) clean.
+            import sys
 
-            os.system("cls" if os.name == "nt" else "clear")
+            if sys.stdout.isatty():
+                sys.stdout.write("\033[2J\033[H")
+                sys.stdout.flush()
 
             # Display result
             print(f"\n{response}")

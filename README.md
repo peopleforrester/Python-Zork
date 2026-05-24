@@ -34,8 +34,8 @@ The game now includes a web interface using TypeScript, React, ReactFlow, and Vi
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/kodekloud-computer-quest.git
-cd kodekloud-computer-quest
+git clone https://github.com/peopleforrester/Python-Zork.git
+cd Python-Zork
 
 # Install Python dependencies (uv handles the venv automatically)
 uv sync --dev

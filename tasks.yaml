@@ -18,60 +18,31 @@ tasks:
     claimed_by: null
     created: "2026-04-28"
     notes: ""
-  - id: tk-fe893e
-    title: 4.3 Add Component.is_virus flag; replace string-sniff
+  - id: tk-90845e
+    title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
     status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: session-1779665857
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-90845e
-    title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
-    status: ready
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-5fe152
-    title: LP.2 Guard ANSI Colors with sys.stdout.isatty()
-    status: ready
-    priority: low
-    blocks:
-      - tk-fc8e15
-    blocked_by: []
-    claimed_by: null
+    claimed_by: session-1779666051
     created: "2026-04-28"
     notes: ""
   - id: tk-fc8e15
     title: LP.3 Replace os.system('clear') with escape codes
-    status: blocked
+    status: claimed
     priority: low
     blocks: []
-    blocked_by:
-      - tk-5fe152
-    claimed_by: null
+    blocked_by: []
+    claimed_by: session-1779666170
     created: "2026-04-28"
     notes: ""
   - id: tk-3ee2e9
     title: LP.4 Fix README/setup.py upstream URLs
-    status: ready
+    status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: null
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-f0d6b8
-    title: LP.5 Read welcome status from self.player
-    status: ready
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: null
+    claimed_by: session-1779666039
     created: "2026-04-28"
     notes: ""
   - id: tk-24fa9f

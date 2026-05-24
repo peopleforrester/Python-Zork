@@ -72,3 +72,15 @@ completed:
     title: 3.4 Backfill type annotations; flip mypy to required
     completed: "2026-05-06"
     summary: Annotated commands.py, models/player.py, game.py, helpers.py. Per-module mypy override enables disallow_untyped_defs and disallow_incomplete_defs on the four files. CI flipped mypy from soft-fail to required. mypy clean across 18 source files.
+  - id: tk-fe893e
+    title: 4.3 Add Component.is_virus flag; replace string-sniff
+    completed: "2026-05-25"
+    summary: Added config.is_virus_name(name) -> bool backed by frozenset(VIRUS_TYPES). Replaced all five 'virus' in name.lower() sites in player.py. The hint-word heuristics (suspicious/malicious in desc) intentionally stay. Three regression tests in TestIsVirusName cover canonical, false-positive, and unrelated inputs.
+  - id: tk-f0d6b8
+    title: LP.5 Read welcome status from self.player
+    completed: "2026-05-25"
+    summary: Welcome banner already reads max_health/health/items/found/quarantined from self.player as of commit 86fe99b (Step 3.6/3.7). Verified in game.py:588-600.
+  - id: tk-5fe152
+    title: LP.2 Guard ANSI Colors with sys.stdout.isatty()
+    completed: "2026-05-25"
+    summary: Colors class checks sys.stdout.isatty() at module load; non-TTY consumers get empty strings. New TestAnsiColorGate verifies non-TTY behavior.
