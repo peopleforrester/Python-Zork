@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH, MAX_KNOWLEDGE
+from computerquest.config import INVENTORY_LIMIT, MAX_HEALTH, MAX_KNOWLEDGE, is_virus_name
 
 
 class Player:
@@ -182,7 +182,7 @@ class Player:
         if target:
             # Check if item is in room
             if target in self.location.items:
-                if 'virus' in target.lower():
+                if is_virus_name(target):
                     self._record_virus_found(target)
                     return f"ALERT! {target} detected. This is a malicious program that should be quarantined immediately."
                 else:
@@ -190,7 +190,7 @@ class Player:
 
             # Check if item is in inventory
             elif target in self.items:
-                if 'virus' in target.lower():
+                if is_virus_name(target):
                     self._record_virus_found(target)
                     return f"ALERT! {target} detected. This is a malicious program in your inventory that should be quarantined immediately."
                 else:
@@ -201,7 +201,7 @@ class Player:
         # Scanning the entire location
         else:
             # Check for viruses
-            viruses_here = [item for item in self.location.items if 'virus' in item.lower()]
+            viruses_here = [item for item in self.location.items if is_virus_name(item)]
 
             if viruses_here:
                 result = "SECURITY ALERT! Virus scan detected the following threats:\n"
@@ -273,13 +273,16 @@ class Player:
 
     def _advanced_scan_location(self) -> str:
         """Helper method for advanced scanning current location"""
-        # Find obvious viruses
-        viruses_here = [item for item in self.location.items if 'virus' in item.lower()]
+        # Find canonical viruses
+        viruses_here = [item for item in self.location.items if is_virus_name(item)]
 
-        # Find suspicious items
+        # Find suspicious items — items not flagged as canonical viruses but
+        # with hint words in their description.
         hidden_threats = []
         for item, desc in self.location.items.items():
-            if 'virus' not in item.lower() and ('suspicious' in desc.lower() or 'malicious' in desc.lower()):
+            if not is_virus_name(item) and (
+                'suspicious' in desc.lower() or 'malicious' in desc.lower()
+            ):
                 hidden_threats.append(item)
 
         if viruses_here or hidden_threats:
@@ -307,8 +310,8 @@ class Player:
         """Analyze an item for virus signatures"""
         location = "in your inventory" if in_inventory else ""
 
-        # Check for virus indicators
-        if 'virus' in item_name.lower() or 'malicious' in item_desc.lower() or 'suspicious' in item_desc.lower():
+        # Check for virus indicators: canonical names, or hint words in desc.
+        if is_virus_name(item_name) or 'malicious' in item_desc.lower() or 'suspicious' in item_desc.lower():
             virus_type = self._detect_virus_type(item_name, item_desc)
 
             if virus_type:

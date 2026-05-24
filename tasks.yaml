@@ -20,11 +20,11 @@ tasks:
     notes: ""
   - id: tk-fe893e
     title: 4.3 Add Component.is_virus flag; replace string-sniff
-    status: ready
+    status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1779665857
     created: "2026-04-28"
     notes: ""
   - id: tk-90845e

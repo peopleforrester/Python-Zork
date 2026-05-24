@@ -109,6 +109,31 @@ class TestHelpers(unittest.TestCase):
         # Test with None
         self.assertEqual(format_list(None), "")
 
+class TestIsVirusName(unittest.TestCase):
+    """Step 4.3: canonical-name detection replaces the old substring sniff
+    so non-virus items containing 'virus' in their name don't false-positive."""
+
+    def test_canonical_virus_names_detected(self):
+        from computerquest.config import VIRUS_TYPES, is_virus_name
+
+        for canonical in VIRUS_TYPES:
+            self.assertTrue(is_virus_name(canonical), canonical)
+
+    def test_non_virus_with_virus_substring_not_detected(self):
+        """The test fixture `virus_item` and `antivirus_tool` must not match."""
+        from computerquest.config import is_virus_name
+
+        self.assertFalse(is_virus_name("virus_item"))
+        self.assertFalse(is_virus_name("antivirus_tool"))
+        self.assertFalse(is_virus_name("test_virus"))
+
+    def test_unrelated_strings_not_detected(self):
+        from computerquest.config import is_virus_name
+
+        self.assertFalse(is_virus_name(""))
+        self.assertFalse(is_virus_name("cpu_package"))
+
+
 class TestMotherboardSingleSource(unittest.TestCase):
     """Step 3.5: motherboard ASCII lives in one place. Game.display_motherboard
     and ComponentVisualizer.render_motherboard_layout_text must return the

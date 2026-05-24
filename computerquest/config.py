@@ -49,6 +49,17 @@ VIRUS_TYPES = [
     "packet_sniffer_virus"
 ]
 
+# Membership check used in place of substring matching ('virus' in name.lower())
+# — the substring matcher false-positived on test fixtures named virus_item,
+# and would not have been localizable. The canonical set lives here so new
+# virus types only need one update.
+_VIRUS_TYPE_SET = frozenset(VIRUS_TYPES)
+
+
+def is_virus_name(name: str) -> bool:
+    """True iff `name` matches a canonical virus identifier in VIRUS_TYPES."""
+    return name in _VIRUS_TYPE_SET
+
 # Component Knowledge Areas
 KNOWLEDGE_AREAS = {
     "cpu": "CPU Architecture",
