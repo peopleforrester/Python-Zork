@@ -18,39 +18,12 @@ tasks:
     claimed_by: null
     created: "2026-04-28"
     notes: ""
-  - id: tk-90845e
-    title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
-    status: claimed
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1779666051
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-fc8e15
-    title: LP.3 Replace os.system('clear') with escape codes
-    status: claimed
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1779666170
-    created: "2026-04-28"
-    notes: ""
-  - id: tk-3ee2e9
-    title: LP.4 Fix README/setup.py upstream URLs
-    status: claimed
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1779666039
-    created: "2026-04-28"
-    notes: ""
   - id: tk-24fa9f
     title: Implement persistent save/load (port from archive/saveload.py)
-    status: ready
+    status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1780448841
     created: "2026-05-02"
     notes: ""

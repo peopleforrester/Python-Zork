@@ -177,8 +177,15 @@ class HelpCommand(Command):
 class QuitCommand(Command):
     """Command to quit the game"""
     def execute(self) -> str:
+        # Offer to save before exiting if there are unsaved changes.
+        if getattr(self.game, "changes_since_save", False):
+            prompt = "You have unsaved changes. Save before exiting? (y/n): "
+            if input(prompt).lower() in ('y', 'yes'):
+                print(self.game.save_load.save_game())
+                self.game.changes_since_save = False
+
         confirm = input("Are you sure you want to exit? (y/n): ").lower()
-        if confirm in ['y', 'yes']:
+        if confirm in ('y', 'yes'):
             self.game.game_over = True
             # Return an empty string to avoid duplicate goodbye messages —
             # the game loop will handle the exit message.
@@ -277,6 +284,48 @@ class AchievementsCommand(Command):
     def execute(self) -> str:
         return self.game.progress.get_progress_report()
 
+
+class SaveCommand(Command):
+    """Persist current game state to disk."""
+    def execute(self) -> str:
+        name = self.args[0] if self.args else None
+        result = self.game.save_load.save_game(name)
+        self.game.last_save_turn = self.game.turns
+        self.game.changes_since_save = False
+        return str(result)
+
+
+class LoadCommand(Command):
+    """Restore game state from a save file."""
+    def can_execute(self) -> tuple[bool, str | None]:
+        if not self.args:
+            return False, "Please specify a save file to load. Use 'saves' to list available saves."
+        return True, None
+
+    def execute(self) -> str:
+        result = self.game.save_load.load_game(self.args[0])
+        self.game.last_save_turn = self.game.turns
+        self.game.changes_since_save = False
+        return str(result)
+
+
+class SavesCommand(Command):
+    """List available save files."""
+    def execute(self) -> str:
+        return str(self.game.save_load.list_saves())
+
+
+class DeleteSaveCommand(Command):
+    """Delete a save file by name."""
+    def can_execute(self) -> tuple[bool, str | None]:
+        if not self.args:
+            return False, "Please specify a save file to delete."
+        return True, None
+
+    def execute(self) -> str:
+        return str(self.game.save_load.delete_save(self.args[0]))
+
+
 class VisualizeCommand(Command):
     """Command to visualize components"""
     def execute(self) -> str:
@@ -347,6 +396,9 @@ class QuickHelpCommand(Command):
 │                                                                      │
 │  {Colors.BOLD}System Commands:{Colors.RESET}                                                    │
 │    {Colors.GREEN}help, h{Colors.RESET} - Show full help message                                  │
+│    {Colors.GREEN}save [name]{Colors.RESET} - Save your game progress                             │
+│    {Colors.GREEN}load [name]{Colors.RESET} - Load a saved game                                   │
+│    {Colors.GREEN}saves{Colors.RESET} - List available save files                                 │
 │    {Colors.GREEN}q{Colors.RESET} - Quit game                                                     │
 │                                                                      │
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -426,6 +478,11 @@ class CommandProcessor:
             'achievements': AchievementsCommand,
             'achieve': AchievementsCommand,
             'stats': AchievementsCommand,
+            'save': SaveCommand,
+            'load': LoadCommand,
+            'saves': SavesCommand,
+            'listsaves': SavesCommand,
+            'deletesave': DeleteSaveCommand,
             'visualize': VisualizeCommand,
             'viz': VisualizeCommand,
             'simulate': SimulateCommand,

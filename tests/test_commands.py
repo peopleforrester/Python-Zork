@@ -382,7 +382,8 @@ class TestCommandProcessor(TestCommandBase):
             'inventory', 'i', 'scan', 'sc', 'advscan', 'advanced-scan', 'advanced_scan',
             'analyze', 'quarantine', 'help', 'quit', 'exit', 'q', 'map', 'm',
             'motherboard', 'mb', 'read', 'about', 'status', 'progress', 'knowledge',
-            'achievements', 'achieve', 'stats', 'visualize', 'viz', 'simulate', 'sim'
+            'achievements', 'achieve', 'stats', 'save', 'load', 'saves',
+            'listsaves', 'deletesave', 'visualize', 'viz', 'simulate', 'sim'
         ]
 
         for cmd in command_classes:
@@ -558,21 +559,18 @@ class TestSimulateGated(TestCommandBase):
             self.assertNotIn("not yet available", result.lower())
 
 
-class TestSaveLoadRemoved(TestCommandBase):
-    """Save/load was a placeholder that silently lost data; removed in
-    Step 1.2 until a real implementation lands."""
+class TestSaveLoadRegistered(TestCommandBase):
+    """Step tk-24fa9f restored save/load with a real implementation.
+    The four verbs are registered again and route to SaveLoadSystem."""
 
     def setUp(self):
         super().setUp()
         self.command_processor = CommandProcessor(self.game)
 
-    def test_save_command_not_registered(self):
+    def test_save_commands_registered(self):
         for verb in ("save", "load", "saves", "listsaves", "deletesave"):
-            self.assertNotIn(verb, self.command_processor.commands)
+            self.assertIn(verb, self.command_processor.commands)
 
-    def test_save_input_returns_unknown(self):
-        result = self.command_processor.process("save")
-        self.assertIn("not recognized", result)
 
 if __name__ == "__main__":
     unittest.main()

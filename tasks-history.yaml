@@ -84,3 +84,15 @@ completed:
     title: LP.2 Guard ANSI Colors with sys.stdout.isatty()
     completed: "2026-05-25"
     summary: Colors class checks sys.stdout.isatty() at module load; non-TTY consumers get empty strings. New TestAnsiColorGate verifies non-TTY behavior.
+  - id: tk-90845e
+    title: LP.1 Remove IMPROVEMENTS.md, stale TODO.md, archive/
+    completed: "2026-05-25"
+    summary: Removed IMPROVEMENTS.md, uppercase TODO.md, and 11 of 12 archive/ files. Kept archive/saveload.py as reference for tk-24fa9f.
+  - id: tk-fc8e15
+    title: LP.3 Replace os.system('clear') with escape codes
+    completed: "2026-05-25"
+    summary: ClearCommand and game loop use ANSI \x1b[2J\x1b[H when stdout.isatty(); no-op otherwise. No more os.system fork per command.
+  - id: tk-3ee2e9
+    title: LP.4 Fix README/setup.py upstream URLs
+    completed: "2026-05-25"
+    summary: README clone URL fixed to peopleforrester/Python-Zork. setup.py was already removed in Step 2.1.

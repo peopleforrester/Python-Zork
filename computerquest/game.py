@@ -36,6 +36,11 @@ class Game:
         self.game_over = False
         self.all_viruses_found = False
         self.victory = False
+        # Save tracking — set by SaveCommand/LoadCommand and read by QuitCommand
+        # to offer a save prompt if there are unsaved changes.
+        self.last_save_turn = 0
+        self.changes_since_save = False
+
         # Initialize the progress tracking system
         self.progress = ProgressSystem(self)
 
@@ -45,6 +50,10 @@ class Game:
         # Initialize minigame state
         self.current_minigame = None
         self.current_visualization = None
+
+        # Initialize save/load system
+        from computerquest.mechanics.save_load import SaveLoadSystem
+        self.save_load = SaveLoadSystem(self)
 
         # Initialize command processor
         self.command_processor = CommandProcessor(self)
@@ -245,8 +254,16 @@ class Game:
             try:
                 user_input = input("\n> ").strip()
             except (EOFError, KeyboardInterrupt):
-                # Handle Ctrl+D or Ctrl+C gracefully
+                # Handle Ctrl+D or Ctrl+C gracefully. If state is dirty,
+                # offer to save before exiting. The prompt itself can also
+                # be interrupted — in that case treat it as a "no".
                 print("\nInterrupted. ")
+                if self.changes_since_save:
+                    try:
+                        if input("Save before exiting? (y/n): ").lower() in ('y', 'yes'):
+                            print(self.save_load.save_game())
+                    except (EOFError, KeyboardInterrupt):
+                        print()
                 print("Exiting...")
                 self.game_over = True
                 break
@@ -257,6 +274,18 @@ class Game:
 
             # Process command through the command processor
             response = self.command_processor.process(user_input)
+
+            # Mark game state as dirty for save-on-exit prompt, unless this
+            # was a save/load/help-style command that doesn't change state.
+            verb = user_input.split()[0].lower() if user_input.split() else ""
+            if verb not in {
+                "save", "load", "saves", "listsaves", "deletesave",
+                "help", "h", "?", "clear", "cls", "c", "quit", "exit", "q",
+                "look", "l", "examine", "ex", "map", "m", "motherboard", "mb",
+                "status", "progress", "knowledge", "achievements", "stats",
+                "inventory", "i", "about", "visualize", "viz",
+            }:
+                self.changes_since_save = True
 
             # Clear the screen before showing the new output. ANSI escapes on
             # a TTY only — keeps piped output (e.g. server.py's pty wrapper,
@@ -490,6 +519,12 @@ class Game:
 │    {Colors.GREEN}simulate step{Colors.RESET}    - Advance simulation by one step                     │
 │    {Colors.GREEN}simulate toggle{Colors.RESET}  - Toggle between simulation modes                    │
 │    {Colors.GREEN}simulate reset{Colors.RESET}   - Reset the simulation                               │
+│                                                                          │
+│  {Colors.BOLD}Save/Load:{Colors.RESET}                                                              │
+│    {Colors.GREEN}save [name]{Colors.RESET}      - Save your game progress (optional name)            │
+│    {Colors.GREEN}load [name]{Colors.RESET}      - Load a saved game                                  │
+│    {Colors.GREEN}saves{Colors.RESET}            - List all available save files                      │
+│    {Colors.GREEN}deletesave [name]{Colors.RESET} - Delete a saved game                               │
 │                                                                          │
 │  {Colors.BOLD}System:{Colors.RESET}                                                                 │
 │    {Colors.GREEN}help, h{Colors.RESET}          - Show this help message                             │

@@ -17,6 +17,7 @@ KodeKloud Computer Quest is an interactive text adventure where players navigate
 - Virus hunting gameplay that teaches security concepts
 - Progressive knowledge system that tracks player learning
 - Mini-games that demonstrate CPU pipelines and memory hierarchies
+- Persistent save/load — JSON snapshots under `~/.kodekloud_quest/saves/`
 - Enhanced UI with improved visuals and readability
 - Web-based terminal interface for running the game in a browser
 
