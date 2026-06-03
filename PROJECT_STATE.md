@@ -13,29 +13,25 @@ Remediation of senior-developer review findings (review run 2026-04-19) for Pyth
 All 26 tasks seeded in `tasks.yaml` with dependencies wired. Check task readiness with `/task ready` (shows only unblocked tasks). As of this snapshot, **nothing is started** — the plan was just persisted.
 
 ## Last completed step
-**Step 4.3 + LP cleanup tail done (commits f55313c, 29021cb).**
+**tk-24fa9f — Save/load port (commit 510ae26).** Ported `archive/saveload.py` into `computerquest/mechanics/save_load.py` with modern style: `pathlib.Path`, narrow exceptions (`OSError` / `json.JSONDecodeError` / `KeyError`), type annotations, `SAVE_SCHEMA_VERSION = "1.0"` versioning, dependency-injected `save_root` for test isolation. Four commands restored (`save`, `load`, `saves`/`listsaves`, `deletesave`); Quit and interrupt flows offer a save-before-exit prompt when state is dirty. 13 new tests cover roundtrip restoration, schema rejection, corrupt JSON, missing fields, and list/delete edge cases.
 
-- **Step 4.3 (tk-fe893e)** — `config.is_virus_name()` replaces `'virus' in name.lower()` substring matching across five sites in `player.py`. Backed by `frozenset(VIRUS_TYPES)`. Test fixtures `virus_item`, `antivirus_tool`, `test_virus` no longer false-positive. The description-content heuristics (`suspicious`/`malicious` in desc) are intentionally retained.
-- **LP.1 (tk-90845e)** — Removed `IMPROVEMENTS.md`, uppercase `TODO.md`, and 11 of 12 `archive/` files. Kept `archive/saveload.py` because `tk-24fa9f` references it as the future-port source.
-- **LP.2 (tk-5fe152)** — `Colors` attributes guarded by `sys.stdout.isatty()`; captured/piped output gets empty strings, not ANSI escapes.
-- **LP.3 (tk-fc8e15)** — `ClearCommand` and game loop write `\x1b[2J\x1b[H` on a TTY; no-op otherwise. No more `os.system` fork per command.
-- **LP.4 (tk-3ee2e9)** — README clone URL points to `peopleforrester/Python-Zork`.
-- **LP.5 (tk-f0d6b8)** — Closed retroactively; already satisfied by commit 86fe99b's welcome rewrite.
+Earlier this session: Step 4.3 (`tk-fe893e`) — `config.is_virus_name()` replaces substring sniffing in `player.py`; LP cleanup (`tk-90845e`, `tk-5fe152`, `tk-fc8e15`, `tk-3ee2e9`, `tk-f0d6b8`) — stale docs removed, ANSI gated by `isatty()`, `os.system('clear')` replaced with escape codes, README URLs fixed.
 
-**120/120 tests green; ruff + mypy clean.**
+**132/132 tests green; ruff + mypy clean.**
 
 Earlier completed: Weeks 1–3 (Steps 1.1–1.5, 2.1–2.4, 3.1–3.7), Step 4.4 (NPC pop bug), pre-existing test sweep.
 
 ## Next step to take
-The senior-review remediation is effectively complete. Three feature tasks remain — all genuine new development, not review remediation:
+Senior-review remediation done; save/load follow-up done. Two genuinely speculative feature tasks remain:
 
-- **tk-24fa9f** — Port `archive/saveload.py` into a real save/load implementation. Most concrete of the three (reference impl already in repo). The decision memory authorizes this as the "implement later" follow-up to Step 1.2's removal.
-- **tk-7303b8 (4.2)** — Wire React `GameMap.tsx` to live game state via a new Socket.IO `query_state` event. Substantial: needs schema design, server changes, frontend rewrite, browser verification.
-- **tk-a7098e (4.1)** — Implement CPU pipeline + memory hierarchy minigames. Genuinely speculative without a design doc; the plan calls for `docs/design-minigames.md` as pre-work.
+- **tk-7303b8 (4.2)** — Wire React `GameMap.tsx` to live game state. **Blocked on architecture decision:** `server.py` currently forks `python main.py` through a PTY, so the server has no in-process Game handle. Wiring real state needs either (a) running Game in-process in `server.py` instead of as a subprocess, or (b) an IPC channel between server and game subprocess. Frontend then needs browser verification, which can't be done from this session.
+- **tk-a7098e (4.1)** — Implement CPU pipeline + memory hierarchy minigames. **Blocked on design doc:** the plan's pre-work is `docs/design-minigames.md` with educational objectives and learning loops. Without that, any implementation is speculative.
+
+Both remaining tasks need Michael's input before they can land cleanly.
 
 ## Branch and test status
-- Active branch at snapshot: `staging`, ahead of `master` by Weeks 1+2+3 plus Step 4.3 and the LP tail.
-- Tests: **120/120 green.** Plain `uv run pytest` works.
+- Active branch at snapshot: `staging`, ahead of `master` by Weeks 1+2+3, Step 4.3, the LP tail, and save/load (`tk-24fa9f`).
+- Tests: **132/132 green.** Plain `uv run pytest` works.
 - Lint: ruff clean across `computerquest/` and `tests/`. Required in CI.
 - Type-check: **mypy clean across all 18 source files.** Required in CI (no longer soft-fail).
 - CI: `.github/workflows/test.yml` runs on push to `staging`/`master`/`main` and on PRs across a Python 3.11+3.12 matrix.
