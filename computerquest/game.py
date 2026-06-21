@@ -6,6 +6,8 @@ Main game logic and controller
 
 from __future__ import annotations
 
+from typing import Any
+
 from computerquest.commands import CommandProcessor
 from computerquest.config import DIRECTION_MAPPING
 from computerquest.mechanics.minigames import CPUPipelineMinigame, MemoryHierarchyMinigame
@@ -16,6 +18,16 @@ from computerquest.world.architecture import ComputerArchitecture
 
 # Re-exported for backward compatibility with existing imports.
 __all__ = ["CPUPipelineMinigame", "ComponentVisualizer", "Game", "MemoryHierarchyMinigame"]
+
+# Verbs whose execution does not change persistent game state. Used by feed()
+# to decide whether to flip the changes_since_save flag.
+_READ_ONLY_VERBS = frozenset({
+    "save", "load", "saves", "listsaves", "deletesave",
+    "help", "h", "?", "clear", "cls", "c", "quit", "exit", "q",
+    "look", "l", "examine", "ex", "map", "m", "motherboard", "mb",
+    "status", "progress", "knowledge", "achievements", "stats",
+    "inventory", "i", "about", "visualize", "viz",
+})
 
 
 class Game:
@@ -233,9 +245,93 @@ class Game:
             print("Note: Command history and tab completion are not available on this system.")
             return False
 
+    def feed(self, line: str) -> str:
+        """
+        Run one command cycle. Returns the response text.
+
+        This is the single entry point both the CLI (via start()) and the
+        web server (server.py) use to drive the game. It only depends on
+        the input string and the game's internal state — no print()
+        side-effects, no input() calls. The dirty-state flag flips here
+        when a state-changing verb is run.
+        """
+        stripped = line.strip()
+        if not stripped:
+            return ""
+
+        response = self.command_processor.process(stripped)
+
+        verb = stripped.split()[0].lower()
+        if verb not in _READ_ONLY_VERBS:
+            self.changes_since_save = True
+
+        return response
+
+    def snapshot(self) -> dict[str, Any]:
+        """
+        Return a structured snapshot of game state for external consumers
+        (the web map renderer). Stable wire format — additions are safe,
+        renames break clients, so don't.
+
+        Note: every room reference in the snapshot uses the same id space
+        (the dict key — 'cpu_package', 'core1', etc.), not the component's
+        internal `Component.id` (e.g. 'CPU000'). The frontend treats those
+        keys as opaque node identifiers.
+        """
+        # Reverse lookup so door destinations can be translated from
+        # Component instances back to their dict-key identifier.
+        room_id_by_component = {room: rid for rid, room in self.game_map.rooms.items()}
+
+        rooms = []
+        for room_id, room in self.game_map.rooms.items():
+            doors = {
+                direction: room_id_by_component[dest]
+                for direction, dest in room.doors.items()
+                if dest in room_id_by_component
+            }
+            rooms.append({
+                "id": room_id,
+                "name": room.name,
+                "visited": room.visited,
+                "doors": doors,
+                "item_count": len(room.items),
+            })
+
+        player_location_id = room_id_by_component.get(self.player.location)
+
+        return {
+            "turn": self.turns,
+            "game_over": self.game_over,
+            "victory": self.victory,
+            "all_viruses_found": self.all_viruses_found,
+            "player": {
+                "name": self.player.name,
+                "location_id": player_location_id,
+                "health": self.player.health,
+                "max_health": self.player.max_health,
+                "items": list(self.player.items.keys()),
+                "knowledge": dict(self.player.knowledge),
+            },
+            "rooms": rooms,
+            "found_viruses": list(self.player.found_viruses),
+            "quarantined_viruses": list(self.player.quarantined_viruses),
+        }
+
+    def welcome_text(self) -> str:
+        """Render the welcome banner to a string instead of stdout."""
+        import contextlib
+        import io
+
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.display_welcome()
+        return buf.getvalue()
+
     def start(self) -> None:
         """
-        Main game loop
+        Main CLI game loop. Drives the game via feed() one line at a time
+        and renders responses to stdout. The server uses feed() directly
+        and skips this loop entirely.
         """
         # Show welcome screen here (moved out of __init__ so construction
         # has no I/O side effects).
@@ -270,28 +366,12 @@ class Game:
                 self.game_over = True
                 break
 
-            # Skip empty inputs
-            if not user_input:
+            response = self.feed(user_input)
+            if not response:
                 continue
 
-            # Process command through the command processor
-            response = self.command_processor.process(user_input)
-
-            # Mark game state as dirty for save-on-exit prompt, unless this
-            # was a save/load/help-style command that doesn't change state.
-            verb = user_input.split()[0].lower() if user_input.split() else ""
-            if verb not in {
-                "save", "load", "saves", "listsaves", "deletesave",
-                "help", "h", "?", "clear", "cls", "c", "quit", "exit", "q",
-                "look", "l", "examine", "ex", "map", "m", "motherboard", "mb",
-                "status", "progress", "knowledge", "achievements", "stats",
-                "inventory", "i", "about", "visualize", "viz",
-            }:
-                self.changes_since_save = True
-
             # Clear the screen before showing the new output. ANSI escapes on
-            # a TTY only — keeps piped output (e.g. server.py's pty wrapper,
-            # test capture) clean.
+            # a TTY only — keeps piped output (e.g. test capture) clean.
             import sys
 
             if sys.stdout.isatty():

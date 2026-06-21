@@ -11,10 +11,10 @@ tasks:
     notes: ""
   - id: tk-7303b8
     title: 4.2 Wire GameMap.tsx to live game state via Socket.IO query event
-    status: ready
+    status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1782085199
     created: "2026-04-28"
     notes: ""

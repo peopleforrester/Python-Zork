@@ -330,5 +330,91 @@ class TestCPUPipelineMinigame(unittest.TestCase):
         self.assertIn("Reset pipeline simulation", result)
 
 
+class TestGameFeed(unittest.TestCase):
+    """Game.feed is the single I/O-free entry point used by both the CLI loop
+    and the web server (Step 4.2)."""
+
+    def setUp(self) -> None:
+        self.game = build_real_game()
+
+    def test_empty_input_returns_empty_and_does_not_dirty(self) -> None:
+        self.assertEqual(self.game.feed(""), "")
+        self.assertEqual(self.game.feed("   "), "")
+        self.assertFalse(self.game.changes_since_save)
+
+    def test_read_only_command_does_not_dirty(self) -> None:
+        result = self.game.feed("look")
+        self.assertNotEqual(result, "")
+        self.assertFalse(self.game.changes_since_save)
+
+    def test_state_changing_command_sets_dirty(self) -> None:
+        # 'take' is not in _READ_ONLY_VERBS.
+        self.game.feed("take instruction_manual")
+        self.assertTrue(self.game.changes_since_save)
+
+    def test_feed_returns_command_processor_output(self) -> None:
+        # 'inventory' is read-only but produces predictable output.
+        result = self.game.feed("inventory")
+        self.assertIn("SYSTEM STORAGE", result)
+
+
+class TestGameSnapshot(unittest.TestCase):
+    """Game.snapshot returns the structured wire format the web map consumes."""
+
+    def setUp(self) -> None:
+        self.game = build_real_game()
+        self.snap = self.game.snapshot()
+
+    def test_top_level_keys(self) -> None:
+        for key in ("turn", "game_over", "victory", "all_viruses_found",
+                    "player", "rooms", "found_viruses", "quarantined_viruses"):
+            self.assertIn(key, self.snap)
+
+    def test_player_block_shape(self) -> None:
+        player = self.snap["player"]
+        for key in ("name", "location_id", "health", "max_health",
+                    "items", "knowledge"):
+            self.assertIn(key, player)
+        self.assertEqual(player["health"], self.game.player.health)
+        self.assertEqual(player["max_health"], self.game.player.max_health)
+
+    def test_player_location_id_resolves_to_a_real_room(self) -> None:
+        location_id = self.snap["player"]["location_id"]
+        self.assertIsNotNone(location_id)
+        self.assertIn(location_id, self.game.game_map.rooms)
+
+    def test_rooms_block_covers_full_map(self) -> None:
+        self.assertEqual(len(self.snap["rooms"]), len(self.game.game_map.rooms))
+        seen_ids = {room["id"] for room in self.snap["rooms"]}
+        self.assertSetEqual(seen_ids, set(self.game.game_map.rooms.keys()))
+
+    def test_room_doors_use_the_same_id_space_as_rooms_list(self) -> None:
+        room_ids = {r["id"] for r in self.snap["rooms"]}
+        for room in self.snap["rooms"]:
+            for direction, dest_id in room["doors"].items():
+                self.assertIn(
+                    dest_id, room_ids,
+                    f"room {room['id']!r} door {direction!r} -> {dest_id!r} not in rooms list",
+                )
+
+    def test_snapshot_reflects_state_after_feed(self) -> None:
+        before = self.game.snapshot()
+        self.game.feed("look")  # turn does not advance for look
+        after = self.game.snapshot()
+        # The player's location should still be valid post-look.
+        self.assertEqual(before["player"]["location_id"], after["player"]["location_id"])
+
+
+class TestGameWelcomeText(unittest.TestCase):
+    """Game.welcome_text captures display_welcome's output for non-CLI surfaces."""
+
+    def test_welcome_text_returns_non_empty_string(self) -> None:
+        game = build_real_game()
+        text = game.welcome_text()
+        self.assertIsInstance(text, str)
+        self.assertGreater(len(text), 100)
+        self.assertIn("KodeKloud", text)
+
+
 if __name__ == "__main__":
     unittest.main()
