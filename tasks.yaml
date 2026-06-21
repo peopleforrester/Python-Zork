@@ -18,12 +18,3 @@ tasks:
     claimed_by: null
     created: "2026-04-28"
     notes: ""
-  - id: tk-24fa9f
-    title: Implement persistent save/load (port from archive/saveload.py)
-    status: claimed
-    priority: low
-    blocks: []
-    blocked_by: []
-    claimed_by: session-1780448841
-    created: "2026-05-02"
-    notes: ""

@@ -96,3 +96,7 @@ completed:
     title: LP.4 Fix README/setup.py upstream URLs
     completed: "2026-05-25"
     summary: README clone URL fixed to peopleforrester/Python-Zork. setup.py was already removed in Step 2.1.
+  - id: tk-24fa9f
+    title: Implement persistent save/load (port from archive/saveload.py)
+    completed: "2026-06-03"
+    summary: 'Ported archive/saveload.py to computerquest/mechanics/save_load.py: pathlib, narrow exceptions, type-annotated, SAVE_SCHEMA_VERSION = 1.0. Four commands restored. Quit + interrupt flows offer save-before-exit when dirty. 13 new tests cover save/load/list/delete and error cases via tmp_path.'
