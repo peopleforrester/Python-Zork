@@ -54,6 +54,11 @@ socketio = SocketIO(app, cors_allowed_origins=CORS_ORIGINS)
 # server, but the keying keeps state isolated if multiple browser tabs connect.
 _sessions: dict[str, Game] = {}
 
+# Per-session input buffer. The browser's xterm.js sends every keystroke as a
+# separate terminal_input event; we accumulate until newline, then flush a
+# whole line into Game.feed.
+_input_buffers: dict[str, str] = {}
+
 # Verbs the server intercepts before they reach Game.feed(), because the
 # CLI implementations block on input(). The web UI handles its own session
 # lifecycle (disconnect/refresh) so we never need the synchronous prompt.
@@ -83,8 +88,9 @@ def handle_connect():
 @socketio.on("disconnect")
 def handle_disconnect():
     sid = _session_id()
-    if sid and sid in _sessions:
-        del _sessions[sid]
+    if sid:
+        _sessions.pop(sid, None)
+        _input_buffers.pop(sid, None)
     logger.info("Client disconnected: %s", sid)
 
 
@@ -97,35 +103,79 @@ def start_game():
 
     game = Game()
     _sessions[sid] = game
+    _input_buffers[sid] = ""
 
     emit("game_started")
     emit("terminal_output", {"output": game.welcome_text()})
+    emit("terminal_output", {"output": "\n\r> "})
     emit("game_state", game.snapshot())
 
 
-@socketio.on("terminal_input")
-def handle_input(data):
-    """Run one game cycle and stream the response + new state back."""
-    sid = _session_id()
-    game = _get_game(sid) if sid else None
-    if game is None:
-        emit("terminal_output", {"output": "[server] no active game; reload to start one.\n"})
-        return
-
-    raw = data.get("input", "") if isinstance(data, dict) else ""
-    verb = raw.strip().split(" ", 1)[0].lower() if raw.strip() else ""
+def _handle_line(sid: str, game: Game, line: str) -> None:
+    """Feed one whole command line to the game and emit the result."""
+    verb = line.strip().split(" ", 1)[0].lower() if line.strip() else ""
 
     if verb in _INTERCEPTED_VERBS:
-        emit("terminal_output", {"output": "\n[server] close the browser tab to exit.\n"})
+        emit("terminal_output", {"output": "\n\r[server] close the browser tab to exit.\n\r> "})
         return
 
-    response = game.feed(raw)
+    response = game.feed(line)
     if response:
-        emit("terminal_output", {"output": f"\n{response}\n"})
+        emit("terminal_output", {"output": f"\n\r{response}\n\r"})
+
     emit("game_state", game.snapshot())
 
     if game.game_over:
         emit("game_ended", {"victory": game.victory})
+    else:
+        emit("terminal_output", {"output": "\n\r> "})
+
+
+@socketio.on("terminal_input")
+def handle_input(data):
+    """Buffer keystrokes per session; flush a line on Enter.
+
+    xterm.js sends every keystroke as a separate event. We accumulate them
+    server-side and call game.feed() once a complete line arrives.
+    """
+    sid = _session_id()
+    game = _get_game(sid) if sid else None
+    if game is None or sid is None:
+        emit("terminal_output", {"output": "[server] no active game; click Start Game.\n\r"})
+        return
+
+    raw = data.get("input", "") if isinstance(data, dict) else ""
+    if not raw:
+        return
+
+    buf = _input_buffers.get(sid, "")
+
+    for char in raw:
+        if char in ("\r", "\n"):
+            # Echo a newline so the terminal advances, then flush.
+            emit("terminal_output", {"output": "\n\r"})
+            line, buf = buf, ""
+            _input_buffers[sid] = buf
+            _handle_line(sid, game, line)
+            game = _get_game(sid)
+            if game is None:
+                return
+        elif char in ("\x7f", "\b"):
+            # Backspace: drop one char from the buffer and erase visually.
+            if buf:
+                buf = buf[:-1]
+                emit("terminal_output", {"output": "\b \b"})
+        elif char == "\x03":
+            # Ctrl-C: abandon the current line.
+            buf = ""
+            emit("terminal_output", {"output": "^C\n\r> "})
+        elif char >= " " and char != "\x7f":
+            # Printable. Append and echo.
+            buf += char
+            emit("terminal_output", {"output": char})
+        # Drop anything else (escape sequences, arrow keys, tab — out of scope).
+
+    _input_buffers[sid] = buf
 
 
 @socketio.on("query_state")

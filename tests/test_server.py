@@ -60,11 +60,17 @@ class TestSocketHandlers(unittest.TestCase):
     def setUp(self):
         # Clear any leftover session state between tests.
         server._sessions.clear()
+        server._input_buffers.clear()
         self.client = server.socketio.test_client(server.app)
 
     def tearDown(self):
         self.client.disconnect()
         server._sessions.clear()
+        server._input_buffers.clear()
+
+    def _send_line(self, text):
+        """Helper: type a full command line including the trailing Enter."""
+        self.client.emit("terminal_input", {"input": text + "\r"})
 
     def _received_by_event(self, event_name):
         return [m for m in self.client.get_received() if m["name"] == event_name]
@@ -89,7 +95,7 @@ class TestSocketHandlers(unittest.TestCase):
         self.client.emit("start_game")
         self.client.get_received()  # drain
 
-        self.client.emit("terminal_input", {"input": "look"})
+        self._send_line("look")
         events = self.client.get_received()
         names = [e["name"] for e in events]
 
@@ -99,6 +105,40 @@ class TestSocketHandlers(unittest.TestCase):
         snapshot = next(e for e in events if e["name"] == "game_state")["args"][0]
         self.assertIn("player", snapshot)
         self.assertIn("rooms", snapshot)
+
+    def test_keystrokes_buffer_until_newline(self):
+        self.client.emit("start_game")
+        self.client.get_received()  # drain
+
+        # Type three characters separately — should echo but not flush.
+        self.client.emit("terminal_input", {"input": "l"})
+        self.client.emit("terminal_input", {"input": "o"})
+        self.client.emit("terminal_input", {"input": "o"})
+
+        events = self.client.get_received()
+        # Only echo events; no game_state yet because no Enter.
+        names = [e["name"] for e in events]
+        self.assertNotIn("game_state", names)
+        self.assertTrue(all(e["name"] == "terminal_output" for e in events))
+
+        # Now send 'k' + Enter: buffer flushes as 'look'.
+        self.client.emit("terminal_input", {"input": "k\r"})
+        events = self.client.get_received()
+        self.assertIn("game_state", [e["name"] for e in events])
+
+    def test_backspace_erases_buffered_character(self):
+        self.client.emit("start_game")
+        self.client.get_received()
+
+        # Type 'lookx', backspace, Enter: buffer should be 'look'.
+        self.client.emit("terminal_input", {"input": "lookx"})
+        self.client.emit("terminal_input", {"input": "\x7f"})
+        self.client.emit("terminal_input", {"input": "\r"})
+        events = self.client.get_received()
+        # If the backspace worked, the command was 'look' which is read-only
+        # and the snapshot's turn counter should still be 0.
+        snapshot = next(e for e in events if e["name"] == "game_state")["args"][0]
+        self.assertEqual(snapshot["turn"], 0)
 
     def test_query_state_re_emits_snapshot(self):
         self.client.emit("start_game")
@@ -113,7 +153,7 @@ class TestSocketHandlers(unittest.TestCase):
 
     def test_input_with_no_active_game_returns_helpful_message(self):
         # No start_game called.
-        self.client.emit("terminal_input", {"input": "look"})
+        self.client.emit("terminal_input", {"input": "look\r"})
         events = self.client.get_received()
         terminal = next((e for e in events if e["name"] == "terminal_output"), None)
         self.assertIsNotNone(terminal)
@@ -126,10 +166,10 @@ class TestSocketHandlers(unittest.TestCase):
         # If the server forwarded 'quit' to game.feed(), QuitCommand would
         # call input() and block. Intercepting it short-circuits to a
         # helpful message instead.
-        self.client.emit("terminal_input", {"input": "quit"})
+        self._send_line("quit")
         events = self.client.get_received()
-        terminal = next(e for e in events if e["name"] == "terminal_output")
-        self.assertIn("close the browser tab", terminal["args"][0]["output"])
+        outputs = [e["args"][0]["output"] for e in events if e["name"] == "terminal_output"]
+        self.assertTrue(any("close the browser tab" in o for o in outputs))
 
 
 if __name__ == "__main__":

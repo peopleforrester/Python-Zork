@@ -152,7 +152,7 @@ function App() {
       
       <div ref={terminalRef} className="terminal" />
       
-      {showMap && <GameMap />}
+      {showMap && <GameMap socket={socket} />}
     </div>
   );
 }
