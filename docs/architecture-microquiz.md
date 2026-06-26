@@ -14,8 +14,26 @@ the game computes the real answer with a real simulator, the diff is the lesson.
 ## Author / status
 
 - Author: Michael Forrester
-- Status: **draft for review** (2026-06-22)
-- Open decisions: see [Open decisions](#open-decisions) at the bottom.
+- Status: **decisions called** (drafted 2026-06-22, decisions resolved 2026-06-26)
+- Decision rationale: see [Decision rationale](#decision-rationale) at the bottom.
+
+## Decisions (applied to this document)
+
+The six open questions in the original draft are resolved as follows. Rationale and the rejected alternative for each one are in [Decision rationale](#decision-rationale).
+
+1. **Multi-puzzle rooms allowed, capped at three.** A `Component.puzzles: list[str]` can hold up to three puzzle ids; rooms may have zero. Three is enough for "intro / twist / hard mode" without breaking the ninety-second budget per room visit.
+
+2. **Soft difficulty gating.** Difficulty-N puzzles appear in `solve` (no argument) listings only when at least one difficulty-(N-1) puzzle in the same area is solved. They remain loadable by explicit `solve <id>` regardless, so a curious player can skip ahead — the gate is presentation only.
+
+3. **Tiered hints.** First hint per puzzle is free. Second and later hints flag the puzzle as "attempted," so a first-time-correct after a costly hint does not bump knowledge. Puzzle data ships with one or two hints per puzzle, ordered cheap-to-expensive.
+
+4. **Auto-prompt on first visit only.** When the player enters a room for the first time and has not attempted its primary puzzle, the puzzle auto-presents with an explicit "type `skip` to put this aside" prompt. On every subsequent visit, only the `[ puzzle available ]` hint shows in `look`. Behaviour gates on the room's primary puzzle id being in `attempted_puzzles`.
+
+5. **Keep the knowledge cap at 5; weight solves by difficulty.** Each solved puzzle contributes `difficulty * 0.5 + 0.5` to its area (difficulty-1 = 1, difficulty-2 = 1.5, difficulty-3 = 2). The cap stays meaningful — knowledge-5 implies real breadth or depth — without requiring every puzzle in the area to be solved. Extra solves count toward achievements.
+
+6. **Each simulator carries a fidelity statement in its module docstring.** Drafts are committed alongside each module's first commit and become the verdict's authority claim. See [Per-simulator fidelity](#per-simulator-fidelity) below.
+
+The Lifecycle, Snapshot, Save/Load, Tests, and Migration plan sections that follow are written against these decisions.
 
 ---
 
@@ -602,43 +620,62 @@ branch.
 
 ---
 
-## Open decisions
+## Per-simulator fidelity
 
-1. **Single-puzzle vs multi-puzzle rooms.** A 64KB L1 cache is one room. Does
-   it host one puzzle ("predict basic LRU") or a series ("now with 2-way
-   associativity," "now with a write-back policy")? Multi makes the cache room
-   feel like a real lesson; single keeps the room rhythm uniform across the
-   map. The data model supports both — the call is content-design.
+Each simulator module ships with a fidelity statement as a top-of-module docstring. The statement is the verdict's authority claim — when a puzzle's verdict says "actually a miss," the player can read the simulator's fidelity statement to know exactly what model that verdict came from. First-pass drafts:
 
-2. **Difficulty as gating vs ordering.** Should higher-difficulty puzzles
-   require lower-difficulty ones in the same area first? The draft says no
-   (player can attempt any puzzle in any order); a stricter reading would
-   gate. The argument for gating is pedagogical (don't show a TLB walk to
-   someone who hasn't done basic cache hit/miss). The argument against is
-   player agency.
+### `simulators/cache.py`
 
-3. **Hints — free or costly?** The draft says free, unlimited. Alternative:
-   a hint counts the puzzle as "attempted" so first-time-correct after a
-   hint scores less. The free draft optimizes for low frustration; the
-   costly version optimizes for honest knowledge measurement.
+> Educational cache simulator. Models direct-mapped and set-associative caches with configurable line size, associativity, and replacement policy (LRU and FIFO). Lines are addressed by tag and index; valid bits are tracked. NOT modeled: MESI or any other coherence protocol; hardware prefetching; write buffers; multi-level inclusion or exclusion; non-power-of-two cache sizes; trace-driven warmup. Verdicts assume a cold cache at the start of each puzzle.
 
-4. **Should `look` auto-trigger an available puzzle, or only hint at it?**
-   The draft is the latter — `look` shows `[ puzzle available ]`; the
-   player runs `solve` explicitly. Auto-triggering is more aggressive
-   teaching; it can also feel intrusive. Probably the right call is "hint
-   on look, prompt on first visit only" as a compromise.
+### `simulators/pipeline.py`
 
-5. **Knowledge cap of 5 vs higher.** With 28 puzzles spread across 5 areas,
-   the player will hit cap on many areas long before solving everything.
-   Either raise the cap, or accept that the meter caps and additional
-   puzzles are for the achievement system. The draft assumes the latter.
+> Educational 5-stage CPU pipeline simulator (IF, ID, EX, MEM, WB). Models in-order issue, RAW data hazards with configurable stall or forward resolution, and structural hazards on shared resources. NOT modeled: branch prediction, speculative execution, out-of-order execution, register renaming, superscalar issue, control hazards from real branches (every puzzle is straight-line code), or any hazard beyond RAW. Verdicts cite the textbook MIPS pipeline (Patterson & Hennessy).
 
-6. **Simulator fidelity bar.** How "real" should each simulator be? A
-   teaching simulator for caches needs to handle direct-mapped, set-
-   associative, LRU and FIFO. It does not need to handle MESI coherence or
-   prefetch. Where exactly each simulator's fidelity stops matters for
-   how authoritative the verdict feels. Probably worth a per-simulator
-   fidelity statement in `simulators/<name>.py`.
+### `simulators/tlb.py`
 
-Each of these changes test assertions, so resolve before content authoring
-starts.
+> Educational virtual-to-physical translation simulator. Models a single-level page table with 4KB pages and a fully-associative TLB with configurable size and replacement policy. Translation walks the page table on a miss; the TLB caches the result. NOT modeled: multi-level page tables; huge or transparent huge pages; TLB shootdown across cores; ASIDs or process tagging; PCID. Verdicts cite the textbook x86 paging model.
+
+### `simulators/packet.py`
+
+> Educational network routing simulator. Models OSI layers 1 to 3: link-layer framing, IP routing through a small static topology, ARP resolution against a fixed table. NOT modeled: TCP windowing, congestion control, retransmit, NAT, firewall policy, MTU fragmentation, IPv6, or any wireless effect. Verdicts assume a quiet, lossless wire.
+
+### `simulators/storage.py`
+
+> Educational block-storage simulator. Models block-level reads and writes, a flat LBA space, a simple HDD seek model (track-to-track distance contributes to access time), and an SSD block-remap counter. NOT modeled: SSD garbage collection, write amplification, wear leveling beyond the remap count, NCQ, command queuing depth effects, controller-cached writes. Verdicts cite the textbook HDD geometry and the abstract SSD model from Bryant and O'Hallaron.
+
+### `simulators/signature.py`
+
+> Educational virus-signature matching simulator. Models exact-pattern matching against a curated signature list. The "found virus" verdict comes from matching a file's contents against the canonical signature for that virus. NOT modeled: heuristic detection, behavior monitoring, polymorphic-virus dynamic matching, sandbox emulation. Verdicts say "this matches the canonical signature for X" — they do not say "this is, in the world, a virus."
+
+Each fidelity statement is a contract. If a puzzle's verdict relies on behaviour the statement excludes, either the puzzle is wrong or the statement needs amending. Both cases are reviewable.
+
+---
+
+## Decision rationale
+
+Rationale and rejected alternatives for the six calls at the top of this document.
+
+### 1. Multi-puzzle rooms (capped at three)
+
+The single-puzzle alternative kept room rhythm uniform but wasted content space in rooms with natural complexity layers (L1 cache → direct-mapped, then 2-way set-associative, then write policies). Three caps the depth before any one room becomes a Zachtronics level and breaks the ninety-second budget. The `Component.puzzles: list[str]` model already supports it; this decision is purely a content-authoring policy.
+
+### 2. Soft difficulty gating
+
+Hard gating respected the learning curve at the cost of player agency. Open ordering preserved agency at the cost of presenting TLB-walk puzzles to a player who has not seen basic cache misses yet. Soft gating splits the difference: by default the `solve` listing shows only difficulty-appropriate puzzles in the room, but a curious player who reads ahead can still `solve <id>` directly. The gate is on the listing UI, not on the engine. Standard pattern from puzzle games with difficulty curves (Sigmar's Garden, the Witness, several Zachtronics entries).
+
+### 3. Tiered hints
+
+Free unlimited hints minimized frustration but let players walk through every puzzle on hints and still see their knowledge meter rise. Costly hints (any hint flags the puzzle attempted) preserved honest measurement at the cost of punishing the player who genuinely just needs the setup re-stated. Tiering keeps both properties. First hint is "I'm stuck on what the puzzle is asking" — a free re-statement. Second and later hints are "this concept is what's tested" — they start to give the shape of the answer away, and a first-time-correct after those does not bump knowledge. Puzzle YAML files declare hints as an ordered list; the engine assumes the first is free, the rest are not. Authors can decide whether to ship one cheap hint, one cheap and one costly, or no hints at all.
+
+### 4. Auto-prompt on first visit only
+
+Auto-prompting every visit is the Khan Academy / Duolingo pattern: aggressive teaching, intrusive in an exploration game. Prompt-on-look only is gentle but easy to skip past entirely — a player can wander the whole map, hit `look` thirty times, and never notice the game has a puzzle layer. First-visit-only auto-prompt lands in the middle: the puzzle is presented once as a clear first impression of the room, with a one-key escape (`skip`). Subsequent visits respect the player's choice and offer the puzzle as a hint in the `look` output. The behaviour gates on `room.puzzles[0] in attempted_puzzles`, so `skip` flips the gate without recording a real attempt.
+
+### 5. Cap at 5, weight by difficulty
+
+Raising the cap (say to 10) would have made cap mean less and made `knowledge >= 3` gates harder to reason about. Counting every solve as 1 would mean a player who only solves the easy puzzles caps out before seeing anything hard. The difficulty weight (`difficulty * 0.5 + 0.5`) keeps the cap meaningful as a real competence indicator: a knowledge-5 player has either breadth (5+ easy solves) or depth (3 hard solves). Knowledge gates retain their existing semantics. Extra puzzles become content for the achievement system (`predict_master`, `predict_grandmaster`) without distorting the meter.
+
+### 6. Per-simulator fidelity statements
+
+The temptation is to either over-engineer the simulators (production-fidelity for everything) or under-engineer them and hope no one notices. Neither is honest. Each simulator's fidelity statement makes the verdict's authority claim explicit. When a player asks "but what about MESI coherence?" the cache simulator's docstring answers: "not modeled here; the verdict is correct for the configuration we do model." That makes Python-Zork an honest teaching artifact instead of a black box that returns answers nobody can verify. The statements above are first-pass drafts — each will be revisited when the corresponding simulator is implemented and may tighten or loosen based on what the puzzle content actually needs.
