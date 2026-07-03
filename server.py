@@ -123,6 +123,7 @@ def _handle_line(sid: str, game: Game, line: str) -> None:
     if response:
         emit("terminal_output", {"output": f"\n\r{response}\n\r"})
 
+    logger.info("line handled for %s: %r -> turn=%d", sid, line, game.turns)
     emit("game_state", game.snapshot())
 
     if game.game_over:
@@ -184,10 +185,15 @@ def handle_query_state():
     sid = _session_id()
     game = _get_game(sid) if sid else None
     if game is None:
+        logger.info("query_state from %s: no session", sid)
         return
+    logger.info("query_state from %s: turn=%d", sid, game.turns)
     emit("game_state", game.snapshot())
 
 
 if __name__ == "__main__":
     logger.info("Starting on %s:%d (debug=%s, origins=%s)", HOST, PORT, DEBUG, CORS_ORIGINS)
-    socketio.run(app, debug=DEBUG, port=PORT, host=HOST)
+    # allow_unsafe_werkzeug: flask-socketio hard-errors on the Werkzeug dev
+    # server when debug is off. This server is documented dev-only (see
+    # README security caveat), so the opt-in is deliberate.
+    socketio.run(app, debug=DEBUG, port=PORT, host=HOST, allow_unsafe_werkzeug=True)
