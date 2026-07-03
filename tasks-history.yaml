@@ -100,3 +100,7 @@ completed:
     title: Implement persistent save/load (port from archive/saveload.py)
     completed: "2026-06-03"
     summary: 'Ported archive/saveload.py to computerquest/mechanics/save_load.py: pathlib, narrow exceptions, type-annotated, SAVE_SCHEMA_VERSION = 1.0. Four commands restored. Quit + interrupt flows offer save-before-exit when dirty. 13 new tests cover save/load/list/delete and error cases via tmp_path.'
+  - id: tk-7303b8
+    title: 4.2 Wire GameMap.tsx to live game state via Socket.IO query event
+    completed: "2026-06-22"
+    summary: 'Backend (5556f0b): Game.feed/snapshot/welcome_text + in-process server.py + 16 new tests. Frontend (6525267): GameMap subscribes to game_state, lays rooms on a circle from snapshot, renders door graph. Server buffers keystrokes for the in-process protocol. 150 Python tests + tsc + vite build all clean. Browser verification by Michael still required.'
