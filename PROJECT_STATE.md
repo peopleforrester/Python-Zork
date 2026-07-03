@@ -32,14 +32,14 @@ _(none sealed yet under the lifecycle schema. Decision history predating the sch
 
 Migration order (each step lands green): 1 simulators → 2 puzzle infra → 3 player/architecture wiring → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
 
-Remaining tracked task: `tk-a7098e` (4.1 minigames) — now unblocked; it is steps 1–7 above. Frontend browser verification of Step 4.2's GameMap work also still owed by Michael.
+Remaining tracked task: `tk-a7098e` (4.1 minigames) — now unblocked; it is steps 1–7 above. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1).
 
 ## Branch & Tests
 
 - Branch: `staging`
-- Working tree: 2 dirty files (tasks.yaml / tasks-history.yaml sync, committed with this migration)
-- Last CI: green on staging @ 4279a5a (run 28261261148)
-- `staging` is 4 commits ahead of `main` (Step 4.2 backend + frontend, both spike docs). Promote when Michael has browser-verified the map.
+- Working tree: clean
+- Last CI: green on staging @ d1b51e1 (run 28671675746)
+- `staging` and `main` are in sync at d1b51e1 (promoted 2026-07-03 after the browser walkthrough cleared the verification gate).
 - Tests: 150/150 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix)
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -52,6 +52,7 @@ _(append-only. Each phase transition adds one line, oldest first.)_
 - 2026-06-22T00:00:00Z 1.1 research spike saved (teaching-games canon)
 - 2026-06-26T00:00:00Z 1.1 → 1.2 architecture-microquiz.md decisions resolved (4279a5a)
 - 2026-07-01T00:00:00Z init-state migration → lifecycle schema adopted at Phase 1.3
+- 2026-07-03T00:00:00Z Step 4.2 browser-verified via headless walkthrough; 3 defects fixed (d1b51e1); staging promoted to main
 
 ## Narrative history (pre-migration body, condensed)
 
