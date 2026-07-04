@@ -2,10 +2,10 @@ version: 1
 tasks:
   - id: tk-a7098e
     title: 4.1 Implement minigames after design doc; flip ENABLE_MINIGAMES
-    status: ready
+    status: claimed
     priority: low
     blocks: []
     blocked_by: []
-    claimed_by: null
+    claimed_by: session-1783197666
     created: "2026-04-28"
     notes: ""
