@@ -26,8 +26,11 @@ classifiers = [
     "Topic :: Games/Entertainment",
 ]
 
-# Core game (CLI) has no third-party runtime dependencies.
-dependencies = []
+# Core runtime deps: pyyaml parses the puzzle data tree
+# (mechanics/puzzles/data/, per docs/architecture-microquiz.md).
+dependencies = [
+    "pyyaml>=6.0.3",
+]
 
 [project.optional-dependencies]
 # Web interface (Flask + Socket.IO front-end)
@@ -49,11 +52,15 @@ dev = [
     "flask>=2.3.0",
     "flask-socketio>=5.3.0",
     "flask-cors>=4.0.0",
+    "types-pyyaml>=6.0.12.20260518",
 ]
 
 [project.urls]
 Homepage = "https://github.com/peopleforrester/Python-Zork"
 Repository = "https://github.com/peopleforrester/Python-Zork"
+
+[tool.setuptools.package-data]
+computerquest = ["mechanics/puzzles/data/**/*.yaml"]
 
 [tool.setuptools.packages.find]
 include = ["computerquest*"]

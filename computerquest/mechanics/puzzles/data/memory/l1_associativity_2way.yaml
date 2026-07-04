@@ -1,0 +1,38 @@
+# Follow-up to l1_lru_basic: same trace plus one more 0x0100 access, at
+# 2-way associativity. Canonical answer: M M M M H M H H — the final H is
+# the "associativity rescue" (0x0200 evicted 0x0180, not 0x0100).
+id: l1_associativity_2way
+component_category: memory
+subject_area: memory
+difficulty: 2
+title: "L1 Cache — the associativity rescue"
+simulator: cache
+prompt: |
+  Same cache, one change: the 4 lines are now organized as 2 sets of 2 ways
+  (2-way set-associative), still LRU. One more access is appended:
+
+    0x0100  0x0140  0x0180  0x01C0  0x0100  0x0200  0x0140  0x0100
+
+  Predict hit (H) or miss (M) for each of the eight accesses. Watch what
+  happens to the final 0x0100 compared to the direct-mapped cache.
+setup:
+  policy: LRU
+  size_lines: 4
+  line_size_bytes: 64
+  associativity: 2
+  accesses: [0x0100, 0x0140, 0x0180, 0x01C0, 0x0100, 0x0200, 0x0140, 0x0100]
+answer_kind: sequence
+answer_grammar: "eight tokens of H or M, separated by spaces"
+hints:
+  - "With 2 sets, set = line mod 2. Three of these lines land in set 0."
+  - "When 0x0200 arrives, set 0 holds 0x0100 and 0x0180. LRU evicts whichever was touched longest ago."
+explanation: |
+  Through the first seven accesses the hit/miss pattern matches the
+  direct-mapped cache. The difference is hidden in WHAT got evicted: when
+  0x0200 missed into set 0, LRU evicted 0x0180 (untouched since access 3)
+  instead of 0x0100 (refreshed by access 5). So the eighth access, 0x0100,
+  hits where the direct-mapped cache would miss.
+
+  That is the whole argument for associativity: same capacity, same miss
+  count on a cold run, but conflict evictions land on the line you are
+  least likely to need again.

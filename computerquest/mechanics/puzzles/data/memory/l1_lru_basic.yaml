@@ -1,0 +1,37 @@
+# The worked example from docs/architecture-microquiz.md. Canonical answer
+# per the cache simulator: M M M M H M H.
+id: l1_lru_basic
+component_category: memory
+subject_area: memory
+difficulty: 1
+title: "L1 Cache — predict hit/miss with LRU eviction"
+simulator: cache
+prompt: |
+  You are looking at a 4-line, direct-mapped L1 cache with 64-byte lines and
+  an LRU replacement policy. The CPU issues this sequence of byte addresses:
+
+    0x0100  0x0140  0x0180  0x01C0  0x0100  0x0200  0x0140
+
+  For each access, predict whether it will be a hit (H) or a miss (M).
+setup:
+  policy: LRU
+  size_lines: 4
+  line_size_bytes: 64
+  associativity: 1
+  accesses: [0x0100, 0x0140, 0x0180, 0x01C0, 0x0100, 0x0200, 0x0140]
+answer_kind: sequence
+answer_grammar: "seven tokens of H or M, separated by spaces"
+hints:
+  - "Start by working out which cache line each address maps to: line = address / 64, set = line mod 4."
+  - "Two of the seven addresses map to the same set. In a direct-mapped cache they cannot coexist."
+explanation: |
+  The first four accesses each go to a different line (0x100, 0x140, 0x180,
+  0x1C0). All four are cold misses. The fifth access (0x100) is still in
+  cache from access 1, so it hits. The sixth (0x200) maps to the same set as
+  0x100; in a direct-mapped cache that means 0x200 evicts 0x100. So 0x200
+  misses. The seventh (0x140) was last touched at access 2 and is still
+  present, so it hits.
+
+  Direct mapping is brutal: even with LRU, two addresses that map to the
+  same set cannot coexist. The follow-up puzzle in this room raises
+  associativity to 2 to show how that changes things.
