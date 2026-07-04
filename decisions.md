@@ -28,3 +28,12 @@ rationale lives in project memory and the referenced docs):
   docs/architecture-microquiz.md (multi-puzzle rooms capped at 3, soft
   difficulty gating, tiered hints, first-visit auto-prompt, cap-5
   difficulty-weighted knowledge, per-simulator fidelity statements).
+
+## 2026-07-04T00:00:00Z · 1.3 · microquiz architecture approved
+
+Michael approved docs/architecture-microquiz.md as the contract for
+the predict-and-verify micro-puzzle unit (tk-a7098e).
+sha256:cde83dbaa90b18bdec1c05ffadb18f1d603f70ee0dc8e9b536820610c6bc8555.
+Alternatives (stay-the-course portfolio piece; full Zachtronics-style
+pivot) were rejected in the 2026-06-22 research spike. Implementation
+follows the doc's eight-step migration plan, TDD-first per step.

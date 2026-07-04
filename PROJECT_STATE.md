@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
-Phase: 1.3 Approve
-Approved: pending
+Phase: 2.1 Test
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -12,19 +12,23 @@ Current unit of work: **micro-puzzle implementation (tk-a7098e)** per `docs/arch
 
 - [x] 1.1 Research (teaching-games spike in mrf-knowledge, 2026-06-22)
 - [x] 1.2 Plan (architecture-microquiz.md drafted b8a7a9b; six decisions resolved 4279a5a)
-- [ ] 1.3 Approve  ← you are here (Michael directed Direction C and the decision calls; formal contract seal pending)
-- [ ] 2.1 Test
+- [x] 1.3 Approve (Michael, 2026-07-04; sha256:cde83dbaa90b)
+- [ ] 2.1 Test  ← you are here (migration step 1: simulator scaffolding, tests first)
 - [ ] 2.2 Implement
 - [ ] 2.3 Verify
 - [ ] 3.1 Stage
 - [ ] 3.2 Confirm CI
 - [ ] 3.3 Promote
 
+Note: the unit iterates 2.1→2.3 once per migration step (8 steps); the 3.x gates apply per landed step.
+
 Prior unit (senior-review remediation + Step 4.2/4.3 + save/load) completed through 3.3 — promoted to `main` at 8ec133c on 2026-06-22.
 
 ## Contracts
 
-_(none sealed yet under the lifecycle schema. Decision history predating the schema lives in `decisions.md` and project memory: Step 1.2 REMOVE save/load [later restored by tk-24fa9f], Step 1.3 GATE minigames, Step 3.2 DELETE data/*.json, Step 3.6 WIRE health bar, plus the six micro-puzzle architecture calls in docs/architecture-microquiz.md.)_
+- 2026-07-04T00:00:00Z · sha256:cde83dbaa90b · docs/architecture-microquiz.md approved by Michael. Predict-and-verify micro-puzzle system: data model, simulator protocol with per-module fidelity statements, five new verbs, difficulty-weighted knowledge meter (cap 5), tiered hints, first-visit auto-prompt, save schema 1.1, eight-step migration plan. Deviations require /prd-amend and re-approval.
+
+_(Decision history predating the schema lives in `decisions.md` and project memory.)_
 
 ## Current Plan
 
@@ -53,6 +57,7 @@ _(append-only. Each phase transition adds one line, oldest first.)_
 - 2026-06-26T00:00:00Z 1.1 → 1.2 architecture-microquiz.md decisions resolved (4279a5a)
 - 2026-07-01T00:00:00Z init-state migration → lifecycle schema adopted at Phase 1.3
 - 2026-07-03T00:00:00Z Step 4.2 browser-verified via headless walkthrough; 3 defects fixed (d1b51e1); staging promoted to main
+- 2026-07-04T00:00:00Z 1.3 → 2.1 microquiz plan approved (sha256:cde83dbaa90b); starting simulator scaffolding
 
 ## Narrative history (pre-migration body, condensed)
 
