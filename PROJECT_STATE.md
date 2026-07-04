@@ -34,7 +34,9 @@ _(Decision history predating the schema lives in `decisions.md` and project memo
 
 **Micro-puzzle system (Direction C, predict-and-verify).** Full blueprint in `docs/architecture-microquiz.md` (decisions resolved 2026-06-26); deep-end minigame design in `docs/design-minigames.md`; research grounding in `mrf-knowledge/game-design/2026-06-22_teaching-games-text-adventure-pivot.md`.
 
-Migration order (each step lands green): 1 simulators → 2 puzzle infra → 3 player/architecture wiring → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
+Migration order (each step lands green): **1 simulators ✓ (4a50df1, promoted)** → 2 puzzle infra → 3 player/architecture wiring → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
+
+Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (stall/forward RAW model) simulators landed with fidelity docstrings; timing conventions (write-through regfile, EX→EX forward, load-use bubble) documented in pipeline.py and pinned by tests (7/8/11 cycle counts). tlb/packet/storage/signature simulators land with their consuming puzzles in step 5.
 
 Remaining tracked task: `tk-a7098e` (4.1 minigames) — now unblocked; it is steps 1–7 above. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1).
 
