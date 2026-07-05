@@ -34,7 +34,7 @@ _(Decision history predating the schema lives in `decisions.md` and project memo
 
 **Micro-puzzle system (Direction C, predict-and-verify).** Full blueprint in `docs/architecture-microquiz.md` (decisions resolved 2026-06-26); deep-end minigame design in `docs/design-minigames.md`; research grounding in `mrf-knowledge/game-design/2026-06-22_teaching-games-text-adventure-pivot.md`.
 
-Migration order (each step lands green): **1 simulators ✓ (4a50df1)** → **2 puzzle infra ✓ (4740077, promoted)** → 3 player/architecture wiring → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
+Migration order (each step lands green): **1 simulators ✓ (4a50df1)** → **2 puzzle infra ✓ (4740077)** → **3 player/world wiring ✓ (a816658, promoted)** → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
 
 Step 2 note: puzzles are one-YAML-per-file under `mechanics/puzzles/data/<category>/`, deserialized to frozen `MicroPuzzle` dataclasses, load-time-validated (the registry runs every setup through its named simulator — a broken puzzle cannot ship). `registry.evaluate(id, raw)` is the single call step 4's commands will use. Three seed puzzles live (two cache, one pipeline). pyyaml is now a runtime dep per contract.
 
