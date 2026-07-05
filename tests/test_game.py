@@ -397,6 +397,22 @@ class TestGameSnapshot(unittest.TestCase):
                     f"room {room['id']!r} door {direction!r} -> {dest_id!r} not in rooms list",
                 )
 
+    def test_rooms_carry_puzzle_state_blocks(self) -> None:
+        """Microquiz step 3: every room exposes available/solved/attempted."""
+        core1_l1 = next(r for r in self.snap["rooms"] if r["id"] == "core1_l1")
+        self.assertEqual(
+            core1_l1["puzzles"]["available"],
+            ["l1_lru_basic", "l1_associativity_2way"],
+        )
+        self.assertEqual(core1_l1["puzzles"]["solved"], [])
+
+        self.game.player.solved_puzzles.add("l1_lru_basic")
+        self.game.player.attempted_puzzles.add("l1_lru_basic")
+        fresh = self.game.snapshot()
+        core1_l1 = next(r for r in fresh["rooms"] if r["id"] == "core1_l1")
+        self.assertEqual(core1_l1["puzzles"]["solved"], ["l1_lru_basic"])
+        self.assertEqual(core1_l1["puzzles"]["attempted"], ["l1_lru_basic"])
+
     def test_snapshot_reflects_state_after_feed(self) -> None:
         before = self.game.snapshot()
         self.game.feed("look")  # turn does not advance for look

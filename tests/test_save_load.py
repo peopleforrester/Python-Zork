@@ -113,6 +113,49 @@ class TestLoadGame(SaveLoadTestBase):
         self.assertIn("missing required field", result)
 
 
+class TestSchemaMigration(SaveLoadTestBase):
+    """Microquiz step 3: schema 1.1 adds puzzle progress; 1.0 saves still load."""
+
+    def test_puzzle_progress_roundtrips(self) -> None:
+        self.game.player.solved_puzzles.add("l1_lru_basic")
+        self.game.player.attempted_puzzles.update({"l1_lru_basic", "pipeline_forwarding_intro"})
+        self.save_load.save_game("with_puzzles")
+
+        self.game.player.solved_puzzles.clear()
+        self.game.player.attempted_puzzles.clear()
+
+        result = self.save_load.load_game("with_puzzles")
+        self.assertIn("Game loaded", result)
+        self.assertEqual(self.game.player.solved_puzzles, {"l1_lru_basic"})
+        self.assertEqual(
+            self.game.player.attempted_puzzles,
+            {"l1_lru_basic", "pipeline_forwarding_intro"},
+        )
+
+    def test_saves_write_schema_1_1(self) -> None:
+        self.save_load.save_game("versioned")
+        data = json.loads((self.save_root / "versioned.json").read_text())
+        self.assertEqual(data["version"], SAVE_SCHEMA_VERSION)
+        self.assertEqual(data["version"], "1.1")
+
+    def test_schema_1_0_save_still_loads_with_empty_puzzle_sets(self) -> None:
+        """A pre-microquiz save has no puzzle fields; loading must succeed
+        and initialize them empty rather than rejecting or crashing."""
+        self.game.player.solved_puzzles.add("l1_lru_basic")
+        self.save_load.save_game("legacy")
+        path = self.save_root / "legacy.json"
+        data = json.loads(path.read_text())
+        data["version"] = "1.0"
+        del data["player"]["solved_puzzles"]
+        del data["player"]["attempted_puzzles"]
+        path.write_text(json.dumps(data))
+
+        result = self.save_load.load_game("legacy")
+        self.assertIn("Game loaded", result)
+        self.assertEqual(self.game.player.solved_puzzles, set())
+        self.assertEqual(self.game.player.attempted_puzzles, set())
+
+
 class TestListSaves(SaveLoadTestBase):
     def test_empty_directory_reports_no_files(self) -> None:
         self.assertIn("No save files", self.save_load.list_saves())

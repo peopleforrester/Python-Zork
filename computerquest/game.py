@@ -295,6 +295,13 @@ class Game:
                 "visited": room.visited,
                 "doors": doors,
                 "item_count": len(room.items),
+                "puzzles": {
+                    "available": list(room.puzzles),
+                    "solved": [p for p in room.puzzles if p in self.player.solved_puzzles],
+                    "attempted": [
+                        p for p in room.puzzles if p in self.player.attempted_puzzles
+                    ],
+                },
             })
 
         player_location_id = room_id_by_component.get(self.player.location)

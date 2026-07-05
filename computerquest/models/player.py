@@ -36,6 +36,9 @@ class Player:
 
         # System-specific attributes
         self.found_viruses: list[str] = []
+        # Microquiz progress: ids from the puzzle registry.
+        self.solved_puzzles: set[str] = set()
+        self.attempted_puzzles: set[str] = set()
         self.quarantined_viruses: list[str] = []
         self.knowledge = {
             "cpu": 0,

@@ -32,7 +32,8 @@ class TestComputerArchitecture(unittest.TestCase):
         with patch.object(ComputerArchitecture, 'make_components') as m_make, \
              patch.object(ComputerArchitecture, 'connect_components') as m_connect, \
              patch.object(ComputerArchitecture, 'create_items') as m_items, \
-             patch.object(ComputerArchitecture, 'create_player') as m_player:
+             patch.object(ComputerArchitecture, 'create_player') as m_player, \
+             patch.object(ComputerArchitecture, 'bind_puzzles') as m_bind:
 
             self.arch.setup()
 
@@ -40,6 +41,7 @@ class TestComputerArchitecture(unittest.TestCase):
             m_connect.assert_called_once_with()
             m_items.assert_called_once_with()
             m_player.assert_called_once_with()
+            m_bind.assert_called_once_with()
 
     def test_make_components(self):
         """Test making components"""
@@ -192,3 +194,43 @@ class TestComputerArchitecture(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPuzzleBindings(unittest.TestCase):
+    """Microquiz step 3: rooms declare their puzzles; bindings must resolve."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        with patch.object(ComputerArchitecture, "setup"):
+            cls.arch = ComputerArchitecture()
+        cls.arch.make_components()
+        cls.arch.bind_puzzles()
+
+    def test_every_room_has_a_puzzles_list(self) -> None:
+        for room_id, room in self.arch.rooms.items():
+            self.assertIsInstance(room.puzzles, list, room_id)
+
+    def test_seed_bindings(self) -> None:
+        self.assertEqual(
+            self.arch.rooms["core1_l1"].puzzles,
+            ["l1_lru_basic", "l1_associativity_2way"],
+        )
+        self.assertEqual(self.arch.rooms["core1"].puzzles, ["pipeline_forwarding_intro"])
+
+    def test_bound_ids_resolve_and_respect_the_cap(self) -> None:
+        from computerquest.mechanics.puzzles import load_registry
+
+        registry = load_registry()
+        seen: set[str] = set()
+        for room_id, room in self.arch.rooms.items():
+            self.assertLessEqual(len(room.puzzles), 3, f"{room_id} exceeds cap (decision 1)")
+            for puzzle_id in room.puzzles:
+                self.assertIn(puzzle_id, registry.by_id, f"{room_id} binds unknown {puzzle_id}")
+                self.assertNotIn(puzzle_id, seen, f"{puzzle_id} bound to two rooms")
+                seen.add(puzzle_id)
+
+    def test_all_shipped_puzzles_are_bound_somewhere(self) -> None:
+        from computerquest.mechanics.puzzles import load_registry
+
+        bound = {p for room in self.arch.rooms.values() for p in room.puzzles}
+        self.assertSetEqual(bound, set(load_registry().by_id))

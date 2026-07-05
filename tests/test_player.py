@@ -395,3 +395,19 @@ class TestPlayer(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestPuzzleTracking(unittest.TestCase):
+    """Microquiz step 3: the player tracks solved and attempted puzzle ids."""
+
+    def setUp(self) -> None:
+        self.player = Player(location=Component(name="X", description="x"))
+
+    def test_fresh_player_has_empty_puzzle_sets(self) -> None:
+        self.assertEqual(self.player.solved_puzzles, set())
+        self.assertEqual(self.player.attempted_puzzles, set())
+
+    def test_puzzle_sets_are_real_sets(self) -> None:
+        self.player.solved_puzzles.add("l1_lru_basic")
+        self.player.solved_puzzles.add("l1_lru_basic")
+        self.assertEqual(len(self.player.solved_puzzles), 1)

@@ -36,6 +36,7 @@ class Component:
             "reliability": 0  # 1-10 scale
         }
         self.visited = False  # Has player visited this component
+        self.puzzles: list[str] = []  # MicroPuzzle ids bound to this room (max 3)
         self.power_state = "on"  # Power state of the component (on/off/sleep)
         self.error_state = None  # Any error conditions present
 

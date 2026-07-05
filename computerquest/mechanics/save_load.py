@@ -12,7 +12,10 @@ from typing import Any
 from computerquest.config import SAVE_DIR
 
 # Bump when the on-disk schema changes in a way old saves can't be read.
-SAVE_SCHEMA_VERSION = "1.0"
+# 1.1 adds player.solved_puzzles / attempted_puzzles; 1.0 saves still load
+# (the new fields default to empty).
+SAVE_SCHEMA_VERSION = "1.1"
+_COMPATIBLE_VERSIONS = frozenset({"1.0", SAVE_SCHEMA_VERSION})
 
 
 def _default_save_root() -> Path:
@@ -57,6 +60,8 @@ class SaveLoadSystem:
                 "found_viruses": player.found_viruses,
                 "quarantined_viruses": player.quarantined_viruses,
                 "knowledge": player.knowledge,
+                "solved_puzzles": sorted(player.solved_puzzles),
+                "attempted_puzzles": sorted(player.attempted_puzzles),
             },
             "components": {
                 room.id: {
@@ -102,7 +107,7 @@ class SaveLoadSystem:
         except (OSError, json.JSONDecodeError) as exc:
             return f"Error loading game: {exc}"
 
-        if state.get("version") != SAVE_SCHEMA_VERSION:
+        if state.get("version") not in _COMPATIBLE_VERSIONS:
             return "Save file is from an incompatible game version."
 
         try:
@@ -136,6 +141,9 @@ class SaveLoadSystem:
         player.found_viruses = player_state["found_viruses"]
         player.quarantined_viruses = player_state["quarantined_viruses"]
         player.knowledge = player_state["knowledge"]
+        # Absent in 1.0 saves; default to empty rather than failing.
+        player.solved_puzzles = set(player_state.get("solved_puzzles", []))
+        player.attempted_puzzles = set(player_state.get("attempted_puzzles", []))
 
         for room_id, room_state in state["components"].items():
             room = rooms_by_id.get(room_id)

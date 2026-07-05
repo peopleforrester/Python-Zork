@@ -23,6 +23,16 @@ class ComputerArchitecture:
         self.connect_components()
         self.create_items()
         self.create_player()
+        self.bind_puzzles()
+
+    def bind_puzzles(self):
+        """
+        Bind micro-puzzle ids to their rooms (declarative, reviewable in one
+        place per the microquiz contract). Max three per room (decision 1);
+        ids must exist in mechanics/puzzles/data/ — tests enforce both.
+        """
+        self.rooms["core1_l1"].puzzles = ["l1_lru_basic", "l1_associativity_2way"]
+        self.rooms["core1"].puzzles = ["pipeline_forwarding_intro"]
 
     def make_components(self):
         """
