@@ -4,7 +4,7 @@
 import logging
 import os
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
@@ -41,7 +41,7 @@ def _env_bool(env_value):
 CORS_ORIGINS = _parse_origins(os.environ.get("CQ_CORS_ORIGINS"))
 DEBUG = _env_bool(os.environ.get("CQ_DEBUG"))
 HOST = os.environ.get("CQ_HOST", "127.0.0.1")
-PORT = int(os.environ.get("CQ_PORT", "5000"))
+PORT = int(os.environ.get("CQ_PORT") or os.environ.get("PORT") or "5000")
 
 
 # --- App ---------------------------------------------------------------------
@@ -68,6 +68,24 @@ _INTERCEPTED_VERBS = frozenset({"quit", "exit", "q"})
 @app.route("/api/health", methods=["GET"])
 def health_check():
     return jsonify({"status": "ok"})
+
+
+# Serve the built frontend when dist/ exists (Railway single-service mode:
+# same origin for page + socket, so no CORS in production). Local dev keeps
+# using the Vite server on :5173 and this route 404s harmlessly.
+_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
+
+
+@app.route("/")
+def index():
+    if os.path.isdir(_DIST):
+        return send_from_directory(_DIST, "index.html")
+    return jsonify({"error": "frontend not built; run npm run build"}), 404
+
+
+@app.route("/assets/<path:filename>")
+def assets(filename):
+    return send_from_directory(os.path.join(_DIST, "assets"), filename)
 
 
 def _session_id() -> str | None:

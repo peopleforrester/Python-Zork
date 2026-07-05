@@ -31,7 +31,9 @@ function App() {
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io('http://localhost:5000');
+    // Dev: the Vite page on :5173 talks to the Flask server on :5000.
+    // Prod (Railway): Flask serves the page itself, so same origin.
+    const newSocket = io(import.meta.env.PROD ? window.location.origin : 'http://localhost:5000');
     
     newSocket.on('connect', () => {
       console.log('Socket connected');
