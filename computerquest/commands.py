@@ -42,7 +42,15 @@ class LookCommand(Command):
         if not self.args:
             # Mark component as visited to reveal more technical details
             self.game.player.location.mark_visited()
-            return self.game.player.look()
+            result = self.game.player.look()
+            room = self.game.player.location
+            for puzzle_id in room.puzzles:
+                if puzzle_id in self.game.player.solved_puzzles:
+                    continue
+                puzzle = self.game.puzzle_registry.by_id.get(puzzle_id)
+                if puzzle is not None:
+                    result += f"\n[ puzzle available: {puzzle.title} ]"
+            return result
         else:
             item_name = self.args[0].lower()
 
@@ -326,6 +334,31 @@ class DeleteSaveCommand(Command):
         return str(self.game.save_load.delete_save(self.args[0]))
 
 
+class SolveCommand(Command):
+    """Begin a micro-puzzle in the current room (or list the available ones)."""
+    def execute(self) -> str:
+        puzzle_id = self.args[0].lower() if self.args else None
+        return str(self.game.start_puzzle(puzzle_id))
+
+
+class AnswerCommand(Command):
+    """Commit an answer for the active micro-puzzle."""
+    def execute(self) -> str:
+        return str(self.game.answer_puzzle(" ".join(self.args)))
+
+
+class HintCommand(Command):
+    """Show the next hint for the active micro-puzzle (first one is free)."""
+    def execute(self) -> str:
+        return str(self.game.puzzle_hint())
+
+
+class SkipCommand(Command):
+    """Put the active micro-puzzle aside without recording an attempt."""
+    def execute(self) -> str:
+        return str(self.game.skip_puzzle())
+
+
 class VisualizeCommand(Command):
     """Command to visualize components"""
     def execute(self) -> str:
@@ -483,6 +516,10 @@ class CommandProcessor:
             'saves': SavesCommand,
             'listsaves': SavesCommand,
             'deletesave': DeleteSaveCommand,
+            'solve': SolveCommand,
+            'answer': AnswerCommand,
+            'hint': HintCommand,
+            'skip': SkipCommand,
             'visualize': VisualizeCommand,
             'viz': VisualizeCommand,
             'simulate': SimulateCommand,
