@@ -1,0 +1,34 @@
+# Canonical answer per the cache simulator: M M H M M (FIFO evicts A).
+id: l2_fifo_eviction
+component_category: memory
+subject_area: memory
+difficulty: 2
+title: "L2 Cache: FIFO is not LRU"
+simulator: cache
+prompt: |
+  A tiny 2-line, fully-associative victim buffer in front of L2 uses
+  FIFO replacement (evict whichever line was INSERTED first, ignoring
+  later touches). Three distinct lines A, B, C at these addresses:
+
+    A=0x000  B=0x040  A  C=0x080  A
+
+  Predict hit (H) or miss (M) for each of the five accesses.
+setup:
+  policy: FIFO
+  size_lines: 2
+  line_size_bytes: 64
+  associativity: 2
+  accesses: [0x000, 0x040, 0x000, 0x080, 0x000]
+answer_kind: sequence
+answer_grammar: "five tokens of H or M, separated by spaces"
+hints:
+  - "The third access to A is a hit, but under FIFO that hit changes nothing."
+  - "When C arrives, the oldest INSERTION is A, however recently it was used."
+explanation: |
+  A and B miss cold; the second A hits. Then C needs a slot, and FIFO
+  evicts by insertion order: A went in first, so A leaves even though it
+  was touched one access ago. The final A misses.
+
+  Under LRU the same trace ends in a hit, because the middle touch
+  refreshed A's recency. This five-access trace is the smallest
+  experiment that tells the two policies apart from the outside.

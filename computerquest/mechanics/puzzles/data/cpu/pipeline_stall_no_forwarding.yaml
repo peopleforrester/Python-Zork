@@ -1,0 +1,37 @@
+# Canonical answer per the pipeline simulator: 11 cycles.
+id: pipeline_stall_no_forwarding
+component_category: cpu
+subject_area: cpu
+difficulty: 2
+title: "Pipeline: the same chain with forwarding off"
+simulator: pipeline
+prompt: |
+  The same dependent chain you may have met in Core 1, but this pipeline
+  has NO forwarding hardware. A consumer must wait until the producer's
+  writeback before leaving decode (the register file is written and read
+  in the same cycle):
+
+    LOAD  R2 <- [R1]
+    ADD   R4 <- R2 + R3
+    STORE [R1] <- R4
+
+  In how many total cycles does the STORE complete WB?
+setup:
+  stages: 5
+  forwarding: false
+  instructions:
+    - ["LOAD", ["R1"], "R2"]
+    - ["ADD", ["R2", "R3"], "R4"]
+    - ["STORE", ["R4", "R1"], null]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "LOAD writes back in cycle 5, so ADD cannot enter EX before cycle 6."
+  - "The ADD writes back in cycle 8; STORE stalls in decode until then."
+explanation: |
+  Without forwarding, every dependent instruction waits for a full
+  writeback. LOAD retires in cycle 5, letting ADD execute in cycle 6 and
+  write back in cycle 8; STORE then executes in cycle 9 and finishes in
+  cycle 11. Forwarding hardware turns this 11 into 8 by shipping results
+  straight between pipeline stages, which is why the follow-up puzzle
+  with forwarding on is three cycles faster on the identical program.

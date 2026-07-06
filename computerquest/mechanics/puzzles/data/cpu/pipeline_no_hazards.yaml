@@ -1,0 +1,34 @@
+# Canonical answer per the pipeline simulator: 5 + 2 = 7 cycles.
+id: pipeline_no_hazards
+component_category: cpu
+subject_area: cpu
+difficulty: 1
+title: "Pipeline: the ideal case"
+simulator: pipeline
+prompt: |
+  A classic 5-stage pipeline (IF, ID, EX, MEM, WB) runs three
+  instructions that share no registers at all:
+
+    ADD R3 <- R1 + R2
+    ADD R6 <- R4 + R5
+    ADD R9 <- R7 + R8
+
+  No hazards, no stalls. In how many total cycles does the last
+  instruction complete WB?
+setup:
+  stages: 5
+  forwarding: true
+  instructions:
+    - ["ADD", ["R1", "R2"], "R3"]
+    - ["ADD", ["R4", "R5"], "R6"]
+    - ["ADD", ["R7", "R8"], "R9"]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "The first instruction takes 5 cycles; each extra instruction adds just one."
+explanation: |
+  Filling the pipeline costs 5 cycles for the first instruction; after
+  that, one instruction retires per cycle. Three instructions finish in
+  5 + 2 = 7 cycles. This k + (n - 1) formula is the whole promise of
+  pipelining, and every hazard puzzle in this system measures how far
+  reality falls short of it.

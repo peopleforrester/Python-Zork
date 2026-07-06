@@ -1,0 +1,37 @@
+# Canonical answer per the signature simulator: clean (one byte short).
+id: signature_near_miss
+component_category: security
+subject_area: security
+difficulty: 2
+title: "Signature scan: the one-byte mutation"
+simulator: signature
+prompt: |
+  Same signature database as the BIOS scanner:
+
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus:     "hide_proc("
+
+  A quarantined sample was recompiled by its author and now contains:
+
+    "init_sector(); XJMP:0x7C0F; load_mbr()"
+
+  What does the scanner report? Answer with a virus name, or "clean".
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "init_sector(); XJMP:0x7C0F; load_mbr()"
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "Compare the file text against each signature character by character."
+explanation: |
+  The sample contains XJMP:0x7C0F, and the stored signature is
+  XJMP:0x7C00. Exact-substring matching fails on the final character,
+  so the scanner reports clean even though the file is one byte away
+  from a known virus.
+
+  This is the fundamental blind spot of signature scanning: any
+  mutation that changes the matched bytes defeats it. Real scanners
+  add heuristics and behavior monitoring precisely because attackers
+  learned to recompile.

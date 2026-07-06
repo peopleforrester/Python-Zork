@@ -35,8 +35,13 @@ class ComputerArchitecture:
         self.rooms["core1"].puzzles = ["pipeline_forwarding_intro"]
         self.rooms["virtual_memory"].puzzles = ["tlb_hitmiss_lru", "tlb_walk_translate"]
         self.rooms["hdd"].puzzles = ["hdd_seek_fcfs", "hdd_seek_sstf"]
-        self.rooms["network_interface"].puzzles = ["packet_route_kernel"]
+        self.rooms["network_interface"].puzzles = ["packet_route_kernel", "packet_route_ssd"]
         self.rooms["bios"].puzzles = ["virus_signature_match"]
+        self.rooms["core1_cu"].puzzles = ["pipeline_no_hazards"]
+        self.rooms["core1_alu"].puzzles = ["pipeline_stall_no_forwarding"]
+        self.rooms["core2_cu"].puzzles = ["pipeline_alu_chain"]
+        self.rooms["l2_cache1"].puzzles = ["l2_fifo_eviction"]
+        self.rooms["kernel"].puzzles = ["signature_near_miss"]
 
     def make_components(self):
         """

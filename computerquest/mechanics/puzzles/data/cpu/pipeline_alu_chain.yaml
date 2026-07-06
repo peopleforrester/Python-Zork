@@ -1,0 +1,38 @@
+# Canonical answer per the pipeline simulator: 8 cycles (no stalls at all).
+id: pipeline_alu_chain
+component_category: cpu
+subject_area: cpu
+difficulty: 2
+title: "Pipeline: a dependent ALU chain, zero stalls"
+simulator: pipeline
+prompt: |
+  Four ADD instructions where every one consumes the previous result,
+  on a 5-stage pipeline WITH forwarding:
+
+    ADD R2 <- R1 + R1
+    ADD R3 <- R2 + R1
+    ADD R4 <- R3 + R1
+    ADD R5 <- R4 + R1
+
+  Dependent on paper, but how many total cycles do they take?
+setup:
+  stages: 5
+  forwarding: true
+  instructions:
+    - ["ADD", ["R1"], "R2"]
+    - ["ADD", ["R2", "R1"], "R3"]
+    - ["ADD", ["R3", "R1"], "R4"]
+    - ["ADD", ["R4", "R1"], "R5"]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "An ALU result forwards from EX directly into the next instruction's EX."
+  - "If nothing stalls, the formula is stages + (instructions - 1)."
+explanation: |
+  Every producer here is an ALU op, and forwarding hands an ALU result
+  from EX straight into the very next EX. The chain runs back to back
+  with zero bubbles: 5 + 3 = 8 cycles, the ideal-pipeline number.
+
+  Compare the load-use chain: a LOAD's value only exists after MEM, so
+  even perfect forwarding eats one bubble there. ALU-to-ALU is the case
+  forwarding solves completely.

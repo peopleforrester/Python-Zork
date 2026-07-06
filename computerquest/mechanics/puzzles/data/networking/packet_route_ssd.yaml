@@ -1,0 +1,38 @@
+# Canonical answer per the packet simulator: nic pch storage_controller ssd.
+id: packet_route_ssd
+component_category: networking
+subject_area: networking
+difficulty: 2
+title: "Packet routing: same tables, different branch"
+simulator: packet
+prompt: |
+  Same forwarding tables as the kernel-bound packet, but this one is
+  DMA traffic addressed to the ssd:
+
+    nic:                kernel -> pch,  ssd -> pch
+    pch:                kernel -> cpu_package,  ssd -> storage_controller
+    cpu_package:        kernel -> kernel
+    storage_controller: ssd -> ssd
+
+  List every component this packet visits, in order.
+setup:
+  routes:
+    nic: {kernel: pch, ssd: pch}
+    pch: {kernel: cpu_package, ssd: storage_controller}
+    cpu_package: {kernel: kernel}
+    storage_controller: {ssd: ssd}
+  src: nic
+  dst: ssd
+answer_kind: sequence
+answer_grammar: "component names in visit order, separated by spaces"
+hints:
+  - "The paths agree up to the pch; its table is where the branch happens."
+explanation: |
+  The nic forwards everything to the pch either way. The branch is in
+  the pch's table: kernel-bound traffic goes up to the cpu_package,
+  ssd-bound traffic goes down to the storage_controller, which delivers
+  it. Path: nic, pch, storage_controller, ssd.
+
+  One changed row in one hop's table redirects the whole flow. That
+  locality is what makes routing scalable, and what makes routing
+  mistakes so surgical.
