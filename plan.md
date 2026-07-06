@@ -22,9 +22,9 @@ Steps are grouped by week to match the review's recommended cadence, but each st
 
 ---
 
-# Week 1 — Critical Bugs
+# Week 1. Critical Bugs
 
-## Step 1.1 — Fix `s` hotkey collision (south vs scan)
+## Step 1.1. Fix `s` hotkey collision (south vs scan)
 
 **Scope:** the `self.commands` dict in `computerquest/commands.py` binds key `'s'` twice (line 432 → south, line 460 → `ScanCommand`). Python keeps the last value, so `s` invokes Scan and documented south movement is broken.
 
@@ -57,22 +57,22 @@ against the current code and pass after the fix.
 
 ---
 
-## Step 1.2 — Decide on save/load: implement or remove
+## Step 1.2. Decide on save/load: implement or remove
 
 **Scope:** `SaveLoadSystem` (`computerquest/game.py:266-281`) is a no-op. `SaveCommand`, `LoadCommand`, `SavesCommand`, `DeleteSaveCommand` are wired up and the quit flow prompts to "save before exit". Users lose data silently.
 
-**Decision required:** implement (port `archive/saveload.py`) OR remove the commands and the unsaved-changes prompt. Default recommendation: **remove** for now, file an issue to implement later — keeps surface honest.
+**Decision required:** implement (port `archive/saveload.py`) OR remove the commands and the unsaved-changes prompt. Default recommendation: **remove** for now and file an issue to implement later; that keeps the surface honest.
 
 **Files touched (remove path):**
-- `computerquest/game.py` — delete `SaveLoadSystem` class and the quit-flow prompt
-- `computerquest/commands.py` — remove the four save/load command classes and their dict registrations
-- `tests/` — drop any tests asserting save/load behavior; add a test that `save` is unknown
-- `README.md` — strike save/load from feature list
+- `computerquest/game.py`: delete `SaveLoadSystem` class and the quit-flow prompt
+- `computerquest/commands.py`: remove the four save/load command classes and their dict registrations
+- `tests/`: drop any tests asserting save/load behavior; add a test that `save` is unknown
+- `README.md`: strike save/load from feature list
 - New GitHub issue: "Implement persistent save/load (port from archive/saveload.py)"
 
 **Files touched (implement path):**
 - `computerquest/mechanics/save_load.py` (new, ported from `archive/saveload.py`)
-- `computerquest/game.py` — replace stub with import
+- `computerquest/game.py`: replace stub with import
 - `tests/test_save_load.py` (new) covering round-trip serialize/deserialize, error on missing save, list/delete
 
 **Implementation prompt (remove):**
@@ -93,24 +93,24 @@ and link archive/saveload.py.
 
 ---
 
-## Step 1.3 — Decide on minigames: implement or feature-flag
+## Step 1.3. Decide on minigames: implement or feature-flag
 
 **Scope:** `CPUPipelineMinigame` (`game.py:240-257`) and `MemoryHierarchyMinigame` (`game.py:259-264`) return placeholder strings. `simulate cpu` / `simulate memory` are user-visible.
 
 **Decision required:** implement OR hide behind `config.ENABLE_MINIGAMES = False`. Default: **hide** until designed.
 
 **Files touched (hide path):**
-- `computerquest/config.py` — add `ENABLE_MINIGAMES: bool = False`
-- `computerquest/commands.py` — `SimulateCommand.execute()` returns "Minigames not yet available." when the flag is off
-- `tests/test_commands.py` — assert the gated behavior
+- `computerquest/config.py`: add `ENABLE_MINIGAMES: bool = False`
+- `computerquest/commands.py`: `SimulateCommand.execute()` returns "Minigames not yet available." when the flag is off
+- `tests/test_commands.py`: assert the gated behavior
 
 **Implementation prompt:**
 ```text
 Add ENABLE_MINIGAMES = False to computerquest/config.py. Modify the simulate
 command in commands.py so that when the flag is False, both `simulate cpu` and
-`simulate memory` return "Minigames are not yet available — track progress in
+`simulate memory` return "Minigames are not yet available, track progress in
 issue #N." When the flag is True, the existing knowledge-gated stubs run.
-Add tests asserting both branches. Do NOT delete the placeholder classes —
+Add tests asserting both branches. Do NOT delete the placeholder classes -
 leave them so the implement-path step can flesh them out (Week 4 step 4.1).
 ```
 
@@ -120,7 +120,7 @@ leave them so the implement-path step can flesh them out (Week 4 step 4.1).
 
 ---
 
-## Step 1.4 — Harden `server.py`
+## Step 1.4. Harden `server.py`
 
 **Scope:** allow-all CORS, `debug=True`, `0.0.0.0` bind, per-connection `subprocess.Popen(["python", "main.py"])` with no auth, bare `except:` at lines 36 and 65, no orphan-process cleanup.
 
@@ -145,7 +145,7 @@ Harden server.py for at least dev safety:
 7. Document the env vars and the security caveat ("multi-user is not
    supported; do not expose to the internet") in README.md.
 
-Do not introduce auth in this step — that is a separate feature.
+Do not introduce auth in this step, that is a separate feature.
 ```
 
 **Verification:**
@@ -158,7 +158,7 @@ Do not introduce auth in this step — that is a separate feature.
 
 ---
 
-## Step 1.5 — Replace identity-function test mocks
+## Step 1.5. Replace identity-function test mocks
 
 **Scope:** `tests/test_commands.py:55-57` patches `_match_item_prefix` and `_match_command_prefix` to identity lambdas and replaces `self.game` with `MagicMock`. `tests/test_game.py:18-50` patches `ComputerArchitecture.setup` and replaces `player`/`game_map` with `MagicMock`. The tests assert behavior of the very methods they stub, hiding bugs (including the `s` hotkey collision).
 
@@ -174,7 +174,7 @@ collaborators:
 
 1. Build a real Game instance in a pytest fixture (conftest.py) using the
    actual ComputerArchitecture, Player, and CommandProcessor. Seed it with a
-   small deterministic world (or the real one — whichever runs in <100ms).
+   small deterministic world (or the real one, whichever runs in <100ms).
 2. Remove the lambda overrides of _match_item_prefix / _match_command_prefix.
    Assertions should now exercise the real prefix-matcher.
 3. Remove MagicMock substitutions of self.game.player and self.game.game_map
@@ -190,9 +190,9 @@ collaborators:
 
 ---
 
-# Week 2 — Build & Tooling
+# Week 2. Build & Tooling
 
-## Step 2.1 — Consolidate packaging into `pyproject.toml`
+## Step 2.1. Consolidate packaging into `pyproject.toml`
 
 **Scope:** `pyproject.toml` lacks a `[project]` table, so `uv sync` / `uv run pytest` (advertised in `CLAUDE.md`) fails. Metadata is split across `setup.py`, `setup.cfg`, `requirements.txt`.
 
@@ -207,7 +207,7 @@ collaborators:
 ```text
 Migrate Python-Zork to a single source of truth in pyproject.toml.
 
-1. Add [project] with name, version (sourced from a single constant — see
+1. Add [project] with name, version (sourced from a single constant, see
    step 2.2), description, requires-python, dependencies (from
    requirements.txt and setup.py install_requires), readme, license.
 2. Add [project.optional-dependencies] with `dev` from setup.py extras_require
@@ -229,7 +229,7 @@ CLAUDE.md should now match reality.
 
 ---
 
-## Step 2.2 — Resolve version drift
+## Step 2.2. Resolve version drift
 
 **Scope:** `computerquest/__init__.py` says `1.1.0`, `config.py:9` says `1.0.0`, `setup.cfg` says `1.1.0`.
 
@@ -254,7 +254,7 @@ behavior changes from Week 1.
 
 ---
 
-## Step 2.3 — Add CI workflow
+## Step 2.3. Add CI workflow
 
 **Scope:** no automated tests on push.
 
@@ -281,7 +281,7 @@ Do not add a deploy job.
 
 ---
 
-## Step 2.4 — Repo hygiene: `.gitignore`, `LICENSE`, README Node version
+## Step 2.4. Repo hygiene: `.gitignore`, `LICENSE`, README Node version
 
 **Scope:**
 - `node_modules/` is **not** in `.gitignore` (verified by review).
@@ -306,9 +306,9 @@ Do not add a deploy job.
 
 ---
 
-# Week 3 — Refactor
+# Week 3. Refactor
 
-## Step 3.1 — Split `game.py`
+## Step 3.1. Split `game.py`
 
 **Scope:** `game.py` is 1035 lines and bundles `Game`, `ComponentVisualizer` (237 lines), `CPUPipelineMinigame`, `MemoryHierarchyMinigame`, `SaveLoadSystem`. The package already has an empty `mechanics/minigames/` subpackage waiting.
 
@@ -330,7 +330,7 @@ Split game.py without changing behavior. Move:
 
 Update game.py to import from the new modules. Update mechanics/__init__.py
 to re-export the public symbols. Verify with grep that no old paths remain.
-Run the full test suite — behavior must not change.
+Run the full test suite, behavior must not change.
 ```
 
 **Verification:** `uv run pytest` green; `wc -l computerquest/game.py` < 600.
@@ -339,7 +339,7 @@ Run the full test suite — behavior must not change.
 
 ---
 
-## Step 3.2 — Decide on `data/*.json`
+## Step 3.2. Decide on `data/*.json`
 
 **Scope:** `data/component_data.json`, `items_data.json`, `virus_data.json` are never read; `architecture.py::make_components()` is the live source. Drift risk.
 
@@ -360,7 +360,7 @@ architecture.py::make_components().
 
 ---
 
-## Step 3.3 — Replace fuzzy matcher with `difflib.get_close_matches`
+## Step 3.3. Replace fuzzy matcher with `difflib.get_close_matches`
 
 **Scope:** `commands.py:583-589` uses `sum(c in command for c in cmd)` (set-membership, not edit distance). Misranks short candidates.
 
@@ -380,7 +380,7 @@ entirely), typo "movee" → "move" suggested, garbage input returns empty.
 
 ---
 
-## Step 3.4 — Backfill type annotations
+## Step 3.4. Backfill type annotations
 
 **Scope:** project-wide grep returned zero hint markers in `computerquest/*.py`. Global rule requires annotations on new code; mypy is configured but has nothing to check.
 
@@ -410,7 +410,7 @@ sparingly).
 
 ---
 
-## Step 3.5 — De-duplicate ASCII motherboard diagrams
+## Step 3.5. De-duplicate ASCII motherboard diagrams
 
 **Scope:** `game.py:910-976` and `game.py:194-238` (inside `ComponentVisualizer.render_motherboard_layout_text`) both render motherboard diagrams.
 
@@ -430,7 +430,7 @@ future edits stay in one place.
 
 ---
 
-## Step 3.6 — Remove dead health-bar branch
+## Step 3.6. Remove dead health-bar branch
 
 **Scope:** `helpers.py:296-303` checks `hasattr(location, 'game') and hasattr(location.game, 'player')` but `Component` has no `game` attribute. Falls through to hard-coded `max_health = 20`. `game.py:540-546` has a parallel dead branch with a `# placeholder` comment.
 
@@ -458,7 +458,7 @@ it.
 
 ---
 
-## Step 3.7 — Centralize magic numbers
+## Step 3.7. Centralize magic numbers
 
 **Scope:** inventory limit `8` hard-coded at `player.py:120` and `helpers.py:321`.
 
@@ -478,11 +478,11 @@ one place.
 
 ---
 
-# Week 4+ — Features
+# Week 4+. Features
 
-## Step 4.1 — Implement minigames (or remove entirely)
+## Step 4.1. Implement minigames (or remove entirely)
 
-**Scope:** flip `ENABLE_MINIGAMES` from Step 1.3 once `CPUPipelineMinigame` and `MemoryHierarchyMinigame` are real. This is a design step, not a refactor — out of scope to spec here without a design doc.
+**Scope:** flip `ENABLE_MINIGAMES` from Step 1.3 once `CPUPipelineMinigame` and `MemoryHierarchyMinigame` are real. This is a design step, not a refactor, out of scope to spec here without a design doc.
 
 **Pre-work:** write `docs/design-minigames.md` with educational objectives, learning loops, and interactive surface.
 
@@ -490,9 +490,9 @@ one place.
 
 ---
 
-## Step 4.2 — Wire React `GameMap.tsx` to live game state
+## Step 4.2. Wire React `GameMap.tsx` to live game state
 
-**Scope:** frontend currently shows 5 hard-coded nodes with `Math.random()` status on a 5-second interval. There is no game-state API — frontend is xterm.js piping over Socket.IO to a forked `python main.py`.
+**Scope:** frontend currently shows 5 hard-coded nodes with `Math.random()` status on a 5-second interval. There is no game-state API, frontend is xterm.js piping over Socket.IO to a forked `python main.py`.
 
 **Sub-steps:**
 1. Add a `GameState` query event over Socket.IO that the Python side responds to with a JSON snapshot (current room, components visible, virus locations discovered, inventory, achievements). Define the schema in `docs/api-gamestate.md`.
@@ -505,7 +505,7 @@ one place.
 
 ---
 
-## Step 4.3 — Replace virus string-sniffing with a flag
+## Step 4.3. Replace virus string-sniffing with a flag
 
 **Scope:** `player.py:172`, `:191`, `:298` do `'virus' in target.lower()`.
 
@@ -526,7 +526,7 @@ is NOT detected as a virus (current code would false-positive).
 
 ---
 
-## Step 4.4 — Fix latent NPC pop bug
+## Step 4.4. Fix latent NPC pop bug
 
 **Scope:** `player.py:58` calls `self.location.play.append(room.play.pop(self))`. `list.pop()` takes int. Dead path today (no NPCs go through this), latent crash if one ever does.
 
@@ -549,19 +549,19 @@ raises TypeError on this test.
 
 # Low-priority cleanup (do opportunistically)
 
-## Step LP.1 — Remove stale planning docs and `archive/`
+## Step LP.1. Remove stale planning docs and `archive/`
 Delete or relocate `IMPROVEMENTS.md`, `TODO.md` (uppercase, the stale one), and `archive/` once Week 1–3 work is merged. Confirm no live code imports `archive/`.
 
-## Step LP.2 — Guard ANSI colors with `sys.stdout.isatty()`
+## Step LP.2. Guard ANSI colors with `sys.stdout.isatty()`
 In the `Colors` constants module, wrap all escape sequences so they emit empty strings when not a TTY. Add a test using `capsys` with `monkeypatch.setattr("sys.stdout.isatty", lambda: False)`.
 
-## Step LP.3 — Replace `os.system('clear')` with direct escape codes
+## Step LP.3. Replace `os.system('clear')` with direct escape codes
 Use `sys.stdout.write('\033[2J\033[H')` and `sys.stdout.flush()`. Skip when not a TTY (composes with LP.2). Avoids spawning a shell.
 
-## Step LP.4 — Fix README/`setup.py` upstream URLs
+## Step LP.4. Fix README/`setup.py` upstream URLs
 Replace `https://github.com/yourusername/...` and `kodekloud/computer-quest` placeholders with Michael's actual fork URL.
 
-## Step LP.5 — Read welcome status from `self.player`
+## Step LP.5. Read welcome status from `self.player`
 Welcome screen currently hardcodes `Health: 20/20`, `Items: 0/8`. Read from `self.player.health`, `self.player.max_health`, `len(self.player.items)`, and `config.INVENTORY_LIMIT` (post-3.7).
 
 ---

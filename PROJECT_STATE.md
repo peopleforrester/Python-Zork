@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 2.1 Test
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -22,11 +22,11 @@ Current unit of work: **micro-puzzle implementation (tk-a7098e)** per `docs/arch
 
 Note: the unit iterates 2.1→2.3 once per migration step (8 steps); the 3.x gates apply per landed step.
 
-Prior unit (senior-review remediation + Step 4.2/4.3 + save/load) completed through 3.3 — promoted to `main` at 8ec133c on 2026-06-22.
+Prior unit (senior-review remediation + Step 4.2/4.3 + save/load) completed through 3.3; promoted to `main` at 8ec133c on 2026-06-22.
 
 ## Contracts
 
-- 2026-07-04T00:00:00Z · sha256:cde83dbaa90b · docs/architecture-microquiz.md approved by Michael. Predict-and-verify micro-puzzle system: data model, simulator protocol with per-module fidelity statements, five new verbs, difficulty-weighted knowledge meter (cap 5), tiered hints, first-visit auto-prompt, save schema 1.1, eight-step migration plan. Deviations require /prd-amend and re-approval.
+- 2026-07-04T00:00:00Z · sha256:cde83dbaa90b · docs/architecture-microquiz.md approved by Michael. Amended 2026-07-06 (prose-style pass, semantics unchanged; new sha256:8abdc57a3d45). Predict-and-verify micro-puzzle system: data model, simulator protocol with per-module fidelity statements, five new verbs, difficulty-weighted knowledge meter (cap 5), tiered hints, first-visit auto-prompt, save schema 1.1, eight-step migration plan. Deviations require /prd-amend and re-approval.
 
 _(Decision history predating the schema lives in `decisions.md` and project memory.)_
 
@@ -36,11 +36,11 @@ _(Decision history predating the schema lives in `decisions.md` and project memo
 
 Migration order (each step lands green): **1 simulators ✓ (4a50df1)** → **2 puzzle infra ✓ (4740077)** → **3 player/world wiring ✓ (a816658, promoted)** → 4 command surface (`solve`/`answer`/`hint`/`skip`) → 5 content fill (28 puzzles) → 6 knowledge-meter cutover → 7 minigames consume simulators, flip `ENABLE_MINIGAMES` → 8 frontend per-room puzzle state.
 
-Step 2 note: puzzles are one-YAML-per-file under `mechanics/puzzles/data/<category>/`, deserialized to frozen `MicroPuzzle` dataclasses, load-time-validated (the registry runs every setup through its named simulator — a broken puzzle cannot ship). `registry.evaluate(id, raw)` is the single call step 4's commands will use. Three seed puzzles live (two cache, one pipeline). pyyaml is now a runtime dep per contract.
+Step 2 note: puzzles are one-YAML-per-file under `mechanics/puzzles/data/<category>/`, deserialized to frozen `MicroPuzzle` dataclasses, load-time-validated (the registry runs every setup through its named simulator, so a broken puzzle cannot ship). `registry.evaluate(id, raw)` is the single call step 4's commands will use. Three seed puzzles live (two cache, one pipeline). pyyaml is now a runtime dep per contract.
 
 Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (stall/forward RAW model) simulators landed with fidelity docstrings; timing conventions (write-through regfile, EX→EX forward, load-use bubble) documented in pipeline.py and pinned by tests (7/8/11 cycle counts). tlb/packet/storage/signature simulators land with their consuming puzzles in step 5.
 
-Remaining tracked task: `tk-a7098e` (4.1 minigames) — now unblocked; it is steps 1–7 above. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1).
+Remaining tracked task: `tk-a7098e` (4.1 minigames), now unblocked; it is steps 1–7 above. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1).
 
 ## Branch & Tests
 
@@ -67,4 +67,4 @@ _(append-only. Each phase transition adds one line, oldest first.)_
 
 The senior-developer review (2026-04-19) produced a 26-step remediation plan. All of it shipped: Week 1 critical bugs (hotkey collision, save/load stub removal, minigame gating, server hardening, real-Game test fixtures), Week 2 tooling (pyproject consolidation, version single-sourcing, CI, repo hygiene), Week 3 refactor (game.py split, dead JSON removal, difflib matcher, type annotations, motherboard de-dup, health-bar wiring, constants), Week 4 features (virus-name predicate, NPC pop bug), LP cleanup tail, save/load reimplementation (tk-24fa9f), and Step 4.2 (Game in-process in server.py + GameMap live-state wiring; browser verification pending).
 
-Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with visits" loop sits in the instructionist failed canon. Direction C adopted — keep the exploration shell, make knowledge rise on solved predict-and-verify micro-puzzles checked by real simulators.
+Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with visits" loop sits in the instructionist failed canon. Direction C adopted: keep the exploration shell and make knowledge rise on solved predict-and-verify micro-puzzles checked by real simulators.

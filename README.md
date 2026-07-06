@@ -3,12 +3,14 @@
 An educational text-based adventure game that teaches computer architecture concepts.
 
 ![KodeKloud Computer Quest](https://img.shields.io/badge/KodeKloud-Computer%20Quest-blue)
-![Python Version](https://img.shields.io/badge/python-3.8%2B-green)
+![Python Version](https://img.shields.io/badge/python-3.10%2B-green)
 ![License](https://img.shields.io/badge/license-MIT-yellow)
 
 ## Overview
 
 KodeKloud Computer Quest is an interactive text adventure where players navigate through a computer system, learning about various hardware components while searching for and neutralizing viruses. The game simulates the internals of a modern computer, from the CPU cores to memory, storage, and peripherals.
+
+Play the hosted demo at https://python-zork-production.up.railway.app (click Start Game, then Show Map).
 
 ## Features
 
@@ -17,7 +19,7 @@ KodeKloud Computer Quest is an interactive text adventure where players navigate
 - Virus hunting gameplay that teaches security concepts
 - Progressive knowledge system that tracks player learning
 - Mini-games that demonstrate CPU pipelines and memory hierarchies
-- Persistent save/load — JSON snapshots under `~/.kodekloud_quest/saves/`
+- Persistent save/load: JSON snapshots under `~/.kodekloud_quest/saves/`
 - Enhanced UI with improved visuals and readability
 - Web-based terminal interface for running the game in a browser
 
@@ -61,7 +63,7 @@ Then open your browser to http://localhost:5173 to play the game.
 
 ### Server Environment Variables
 
-The Flask backend reads its configuration from environment variables. Defaults are conservative — the server binds to `127.0.0.1` and rejects all browsers except `http://localhost:5173`.
+The Flask backend reads its configuration from environment variables. Defaults are conservative: the server binds to `127.0.0.1` and rejects all browsers except `http://localhost:5173`.
 
 | Variable | Default | Notes |
 |---|---|---|
@@ -72,7 +74,7 @@ The Flask backend reads its configuration from environment variables. Defaults a
 
 ### Security Caveat
 
-This server is **dev-only**. Each browser connection forks a Python subprocess with no authentication or sandboxing, and the server does not support multiple concurrent users — connecting a second client kills the first. **Do not expose this server to the public internet.** A future task will add authentication and per-session isolation.
+The game runs in-process in the Flask server. Each Socket.IO connection gets its own isolated Game instance, and player input only reaches the game's command parser. There is no authentication: anyone who can reach the server can play (and only play). Fine for a demo deployment; add auth before putting anything sensitive behind it.
 
 ### Building for Production
 
@@ -133,9 +135,9 @@ The web interface consists of:
 
 1. **Backend**:
    - Flask server with Socket.IO for real-time communication
-   - Runs the Python game in a PTY (pseudo-terminal)
-   - Streams game output to the frontend
-   - Processes user input and sends it to the game
+   - Runs the Game in-process, one instance per connected session
+   - Buffers keystrokes server-side and feeds whole command lines to the game
+   - Emits terminal output plus a structured game_state snapshot after every command
 
 2. **Frontend**:
    - React application with TypeScript

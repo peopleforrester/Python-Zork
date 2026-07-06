@@ -5,7 +5,7 @@ id: pipeline_forwarding_intro
 component_category: cpu
 subject_area: cpu
 difficulty: 2
-title: "Pipeline — count the cycles with forwarding on"
+title: "Pipeline: count the cycles with forwarding on"
 simulator: pipeline
 prompt: |
   A classic 5-stage pipeline (IF, ID, EX, MEM, WB) with forwarding enabled
@@ -29,7 +29,7 @@ answer_kind: number
 answer_grammar: "a single whole number of cycles"
 hints:
   - "Without any hazards, 3 instructions in a 5-stage pipeline take 5 + 2 = 7 cycles."
-  - "Forwarding erases the ADD->STORE hazard entirely, but a LOAD's value only exists after MEM — the dependent ADD must wait one cycle."
+  - "Forwarding erases the ADD->STORE hazard entirely, but a LOAD's value only exists after MEM, so the dependent ADD must wait one cycle."
 explanation: |
   An ideal run would take 7 cycles (5 to fill the pipe, 1 more per extra
   instruction). The LOAD -> ADD dependency costs exactly one bubble: the

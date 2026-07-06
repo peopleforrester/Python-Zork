@@ -37,3 +37,13 @@ sha256:cde83dbaa90b18bdec1c05ffadb18f1d603f70ee0dc8e9b536820610c6bc8555.
 Alternatives (stay-the-course portfolio piece; full Zachtronics-style
 pivot) were rejected in the 2026-06-22 research spike. Implementation
 follows the doc's eight-step migration plan, TDD-first per step.
+
+## 2026-07-06T00:00:00Z · amendment · prose-style pass over the contract doc
+
+Michael directed an AI-isms sweep over all repo prose. The sealed
+contract (docs/architecture-microquiz.md) had 38 em-dashes plus a few
+splices; all replaced per the prose-style rule. No decision, schema,
+verb, or plan-step content changed. New sha256:8abdc57a3d45. Same pass
+cleaned README (also fixing stale PTY-era architecture and security
+text), PROJECT_STATE, plan.md, design-minigames.md, and the three
+puzzle YAML files.

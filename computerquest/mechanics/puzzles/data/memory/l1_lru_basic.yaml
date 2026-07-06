@@ -4,7 +4,7 @@ id: l1_lru_basic
 component_category: memory
 subject_area: memory
 difficulty: 1
-title: "L1 Cache — predict hit/miss with LRU eviction"
+title: "L1 Cache: predict hit/miss with LRU eviction"
 simulator: cache
 prompt: |
   You are looking at a 4-line, direct-mapped L1 cache with 64-byte lines and

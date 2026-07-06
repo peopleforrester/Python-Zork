@@ -1,11 +1,11 @@
 # Follow-up to l1_lru_basic: same trace plus one more 0x0100 access, at
-# 2-way associativity. Canonical answer: M M M M H M H H — the final H is
+# 2-way associativity. Canonical answer: M M M M H M H H. The final H is
 # the "associativity rescue" (0x0200 evicted 0x0180, not 0x0100).
 id: l1_associativity_2way
 component_category: memory
 subject_area: memory
 difficulty: 2
-title: "L1 Cache — the associativity rescue"
+title: "L1 Cache: the associativity rescue"
 simulator: cache
 prompt: |
   Same cache, one change: the 4 lines are now organized as 2 sets of 2 ways

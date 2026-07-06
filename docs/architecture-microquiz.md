@@ -1,4 +1,4 @@
-# Architecture Spike — Predict-and-Verify Micro-Puzzles
+# Architecture Spike. Predict-and-Verify Micro-Puzzles
 
 Companion to `docs/design-minigames.md`. Where that doc designed the two
 "deep-end" minigames (CPU pipeline, memory hierarchy), this spike designs the
@@ -8,7 +8,7 @@ the simulator to verify.
 
 This is the structural implementation of Direction C from the spike at
 `~/repos/mrf/mrf-knowledge/game-design/2026-06-22_teaching-games-text-adventure-pivot.md`.
-The pedagogical pattern is "predict and verify" — the player commits an answer,
+The pedagogical pattern is "predict and verify": the player commits an answer,
 the game computes the real answer with a real simulator, the diff is the lesson.
 
 ## Author / status
@@ -23,13 +23,13 @@ The six open questions in the original draft are resolved as follows. Rationale 
 
 1. **Multi-puzzle rooms allowed, capped at three.** A `Component.puzzles: list[str]` can hold up to three puzzle ids; rooms may have zero. Three is enough for "intro / twist / hard mode" without breaking the ninety-second budget per room visit.
 
-2. **Soft difficulty gating.** Difficulty-N puzzles appear in `solve` (no argument) listings only when at least one difficulty-(N-1) puzzle in the same area is solved. They remain loadable by explicit `solve <id>` regardless, so a curious player can skip ahead — the gate is presentation only.
+2. **Soft difficulty gating.** Difficulty-N puzzles appear in `solve` (no argument) listings only when at least one difficulty-(N-1) puzzle in the same area is solved. They remain loadable by explicit `solve <id>` regardless, so a curious player can skip ahead; the gate is presentation only.
 
 3. **Tiered hints.** First hint per puzzle is free. Second and later hints flag the puzzle as "attempted," so a first-time-correct after a costly hint does not bump knowledge. Puzzle data ships with one or two hints per puzzle, ordered cheap-to-expensive.
 
 4. **Auto-prompt on first visit only.** When the player enters a room for the first time and has not attempted its primary puzzle, the puzzle auto-presents with an explicit "type `skip` to put this aside" prompt. On every subsequent visit, only the `[ puzzle available ]` hint shows in `look`. Behaviour gates on the room's primary puzzle id being in `attempted_puzzles`.
 
-5. **Keep the knowledge cap at 5; weight solves by difficulty.** Each solved puzzle contributes `difficulty * 0.5 + 0.5` to its area (difficulty-1 = 1, difficulty-2 = 1.5, difficulty-3 = 2). The cap stays meaningful — knowledge-5 implies real breadth or depth — without requiring every puzzle in the area to be solved. Extra solves count toward achievements.
+5. **Keep the knowledge cap at 5; weight solves by difficulty.** Each solved puzzle contributes `difficulty * 0.5 + 0.5` to its area (difficulty-1 = 1, difficulty-2 = 1.5, difficulty-3 = 2). The cap stays meaningful (knowledge-5 implies real breadth or depth) without requiring every puzzle in the area to be solved. Extra solves count toward achievements.
 
 6. **Each simulator carries a fidelity statement in its module docstring.** Drafts are committed alongside each module's first commit and become the verdict's authority claim. See [Per-simulator fidelity](#per-simulator-fidelity) below.
 
@@ -66,7 +66,7 @@ unlock at higher knowledge levels.
 Python-Zork is already a knowledge-gated exploration game. The components, the
 five-area knowledge meter, the achievement system, and the per-room
 descriptions all stay. What changes is the verb that drives the knowledge meter
-up — from "visited" to "demonstrated."
+up: from "visited" to "demonstrated."
 
 The new infrastructure also has standalone value: the simulators that verify
 the player's predictions are the same simulators the deep-end minigames will
@@ -122,7 +122,7 @@ For a pipeline-hazard puzzle, `setup` looks like:
 ```
 
 The simulator owns the schema for each category. Puzzle authoring is data, not
-code — see [Puzzle data layout](#puzzle-data-layout) below.
+code; see [Puzzle data layout](#puzzle-data-layout) below.
 
 ### AnswerKind
 
@@ -137,7 +137,7 @@ class AnswerKind(str, Enum):
 
 Each kind has a small parser that turns a player line into the canonical shape
 the simulator's output uses. The parser tolerates whitespace, commas, and
-case but is otherwise strict — wrong shape comes back to the player as "I
+case but is otherwise strict: wrong shape comes back to the player as "I
 need an answer like: `hit miss miss hit hit`," not as a wrong answer.
 
 ### Simulator interface
@@ -153,7 +153,7 @@ class Simulator(Protocol):
 ```
 
 One simulator module per component category, living under
-`computerquest/mechanics/simulators/`. The simulator's `run()` is pure — same
+`computerquest/mechanics/simulators/`. The simulator's `run()` is pure: same
 setup, same answer, every time. That property is what makes the test
 architecture trivial.
 
@@ -182,7 +182,7 @@ self.attempted_puzzles: set[str] = set() # solved or not, ever shown
 ```
 
 The knowledge meter formula changes (see [Knowledge meter](#knowledge-meter)
-below) but the field shape stays — five subject areas, 0–5 each, derived from
+below) but the field shape stays: five subject areas, 0 to 5 each, derived from
 puzzles solved in that area's component category.
 
 ---
@@ -191,10 +191,10 @@ puzzles solved in that area's component category.
 
 ```
 computerquest/mechanics/
-    minigames/                 # existing — the deep-end puzzles (CPU pipeline, memory hierarchy)
+    minigames/                 # existing: the deep-end puzzles (CPU pipeline, memory hierarchy)
         cpu.py
         memory.py
-    puzzles/                   # NEW — micro-puzzle infrastructure
+    puzzles/                   # NEW: micro-puzzle infrastructure
         __init__.py            # exports MicroPuzzle, AnswerKind, Verdict, registry helpers
         types.py               # dataclasses + enum
         parsers.py             # AnswerKind → player-input parser
@@ -216,7 +216,7 @@ computerquest/mechanics/
                 tcp_flag_sequence.yaml
             security/
                 virus_signature_match.yaml
-    simulators/                # NEW — pure functions verifying puzzle answers
+    simulators/                # NEW: pure functions verifying puzzle answers
         __init__.py
         base.py                # Simulator protocol, Verdict dataclass, generic verify()
         cache.py               # LRU/FIFO cache (used by L1/L2/L3 rooms + memory minigame)
@@ -261,7 +261,7 @@ id: l1_lru_basic
 component_category: memory
 subject_area: memory
 difficulty: 1
-title: "L1 Cache — predict hit/miss with LRU eviction"
+title: "L1 Cache: predict hit/miss with LRU eviction"
 prompt: |
   You are looking at a 4-line, direct-mapped L1 cache with 64-byte lines and
   an LRU replacement policy. The CPU issues this sequence of byte addresses:
@@ -287,7 +287,7 @@ explanation: |
   misses. The seventh (0x140) was last touched at access 2 and is still
   present, so it hits.
 
-  Direct mapping is brutal — even with LRU, you cannot keep two addresses
+  Direct mapping is brutal: even with LRU, you cannot keep two addresses
   that map to the same set. The next puzzle in this room raises associativity
   to 2 to show how that changes things.
 ```
@@ -299,7 +299,7 @@ exceptions), and indexes the puzzles by `id` and by `component_category`.
 ### Room ↔ puzzle binding
 
 ```python
-# computerquest/world/architecture.py — additions
+# computerquest/world/architecture.py additions
 self.rooms["core1_l1"].puzzles = ["l1_lru_basic", "l1_associativity_2way"]
 self.rooms["ram_dimm1"].puzzles = ["ram_dimm_address_decode"]
 ```
@@ -327,13 +327,13 @@ New verbs added to `CommandProcessor`:
 
 State machine inside the Game:
 
-- `current_puzzle: MicroPuzzle | None` — analogous to `current_minigame`.
+- `current_puzzle: MicroPuzzle | None`: analogous to `current_minigame`.
 - Active puzzle persists across rooms; `look` and `move` still work while the
   puzzle is open. The puzzle ends when the player commits an answer (right or
   wrong) or runs `skip`.
 
 Reuse the existing read-only verb set so opening a puzzle doesn't dirty the
-save state — but committing an answer does.
+save state; committing an answer does.
 
 ### Interaction example
 
@@ -344,7 +344,7 @@ save state — but committing an answer does.
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 A 64 KB direct-mapped L1 cache feeding Core 1...
 
-[ puzzle available: L1 Cache — predict hit/miss with LRU eviction ]
+[ puzzle available: L1 Cache: predict hit/miss with LRU eviction ]
 
 > solve
 You are looking at a 4-line, direct-mapped L1 cache with 64-byte lines...
@@ -359,19 +359,19 @@ Verdict:
   position 3 (0x0180): M  ✓ cold miss
   position 4 (0x01C0): M  ✓ cold miss
   position 5 (0x0100): H  ✓ still in cache
-  position 6 (0x0200): H  ✗ correct answer was M — 0x200 maps to the same
+  position 6 (0x0200): H  ✗ correct answer was M, 0x200 maps to the same
                           set as 0x100 in a direct-mapped cache, so it
                           evicts 0x100 and is itself a cold miss.
   position 7 (0x0140): H  ✓ last touched at access 2, still present.
 
 6 of 7 correct. Memory knowledge unchanged this round; try the room's
-follow-up puzzle and you'll see how 2-way associativity rescues this case.
+follow-up puzzle in this room; it shows how 2-way associativity rescues this case.
 
 (explanation paragraph follows)
 ```
 
 The first-time-correct rule is "all positions right" for sequence answers. 6/7
-counts as an attempt, not a solve. The next attempt isn't penalized — same
+counts as an attempt, not a solve. The next attempt isn't penalized: same
 setup, same expected answer, same one-shot scoring.
 
 ---
@@ -394,7 +394,7 @@ puzzle could count as 1.5) but the first-pass implementation treats every
 solve as worth 1.
 
 Floor and ceiling stay at 0–5. The existing knowledge gates (e.g. minigames
-require `knowledge[cpu] >= 3`) keep working — they now reflect demonstrated
+require `knowledge[cpu] >= 3`) keep working; they now reflect demonstrated
 competence rather than tourism, which is what they were meant to reflect all
 along.
 
@@ -407,14 +407,14 @@ muddle the signal the meter sends both to the player and to the gating logic.
 
 The progress system gets new conditions to evaluate:
 
-- `predict_apprentice` — first puzzle of any category solved.
-- `predict_journeyman` — every category has at least one solve.
-- `predict_master` — every puzzle in any one category solved.
-- `predict_grandmaster` — every puzzle in every category solved.
-- `cold_streak` — five puzzles solved in a row first-time-correct.
+- `predict_apprentice`: first puzzle of any category solved.
+- `predict_journeyman`: every category has at least one solve.
+- `predict_master`: every puzzle in any one category solved.
+- `predict_grandmaster`: every puzzle in every category solved.
+- `cold_streak`: five puzzles solved in a row first-time-correct.
 
 These slot into the existing achievement infrastructure with no schema
-changes — only new `Achievement(...)` rows in `ProgressSystem.setup_achievements`.
+changes; only new `Achievement(...)` rows in `ProgressSystem.setup_achievements`.
 
 ---
 
@@ -435,7 +435,7 @@ minigame decision. A loaded game starts with no active puzzle. Walking back
 into the room presents it again.
 
 Schema version bumps from `1.0` to `1.1`. The loader treats a `1.0` save as
-valid but initializes the new fields to empty sets — old saves still load.
+valid but initializes the new fields to empty sets; old saves still load.
 
 ---
 
@@ -461,8 +461,8 @@ valid but initializes the new fields to empty sets — old saves still load.
 ]
 ```
 
-GameMap.tsx gains a CSS class per state — `node solved`, `node attempted`,
-`node available`, `node empty` — so the map shows progress at a glance.
+GameMap.tsx gains a CSS class per state, `node solved`, `node attempted`,
+`node available`, `node empty`) so the map shows progress at a glance.
 
 ---
 
@@ -601,7 +601,7 @@ branch.
   re-offers the puzzle.
 - **Networking and security simulators at production fidelity.** First-pass
   simulators are educationally honest but not full-fidelity (e.g. the network
-  simulator routes through PCH, NIC, and an abstracted wire — it does not
+  simulator routes through PCH, NIC, and an abstracted wire; it does not
   implement TCP window scaling).
 
 ## Anti-goals
@@ -622,7 +622,7 @@ branch.
 
 ## Per-simulator fidelity
 
-Each simulator module ships with a fidelity statement as a top-of-module docstring. The statement is the verdict's authority claim — when a puzzle's verdict says "actually a miss," the player can read the simulator's fidelity statement to know exactly what model that verdict came from. First-pass drafts:
+Each simulator module ships with a fidelity statement as a top-of-module docstring. The statement is the verdict's authority claim: when a puzzle's verdict says "actually a miss," the player can read the simulator's fidelity statement to know exactly what model that verdict came from. First-pass drafts:
 
 ### `simulators/cache.py`
 
@@ -646,7 +646,7 @@ Each simulator module ships with a fidelity statement as a top-of-module docstri
 
 ### `simulators/signature.py`
 
-> Educational virus-signature matching simulator. Models exact-pattern matching against a curated signature list. The "found virus" verdict comes from matching a file's contents against the canonical signature for that virus. NOT modeled: heuristic detection, behavior monitoring, polymorphic-virus dynamic matching, sandbox emulation. Verdicts say "this matches the canonical signature for X" — they do not say "this is, in the world, a virus."
+> Educational virus-signature matching simulator. Models exact-pattern matching against a curated signature list. The "found virus" verdict comes from matching a file's contents against the canonical signature for that virus. NOT modeled: heuristic detection, behavior monitoring, polymorphic-virus dynamic matching, sandbox emulation. Verdicts say "this matches the canonical signature for X"; they do not say "this is, in the world, a virus."
 
 Each fidelity statement is a contract. If a puzzle's verdict relies on behaviour the statement excludes, either the puzzle is wrong or the statement needs amending. Both cases are reviewable.
 
@@ -666,11 +666,11 @@ Hard gating respected the learning curve at the cost of player agency. Open orde
 
 ### 3. Tiered hints
 
-Free unlimited hints minimized frustration but let players walk through every puzzle on hints and still see their knowledge meter rise. Costly hints (any hint flags the puzzle attempted) preserved honest measurement at the cost of punishing the player who genuinely just needs the setup re-stated. Tiering keeps both properties. First hint is "I'm stuck on what the puzzle is asking" — a free re-statement. Second and later hints are "this concept is what's tested" — they start to give the shape of the answer away, and a first-time-correct after those does not bump knowledge. Puzzle YAML files declare hints as an ordered list; the engine assumes the first is free, the rest are not. Authors can decide whether to ship one cheap hint, one cheap and one costly, or no hints at all.
+Free unlimited hints minimized frustration but let players walk through every puzzle on hints and still see their knowledge meter rise. Costly hints (any hint flags the puzzle attempted) preserved honest measurement at the cost of punishing the player who genuinely just needs the setup re-stated. Tiering keeps both properties. First hint is "I'm stuck on what the puzzle is asking", a free re-statement. Second and later hints are "this concept is what's tested", they start to give the shape of the answer away, and a first-time-correct after those does not bump knowledge. Puzzle YAML files declare hints as an ordered list; the engine assumes the first is free, the rest are not. Authors can decide whether to ship one cheap hint, one cheap and one costly, or no hints at all.
 
 ### 4. Auto-prompt on first visit only
 
-Auto-prompting every visit is the Khan Academy / Duolingo pattern: aggressive teaching, intrusive in an exploration game. Prompt-on-look only is gentle but easy to skip past entirely — a player can wander the whole map, hit `look` thirty times, and never notice the game has a puzzle layer. First-visit-only auto-prompt lands in the middle: the puzzle is presented once as a clear first impression of the room, with a one-key escape (`skip`). Subsequent visits respect the player's choice and offer the puzzle as a hint in the `look` output. The behaviour gates on `room.puzzles[0] in attempted_puzzles`, so `skip` flips the gate without recording a real attempt.
+Auto-prompting every visit is the Khan Academy / Duolingo pattern: aggressive teaching, intrusive in an exploration game. Prompt-on-look only is gentle but easy to skip past entirely, a player can wander the whole map, hit `look` thirty times, and never notice the game has a puzzle layer. First-visit-only auto-prompt lands in the middle: the puzzle is presented once as a clear first impression of the room, with a one-key escape (`skip`). Subsequent visits respect the player's choice and offer the puzzle as a hint in the `look` output. The behaviour gates on `room.puzzles[0] in attempted_puzzles`, so `skip` flips the gate without recording a real attempt.
 
 ### 5. Cap at 5, weight by difficulty
 
@@ -678,4 +678,4 @@ Raising the cap (say to 10) would have made cap mean less and made `knowledge >=
 
 ### 6. Per-simulator fidelity statements
 
-The temptation is to either over-engineer the simulators (production-fidelity for everything) or under-engineer them and hope no one notices. Neither is honest. Each simulator's fidelity statement makes the verdict's authority claim explicit. When a player asks "but what about MESI coherence?" the cache simulator's docstring answers: "not modeled here; the verdict is correct for the configuration we do model." That makes Python-Zork an honest teaching artifact instead of a black box that returns answers nobody can verify. The statements above are first-pass drafts — each will be revisited when the corresponding simulator is implemented and may tighten or loosen based on what the puzzle content actually needs.
+The temptation is to either over-engineer the simulators (production-fidelity for everything) or under-engineer them and hope no one notices. Neither is honest. Each simulator's fidelity statement makes the verdict's authority claim explicit. When a player asks "but what about MESI coherence?" the cache simulator's docstring answers: "not modeled here; the verdict is correct for the configuration we do model." That makes Python-Zork an honest teaching artifact instead of a black box that returns answers nobody can verify. The statements above are first-pass drafts, each will be revisited when the corresponding simulator is implemented and may tighten or loosen based on what the puzzle content actually needs.

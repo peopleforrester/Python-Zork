@@ -1,4 +1,4 @@
-# Minigame Design — CPU Pipeline & Memory Hierarchy
+# Minigame Design. CPU Pipeline & Memory Hierarchy
 
 Pre-work for Step 4.1 (`tk-a7098e`). The minigames are currently no-op stubs
 gated behind `config.ENABLE_MINIGAMES = False` (Step 1.3). This document
@@ -6,7 +6,7 @@ specifies what they should do once implemented, so the implementation work
 has concrete targets and the eventual UX matches the educational intent of
 the rest of the game.
 
-Scope: two minigames only — CPU pipeline and memory hierarchy. The plan does
+Scope: two minigames only. CPU pipeline and memory hierarchy. The plan does
 not call for networking, storage, or security minigames; those would be
 separate proposals.
 
@@ -39,7 +39,7 @@ The minigames have to fit inside the existing game's shape:
    benefit from a simulation framework or a TUI library.
 6. **Persistence-aware.** Save/load (now live as of `tk-24fa9f`) snapshots
    the player and world but not active minigame state. A loaded game starts
-   with no active minigame. This is a deliberate simplification — minigames
+   with no active minigame. This is a deliberate simplification: minigames
    are short interactive sessions, not long-running state worth persisting.
 
 ## CPU Pipeline Minigame
@@ -79,7 +79,7 @@ PipelineState
 
 `Instruction` is a small dataclass: opcode (str), src (tuple[str, ...] for
 register names), dst (str | None), and the cycle it entered IF (filled in at
-issue time). Six to ten instructions per canned workload — enough to show a
+issue time). Six to ten instructions per canned workload: enough to show a
 hazard, short enough to finish in under a minute of player input.
 
 ### Learning loop
@@ -103,7 +103,7 @@ hazard, short enough to finish in under a minute of player input.
    the cycle counter, the throughput so far (completed / cycle), and a
    short status line about what just happened (issued, retired, stalled,
    forwarded).
-4. **Toggle.** `simulate toggle` flips `pipelined`. The reset is partial —
+4. **Toggle.** `simulate toggle` flips `pipelined`. The reset is partial -
    the workload restarts but the player's mode choice persists so they can
    compare the two timelines side by side. The minigame remembers the
    prior pipelined-mode finish cycle so the toggle prompt can say
@@ -132,7 +132,7 @@ hazard, short enough to finish in under a minute of player input.
 | `simulate stop` | Exit the minigame. |
 | `simulate status` | Re-render current state without advancing. |
 
-`simulate status` is new; it makes the existing UI patterns consistent —
+`simulate status` is new; it makes the existing UI patterns consistent -
 players type it when they got lost in the prompt history.
 
 ### Workload
@@ -222,10 +222,10 @@ contents (an ordered list of addresses for LRU bookkeeping).
    evicted line X from L1; total latency: N cycles."
 4. **Pattern selection.** Before stepping, the player can pick the access
    pattern with `simulate pattern <name>`:
-   - `sequential` — addresses 0..K, demonstrates spatial locality.
-   - `loop` — repeated short cycle, demonstrates temporal locality.
-   - `random` — uniform, demonstrates thrashing.
-   - `stride` — fixed stride > line size, demonstrates the limits of
+   - `sequential`: addresses 0..K, demonstrates spatial locality.
+   - `loop`: repeated short cycle, demonstrates temporal locality.
+   - `random`: uniform, demonstrates thrashing.
+   - `stride`: fixed stride > line size, demonstrates the limits of
      spatial prefetch.
 5. **Cache tuning.** `simulate cache <level> <size>` lets the player
    double/halve a level's size (within reason) and re-run to see the hit
@@ -252,7 +252,7 @@ contents (an ordered list of addresses for LRU bookkeeping).
 - Gate honours `knowledge["memory"] >= 3`; tuning gated by `>= 4`.
 - All four patterns produce distinct, predictable hit-rate profiles on
   the default cache config (target ranges committed as test assertions
-  rather than exact values — the policy choice gives a small range).
+  rather than exact values; the policy choice gives a small range).
 - LRU policy verified against a canonical Patterson sequence.
 - Tests cover: gate, each pattern's expected behaviour, cache-tuning gate,
   reset preserves configuration, stop clears `current_minigame`.
@@ -274,7 +274,7 @@ computerquest/mechanics/minigames/
 The placeholder methods on the current stubs map onto the new
 implementations cleanly: `explain` / `get_status` / `step` / `reset` keep
 their signatures so `Game.handle_simulation` doesn't need to know about
-new verbs at a structural level — it can dispatch them generically by
+new verbs at a structural level; it can dispatch them generically by
 mapping `verb` → method name.
 
 `SimulateCommand` already short-circuits cpu/memory when
