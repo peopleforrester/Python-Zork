@@ -1,0 +1,38 @@
+# Canonical answer per the packet simulator: nic pch cpu_package kernel.
+id: packet_route_kernel
+component_category: networking
+subject_area: networking
+difficulty: 1
+title: "Packet routing: trace the path to the kernel"
+simulator: packet
+prompt: |
+  A packet arrives at the network interface (nic) addressed to the kernel.
+  Each component's forwarding table has one next-hop entry per
+  destination:
+
+    nic:                kernel -> pch,  ssd -> pch
+    pch:                kernel -> cpu_package,  ssd -> storage_controller
+    cpu_package:        kernel -> kernel
+    storage_controller: ssd -> ssd
+
+  List every component the packet visits, in order, starting at nic and
+  ending at kernel.
+setup:
+  routes:
+    nic: {kernel: pch, ssd: pch}
+    pch: {kernel: cpu_package, ssd: storage_controller}
+    cpu_package: {kernel: kernel}
+    storage_controller: {ssd: ssd}
+  src: nic
+  dst: kernel
+answer_kind: sequence
+answer_grammar: "component names in visit order, separated by spaces"
+hints:
+  - "Follow one lookup per hop: what does nic's table say for destination kernel?"
+explanation: |
+  Each hop consults only its own table: nic forwards kernel-bound traffic
+  to the pch, the pch forwards it to the cpu_package, and the cpu_package
+  delivers it to the kernel. Path: nic, pch, cpu_package, kernel.
+
+  No component knows the whole route. Per-hop forwarding tables are the
+  core idea of IP routing, scaled down to four rows.

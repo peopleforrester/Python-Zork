@@ -1,0 +1,30 @@
+# Canonical answer per the seek simulator: 10 + 10 + 30 = 50.
+id: hdd_seek_sstf
+component_category: storage
+subject_area: storage
+difficulty: 2
+title: "Disk seek: shortest-seek-time-first"
+simulator: seek
+prompt: |
+  Same disk, same starting point: head at track 50, pending requests for
+  tracks 60, 40, and 70. This time the scheduler is SSTF: it always
+  services the nearest pending request next.
+
+  How many tracks does the head travel in total?
+setup:
+  algorithm: SSTF
+  start_track: 50
+  requests: [60, 40, 70]
+answer_kind: number
+answer_grammar: "one whole number of tracks"
+hints:
+  - "From 50, the nearest request is 60. From 60, which is closer: 40 or 70?"
+  - "The greedy choice defers track 40 to the very end."
+explanation: |
+  SSTF from 50 picks 60 first (10 tracks). From 60, track 70 is nearer
+  than track 40 (10 vs 20), so 70 goes next. Track 40 is serviced last,
+  costing 30. Total: 50 tracks, beating FCFS's 60 on the same queue.
+
+  The catch SSTF does not solve: a stream of nearby requests can starve a
+  far-away one indefinitely. That is why real schedulers bound the greed
+  with elevator-style sweeps.

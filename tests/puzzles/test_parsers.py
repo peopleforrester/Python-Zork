@@ -69,3 +69,9 @@ class TestMappingParser(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestNumberHex(unittest.TestCase):
+    def test_hex_accepted_for_address_answers(self) -> None:
+        self.assertEqual(parse_answer(AnswerKind.NUMBER, "0x9234"), 0x9234)
+        self.assertEqual(parse_answer(AnswerKind.NUMBER, "37428"), 37428)

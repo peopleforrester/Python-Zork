@@ -43,7 +43,9 @@ def parse_answer(kind: AnswerKind, raw: str, grammar: str | None = None) -> Any:
 
     if kind is AnswerKind.NUMBER:
         try:
-            return int(text)
+            # base 0 accepts plain decimal and 0x-prefixed hex, so address
+            # answers can be given either way.
+            return int(text, 0)
         except ValueError:
             raise _fail(grammar) from None
 

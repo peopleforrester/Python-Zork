@@ -1,0 +1,35 @@
+# Canonical answer per the TLB simulator: M M H M M.
+id: tlb_hitmiss_lru
+component_category: memory
+subject_area: memory
+difficulty: 2
+title: "TLB: predict hit/miss across a page-touch trace"
+simulator: tlb
+prompt: |
+  The MMU has a 2-entry, fully-associative TLB with LRU replacement and
+  4 KB pages. The CPU touches these virtual addresses in order:
+
+    0x0000  0x1000  0x0004  0x3000  0x1004
+
+  Work out which virtual page each address belongs to, then predict for
+  each access whether the TLB hits (H) or misses (M).
+setup:
+  page_size: 4096
+  tlb_entries: 2
+  policy: LRU
+  page_table: {0: 8, 1: 9, 3: 2}
+  accesses: [0x0000, 0x1000, 0x0004, 0x3000, 0x1004]
+answer_kind: sequence
+answer_grammar: "five tokens of H or M, separated by spaces"
+hints:
+  - "Page number = address / 4096. Two of these five addresses share a page."
+  - "After the third access, LRU order is: page 1 oldest, page 0 newest. Page 3 has to evict someone."
+explanation: |
+  The five addresses touch pages 0, 1, 0, 3, 1. Pages 0 and 1 are cold
+  misses; the second touch of page 0 hits and refreshes it in LRU order.
+  Page 3 misses and needs a slot: the least recently used entry is page 1,
+  so page 1 is evicted. The final access touches page 1 again, and it is
+  gone, so it misses and walks the page table a second time.
+
+  This is why TLB reach matters: a working set of three pages thrashes a
+  two-entry TLB even when every page is mapped and resident.

@@ -13,18 +13,25 @@ from computerquest.mechanics.puzzles.parsers import parse_answer
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 from computerquest.mechanics.simulators.base import AnswerKind, Verdict, verify_sequence
 from computerquest.mechanics.simulators.cache import CacheSimulator
+from computerquest.mechanics.simulators.packet import PacketRouteSimulator
 from computerquest.mechanics.simulators.pipeline import PipelineSimulator
+from computerquest.mechanics.simulators.signature import SignatureMatchSimulator
+from computerquest.mechanics.simulators.storage import SeekDistanceSimulator
+from computerquest.mechanics.simulators.tlb import TLBSimulator, TLBTranslateSimulator
 
 DATA_ROOT = Path(__file__).parent / "data"
 
 VALID_CATEGORIES = frozenset({"cpu", "memory", "storage", "networking", "security"})
 
 # Named simulator table the contract's registry resolves puzzles against.
-# New simulators (tlb, packet, storage, signature) register here as their
-# consuming puzzles land in migration step 5.
 SIMULATORS: dict[str, Any] = {
     "cache": CacheSimulator(),
     "pipeline": PipelineSimulator(),
+    "tlb": TLBSimulator(),
+    "tlb_translate": TLBTranslateSimulator(),
+    "packet": PacketRouteSimulator(),
+    "seek": SeekDistanceSimulator(),
+    "signature": SignatureMatchSimulator(),
 }
 
 

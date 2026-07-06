@@ -1,0 +1,37 @@
+# Canonical answer per the signature simulator: boot_sector_virus.
+id: virus_signature_match
+component_category: security
+subject_area: security
+difficulty: 1
+title: "Signature scan: name the infection"
+simulator: signature
+prompt: |
+  Your antivirus tool knows two signatures:
+
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus:     "hide_proc("
+
+  A suspicious file contains:
+
+    "init_sector(); XJMP:0x7C00; load_mbr()"
+
+  Which virus does the scanner report? Answer with the virus name, or
+  "clean" if neither signature matches exactly.
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "init_sector(); XJMP:0x7C00; load_mbr()"
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "Signature matching is exact substring search. Scan the file text for each pattern."
+explanation: |
+  The file contains the exact byte pattern XJMP:0x7C00, which is the
+  stored signature for boot_sector_virus. The rootkit signature does not
+  appear, so the scanner reports boot_sector_virus.
+
+  Exactness is both the strength and the weakness of signature scanning:
+  it never false-positives on near misses, and it never catches a virus
+  that mutated a single byte. That trade-off is why modern scanners pair
+  signatures with heuristics.

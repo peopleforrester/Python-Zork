@@ -1,0 +1,27 @@
+# Canonical answer per the seek simulator: 10 + 20 + 30 = 60.
+id: hdd_seek_fcfs
+component_category: storage
+subject_area: storage
+difficulty: 1
+title: "Disk seek: total head movement under FCFS"
+simulator: seek
+prompt: |
+  The disk head sits at track 50. Three requests arrive and are serviced
+  first-come-first-served, in this order:
+
+    track 60, track 40, track 70
+
+  How many tracks does the head travel in total?
+setup:
+  algorithm: FCFS
+  start_track: 50
+  requests: [60, 40, 70]
+answer_kind: number
+answer_grammar: "one whole number of tracks"
+hints:
+  - "Add up the absolute distances of each move: |50-60| first."
+explanation: |
+  FCFS services requests in arrival order: 50 to 60 is 10 tracks, 60 back
+  to 40 is 20, and 40 out to 70 is 30. Total: 60 tracks. Notice the head
+  crossed the same region twice; that back-and-forth is what smarter
+  schedulers try to eliminate.
