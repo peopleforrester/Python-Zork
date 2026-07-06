@@ -234,3 +234,53 @@ class TestPuzzleBindings(unittest.TestCase):
 
         bound = {p for room in self.arch.rooms.values() for p in room.puzzles}
         self.assertSetEqual(bound, set(load_registry().by_id))
+
+
+class TestWorldGraphInvariants(unittest.TestCase):
+    """Every room must be reachable, and no connect_to call may silently
+    overwrite an earlier door on the same direction (the bug that orphaned
+    l2_cache2 and ram_dimm4)."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        with patch.object(ComputerArchitecture, "setup"):
+            cls.arch = ComputerArchitecture()
+        cls.arch.make_components()
+        cls.arch.connect_components()
+
+    def test_every_room_reachable_from_start(self) -> None:
+        from collections import deque
+
+        rooms = self.arch.rooms
+        reverse = {room: rid for rid, room in rooms.items()}
+        seen = {"cpu_package"}
+        queue = deque(["cpu_package"])
+        while queue:
+            rid = queue.popleft()
+            for dest in rooms[rid].doors.values():
+                did = reverse.get(dest)
+                if did and did not in seen:
+                    seen.add(did)
+                    queue.append(did)
+        self.assertSetEqual(set(rooms), seen, f"unreachable: {sorted(set(rooms) - seen)}")
+
+    def test_no_direction_collisions(self) -> None:
+        from collections import Counter
+
+        from computerquest.models.component import Component
+
+        calls: list[tuple[str, str]] = []
+        original = Component.connect_to
+
+        def spy(room, other, direction):
+            calls.append((room.name, direction))
+            return original(room, other, direction)
+
+        with patch.object(ComputerArchitecture, "setup"):
+            arch = ComputerArchitecture()
+        arch.make_components()
+        with patch.object(Component, "connect_to", spy):
+            arch.connect_components()
+
+        dupes = [key for key, n in Counter(calls).items() if n > 1]
+        self.assertEqual(dupes, [], f"door overwrites: {dupes}")

@@ -327,7 +327,10 @@ class ComputerArchitecture:
         self.rooms["core2"].connect_to(self.rooms["core2_alu"], 'e')
         self.rooms["core2"].connect_to(self.rooms["core2_registers"], 'w')
         self.rooms["core2"].connect_to(self.rooms["core2_l1"], 's')
-        self.rooms["core2"].connect_to(self.rooms["l2_cache2"], 'sw')
+        # 'se' mirrors core1 -> l2_cache1; 'sw' is the return to cpu_package.
+        # These were both 'sw' once, and the second bind overwrote the first,
+        # leaving l2_cache2 unreachable (doors is keyed by direction).
+        self.rooms["core2"].connect_to(self.rooms["l2_cache2"], 'se')
         self.rooms["core2"].connect_to(self.rooms["cpu_package"], 'sw')
 
         # Add return connections for Core 2 components
@@ -350,7 +353,9 @@ class ComputerArchitecture:
         self.rooms["memory_controller"].connect_to(self.rooms["ram_dimm1"], 'w')
         self.rooms["memory_controller"].connect_to(self.rooms["ram_dimm2"], 'sw')
         self.rooms["memory_controller"].connect_to(self.rooms["ram_dimm3"], 'nw')
-        self.rooms["memory_controller"].connect_to(self.rooms["ram_dimm4"], 'n')
+        # 'ne' completes the DIMM fan (w, sw, nw, ne); 'n' stays the L3
+        # return path. Both were 'n' once, orphaning ram_dimm4.
+        self.rooms["memory_controller"].connect_to(self.rooms["ram_dimm4"], 'ne')
         self.rooms["memory_controller"].connect_to(self.rooms["l3_cache"], 'n')  # Return path
 
         # Connect RAM to conceptual components and back to memory controller

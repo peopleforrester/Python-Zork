@@ -117,7 +117,8 @@ button:hover {
 }
 
 .node.unvisited {
-  background-color: #444;
+  background-color: #5a5a6e;
+  border: 1px solid #9090a8;
 }
 
 .edgePath path {

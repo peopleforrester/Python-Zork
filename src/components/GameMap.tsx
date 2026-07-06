@@ -12,7 +12,7 @@ import ReactFlow, {
 import { Socket } from 'socket.io-client';
 import 'reactflow/dist/style.css';
 
-/** Wire shape from server.py — keep in sync with Game.snapshot() in Python. */
+/** Wire shape from server.py; keep in sync with Game.snapshot() in Python. */
 export interface RoomSnapshot {
   id: string;
   name: string;
@@ -45,7 +45,7 @@ interface GameMapProps {
 
 /**
  * Lay rooms out on a circle, ordered alphabetically by id so the placement is
- * stable across renders. Good enough for a dev map — a real layout would use a
+ * stable across renders. Good enough for a dev map; a real layout would use a
  * force-directed pass driven by the door graph.
  */
 function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number }> {
@@ -141,14 +141,22 @@ function GameMap({ socket }: GameMapProps) {
         Computer Architecture Map
         {snapshot && (
           <span className="map-status">
-            {' '}— Turn {snapshot.turn} · {snapshot.rooms.filter((r) => r.visited).length}/
+            {' '}· Turn {snapshot.turn} · {snapshot.rooms.filter((r) => r.visited).length}/
             {snapshot.rooms.length} visited
           </span>
         )}
       </div>
       <div className="map-content">
         {snapshot ? (
-          <ReactFlow nodes={nodes} edges={edges} fitView>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            fitView
+            // The full ring needs ~0.23 zoom in a ~300px panel; the default
+            // minZoom of 0.5 clamps fitView onto the empty middle of the ring.
+            minZoom={0.05}
+            fitViewOptions={{ padding: 0.1 }}
+          >
             <Controls />
             <MiniMap />
             <Background gap={12} size={1} />
