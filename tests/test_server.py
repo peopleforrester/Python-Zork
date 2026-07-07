@@ -5,6 +5,7 @@ ABOUTME: Imports server module without starting Flask.
 """
 
 import unittest
+import unittest.mock
 
 import server
 
@@ -174,3 +175,24 @@ class TestSocketHandlers(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFeedCrashSafety(unittest.TestCase):
+    """A crash inside Game.feed must surface in the terminal, not vanish."""
+
+    def test_handle_line_reports_internal_errors(self) -> None:
+        import server as server_module
+
+        emitted = []
+
+        class ExplodingGame:
+            def feed(self, line):
+                raise RuntimeError("boom")
+
+        with unittest.mock.patch.object(
+            server_module, "emit", lambda *a, **k: emitted.append(a)
+        ):
+            server_module._handle_line("sid-x", ExplodingGame(), "knowledge")
+
+        text = " ".join(str(a) for a in emitted)
+        self.assertIn("internal error", text.lower())

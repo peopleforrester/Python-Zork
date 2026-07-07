@@ -137,7 +137,17 @@ def _handle_line(sid: str, game: Game, line: str) -> None:
         emit("terminal_output", {"output": "\n\r[server] close the browser tab to exit.\n\r> "})
         return
 
-    response = game.feed(line)
+    try:
+        response = game.feed(line)
+    except Exception:
+        # A crash must surface in the player's terminal, not vanish into
+        # a swallowed handler exception with a hung prompt.
+        logger.exception("feed crashed for %s on line %r", sid, line)
+        emit(
+            "terminal_output",
+            {"output": "\n\r[server] internal error running that command.\n\r> "},
+        )
+        return
     if response:
         emit("terminal_output", {"output": f"\n\r{response}\n\r"})
 

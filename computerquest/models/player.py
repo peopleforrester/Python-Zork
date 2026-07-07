@@ -537,8 +537,12 @@ class Player:
         result = "┏━━━━━━━━━━━━ COMPUTER ARCHITECTURE KNOWLEDGE ━━━━━━━━━━━━┓\n"
 
         for topic, level in self.knowledge.items():
-            stars = "★" * level + "☆" * (MAX_KNOWLEDGE - level)
-            level_bar = "█" * level + "░" * (MAX_KNOWLEDGE - level)
+            # Levels are fractional since the puzzle cutover (difficulty
+            # weights add 1, 1.5, or 2). Render whole symbols and show the
+            # exact value alongside.
+            whole = int(level)
+            stars = "★" * whole + "☆" * (MAX_KNOWLEDGE - whole)
+            level_bar = "█" * whole + "░" * (MAX_KNOWLEDGE - whole)
             result += f"  {topic.capitalize()}: {stars} {level_bar} {level}/{MAX_KNOWLEDGE}\n"
 
         # Total progress bar

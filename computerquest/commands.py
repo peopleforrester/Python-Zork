@@ -508,6 +508,7 @@ class CommandProcessor:
             'status': StatusCommand,
             'progress': StatusCommand,
             'knowledge': KnowledgeCommand,
+            'k': KnowledgeCommand,
             'achievements': AchievementsCommand,
             'achieve': AchievementsCommand,
             'stats': AchievementsCommand,

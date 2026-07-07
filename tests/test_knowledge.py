@@ -88,3 +88,23 @@ class TestLoadRecomputes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestKnowledgeReportRendering(unittest.TestCase):
+    """The report must render fractional levels (regression: '★' * 2.5)."""
+
+    def setUp(self) -> None:
+        self.game = build_real_game()
+
+    def test_fractional_level_renders_without_crashing(self) -> None:
+        self.game.player.location = self.game.game_map.rooms["core1"]
+        self.game.feed("solve pipeline_forwarding_intro")
+        self.game.feed("answer 8")   # cpu -> 1.5
+        report = self.game.feed("knowledge")
+        self.assertIn("1.5", report)
+        self.assertIn("CPU", report.upper())
+
+    def test_k_alias_resolves(self) -> None:
+        report = self.game.feed("k")
+        self.assertNotIn("not recognized", report)
+        self.assertIn("Knowledge", report)
