@@ -1,0 +1,30 @@
+# Canonical answer per the seek simulator: 49 + 96 + 95 + 96 = 336.
+id: hdd_seek_zigzag
+component_category: storage
+subject_area: storage
+difficulty: 2
+title: "Disk seek: a hostile arrival order"
+simulator: seek
+prompt: |
+  The head sits at track 50. Four requests arrive in the worst possible
+  order and are serviced FCFS:
+
+    track 99, track 3, track 98, track 2
+
+  How many tracks does the head travel in total?
+setup:
+  algorithm: FCFS
+  start_track: 50
+  requests: [99, 3, 98, 2]
+answer_kind: number
+answer_grammar: "one whole number of tracks"
+hints:
+  - "The head crosses nearly the whole disk between every pair of requests."
+explanation: |
+  FCFS obeys arrival order: 50 to 99 is 49, then all the way back to 3
+  (96), out again to 98 (95), and back to 2 (96). Total: 336 tracks for
+  four requests that live in two tight clusters.
+
+  The queue's CONTENT is friendly; only its ORDER is hostile. That gap
+  between 336 and what a smarter order achieves is the entire budget
+  disk schedulers play with.

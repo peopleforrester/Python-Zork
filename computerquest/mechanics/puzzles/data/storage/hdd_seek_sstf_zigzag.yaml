@@ -1,0 +1,31 @@
+# Canonical answer per the seek simulator: 47 + 1 + 96 + 1 = 145.
+id: hdd_seek_sstf_zigzag
+component_category: storage
+subject_area: storage
+difficulty: 3
+title: "Disk seek: SSTF untangles the zigzag"
+simulator: seek
+prompt: |
+  Same head position, same four requests as the FCFS zigzag, but the
+  scheduler is SSTF (service the nearest pending request next):
+
+    head at 50; pending: 99, 3, 98, 2
+
+  How many tracks does the head travel in total?
+setup:
+  algorithm: SSTF
+  start_track: 50
+  requests: [99, 3, 98, 2]
+answer_kind: number
+answer_grammar: "one whole number of tracks"
+hints:
+  - "From 50 the nearest is 3 (47 away). Service each cluster completely before crossing."
+  - "The one long move is the single crossing from the low cluster to the high one."
+explanation: |
+  SSTF from 50 goes to 3 (47), mops up 2 (1), crosses once to 98 (96),
+  and finishes at 99 (1). Total: 145 versus FCFS's 336 on the identical
+  queue, a 57 percent saving purely from ordering.
+
+  Note what it did: it discovered the two clusters and paid the
+  expensive crossing exactly once. Elevator algorithms formalize that
+  instinct while also preventing the starvation SSTF permits.

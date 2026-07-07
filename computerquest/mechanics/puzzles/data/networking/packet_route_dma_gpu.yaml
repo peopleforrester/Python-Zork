@@ -1,0 +1,37 @@
+# Canonical answer per the packet simulator: nic pch pcie_controller pcie_x16 gpu.
+id: packet_route_dma_gpu
+component_category: networking
+subject_area: networking
+difficulty: 2
+title: "Packet routing: five hops to the GPU"
+simulator: packet
+prompt: |
+  A frame arrives at the nic carrying texture data addressed to the gpu.
+  The forwarding tables:
+
+    nic:             gpu -> pch
+    pch:             gpu -> pcie_controller
+    pcie_controller: gpu -> pcie_x16
+    pcie_x16:        gpu -> gpu
+
+  List every component the frame visits, in order.
+setup:
+  routes:
+    nic: {gpu: pch}
+    pch: {gpu: pcie_controller}
+    pcie_controller: {gpu: pcie_x16}
+    pcie_x16: {gpu: gpu}
+  src: nic
+  dst: gpu
+answer_kind: sequence
+answer_grammar: "component names in visit order, separated by spaces"
+hints:
+  - "Each table has exactly one row here; just follow the chain."
+explanation: |
+  A straight chain: nic, pch, pcie_controller, pcie_x16, gpu. Five
+  stations, four lookups, and no component ever saw more than its own
+  next hop.
+
+  Notice the CPU is not on the path. Device-to-device transfers ride
+  the interconnect directly; the days of the processor hand-carrying
+  every byte ended with DMA.

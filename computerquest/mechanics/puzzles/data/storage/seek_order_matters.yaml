@@ -1,0 +1,31 @@
+# Canonical answer per the seek simulator: 48 + 1 + 95 + 1 = 145.
+id: seek_order_matters
+component_category: storage
+subject_area: storage
+difficulty: 3
+title: "Disk seek: a sorted queue needs no clever scheduler"
+simulator: seek
+prompt: |
+  The same four tracks as the zigzag puzzles, but the requester itself
+  submitted them pre-sorted, and the scheduler is plain FCFS:
+
+    head at 50; requests in order: 2, 3, 98, 99
+
+  How many tracks does the head travel in total?
+setup:
+  algorithm: FCFS
+  start_track: 50
+  requests: [2, 3, 98, 99]
+answer_kind: number
+answer_grammar: "one whole number of tracks"
+hints:
+  - "One sweep down through the low cluster, one crossing, one sweep up."
+explanation: |
+  50 to 2 is 48, to 3 is 1, across to 98 is 95, to 99 is 1. Total: 145,
+  matching what SSTF earned on the hostile ordering, with zero scheduler
+  intelligence.
+
+  The lesson cuts both ways: a smart scheduler can rescue a bad queue,
+  and a well-behaved submitter can make the scheduler irrelevant. Real
+  systems do both, and SSDs opted out of the game entirely by removing
+  the moving head.

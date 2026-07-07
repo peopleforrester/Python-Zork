@@ -1,0 +1,33 @@
+# Canonical answer per the pipeline simulator: 8 cycles.
+id: pipeline_regfile_timing
+component_category: cpu
+subject_area: cpu
+difficulty: 3
+title: "Pipeline: what the register file costs without forwarding"
+simulator: pipeline
+prompt: |
+  Two dependent ALU instructions, NO forwarding. The register file is
+  write-through: a value written in WB can be read in the same cycle.
+
+    ADD R2 <- R1 + R1
+    SUB R4 <- R2 + R3
+
+  In how many total cycles does the SUB complete WB?
+setup:
+  stages: 5
+  forwarding: false
+  instructions:
+    - ["ADD", ["R1"], "R2"]
+    - ["SUB", ["R2", "R3"], "R4"]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "The ADD writes back in cycle 5, so the SUB may leave decode in cycle 5 and execute in 6."
+explanation: |
+  Without forwarding, the SUB waits in decode until the ADD's writeback
+  cycle (cycle 5), executes in cycle 6, and retires in cycle 8. Ideal
+  would be 6; the register-file round trip costs two bubbles.
+
+  With forwarding the same pair runs in 6, because the ALU result skips
+  the register file entirely on its way to the next EX. The register
+  file is for keeping state, not for passing it between neighbors.

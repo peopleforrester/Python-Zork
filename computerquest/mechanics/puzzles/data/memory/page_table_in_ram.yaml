@@ -1,0 +1,31 @@
+# Canonical answer per the translate simulator: 1 * 4096 + 0xABC = 0x1ABC.
+id: page_table_in_ram
+component_category: memory
+subject_area: memory
+difficulty: 2
+title: "Page walk: the table lives here in RAM"
+simulator: tlb_translate
+prompt: |
+  On a TLB miss, the hardware walks the page table, which is ordinary
+  data stored right here in RAM. Pages are 4 KB and the relevant entry
+  reads:
+
+    VPN 4 -> PFN 1
+
+  Translate virtual address 0x4ABC. Answer in decimal or 0x hex.
+setup:
+  page_size: 4096
+  page_table: {4: 1}
+  vaddr: 0x4ABC
+answer_kind: number
+answer_grammar: "one physical address, decimal or 0x hex"
+hints:
+  - "VPN = 0x4ABC / 0x1000 = 4; the offset is the remaining 0xABC."
+explanation: |
+  0x4ABC splits into VPN 4 and offset 0xABC. The entry maps VPN 4 to
+  PFN 1, so the physical address is 1 * 4096 + 0xABC = 0x1ABC.
+
+  The virtual address was HIGHER than the physical one it maps to;
+  translation relocates pages anywhere, including downward. And since
+  this table is itself bytes in RAM, every TLB miss costs an extra
+  memory access just to learn where memory is.

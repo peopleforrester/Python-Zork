@@ -1,0 +1,36 @@
+# Canonical answer per the signature simulator: rootkit_virus.
+id: signature_rootkit_hunt
+component_category: security
+subject_area: security
+difficulty: 2
+title: "Signature scan: something is hiding in kernel space"
+simulator: signature
+prompt: |
+  Scanning a suspicious kernel module against the signature database:
+
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus:     "hide_proc("
+
+  The module's contents:
+
+    "register_hook(); hide_proc(pid); return 0;"
+
+  What does the scanner report? Answer with a virus name, or "clean".
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "register_hook(); hide_proc(pid); return 0;"
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "Check each signature as an exact substring of the module text."
+explanation: |
+  The module contains hide_proc( byte for byte, the stored signature
+  for rootkit_virus. The boot-sector pattern is absent.
+
+  A rootkit's job after infection is to make exactly this scan lie: by
+  hooking the kernel's own file-reading paths, it can feed the scanner
+  a clean copy of any file it wants. Detection from inside a
+  compromised kernel is a losing game, which is why serious rootkit
+  hunting boots from separate, trusted media.

@@ -1,0 +1,37 @@
+# Canonical answer per the packet simulator:
+# ssd storage_controller pch memory_controller ram_dimm1.
+id: packet_route_dma_to_ram
+component_category: networking
+subject_area: networking
+difficulty: 3
+title: "Packet routing: DMA writes land in RAM, not the CPU"
+simulator: packet
+prompt: |
+  The ssd finishes a read and DMAs the data toward ram_dimm1:
+
+    ssd:                ram_dimm1 -> storage_controller
+    storage_controller: ram_dimm1 -> pch
+    pch:                ram_dimm1 -> memory_controller
+    memory_controller:  ram_dimm1 -> ram_dimm1
+
+  List every component the transfer visits, in order.
+setup:
+  routes:
+    ssd: {ram_dimm1: storage_controller}
+    storage_controller: {ram_dimm1: pch}
+    pch: {ram_dimm1: memory_controller}
+    memory_controller: {ram_dimm1: ram_dimm1}
+  src: ssd
+  dst: ram_dimm1
+answer_kind: sequence
+answer_grammar: "component names in visit order, separated by spaces"
+hints:
+  - "Follow the chain; the interesting part is which component is absent."
+explanation: |
+  ssd, storage_controller, pch, memory_controller, ram_dimm1. The data
+  goes disk to memory without ever entering the CPU; the processor just
+  receives an interrupt when the transfer completes.
+
+  That absence is the whole point of DMA: the CPU sets up the transfer,
+  then spends those cycles running your program instead of shoveling
+  bytes.

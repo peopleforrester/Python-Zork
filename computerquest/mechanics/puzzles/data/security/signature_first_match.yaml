@@ -1,0 +1,38 @@
+# Canonical answer per the signature simulator: boot_sector_virus
+# (both patterns present; the scanner reports the first match in
+# database order).
+id: signature_first_match
+component_category: security
+subject_area: security
+difficulty: 3
+title: "Signature scan: a doubly-infected file"
+simulator: signature
+prompt: |
+  This sample managed to get infected twice. Database:
+
+    boot_sector_virus: "XJMP:0x7C00"   (first entry)
+    rootkit_virus:     "hide_proc("    (second entry)
+
+  Contents:
+
+    "hide_proc(pid); XJMP:0x7C00; done()"
+
+  The scanner checks signatures in database order and reports the FIRST
+  match. What does it report?
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "hide_proc(pid); XJMP:0x7C00; done()"
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "Both signatures match. The tiebreaker is database order, not position in the file."
+explanation: |
+  Both patterns are present, and the rootkit pattern even appears
+  earlier in the FILE, but the scanner walks its DATABASE in order and
+  boot_sector_virus is the first entry, so that is the verdict.
+
+  Single-verdict scanners genuinely lose information on multi-infected
+  files. Real engines report every match precisely because cleanup that
+  removes one infection and misses the second leaves the machine owned.

@@ -1,0 +1,35 @@
+# Canonical answer per the cache simulator: ten misses (LRU loop pathology).
+id: l3_loop_pathology
+component_category: memory
+subject_area: memory
+difficulty: 3
+title: "L3 Cache: the loop that defeats LRU"
+simulator: cache
+prompt: |
+  A 4-line, fully-associative cache slice with LRU replacement. A tight
+  loop touches FIVE distinct lines, twice through:
+
+    A=0x000  B=0x040  C=0x080  D=0x0C0  E=0x100
+    A        B        C        D        E
+
+  Predict hit (H) or miss (M) for all ten accesses.
+setup:
+  policy: LRU
+  size_lines: 4
+  line_size_bytes: 64
+  associativity: 4
+  accesses: [0x000, 0x040, 0x080, 0x0C0, 0x100, 0x000, 0x040, 0x080, 0x0C0, 0x100]
+answer_kind: sequence
+answer_grammar: "ten tokens of H or M, separated by spaces"
+hints:
+  - "When E arrives, the least recently used line is A. Which line does the loop need next?"
+  - "LRU always evicts exactly the line this loop is about to come back for."
+explanation: |
+  Every access misses. The first five are cold, and then the pathology
+  starts: E evicts A just before the loop re-touches A; loading A evicts
+  B just before B is needed, and so on forever. A loop over N+1 lines in
+  an N-line LRU cache hits zero percent, one line too many turns LRU
+  into the worst possible policy for this trace.
+
+  This is why real workloads get blocked to fit cache, and why some
+  caches use random or FIFO-like replacement for streaming patterns.
