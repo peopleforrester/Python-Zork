@@ -214,8 +214,6 @@ class Player:
                 result += "\nUse 'quarantine [virus]' to contain these threats."
                 return result
             else:
-                # Increase component knowledge
-                self._increase_component_knowledge()
                 return "Scan complete. No viruses detected in this location."
 
     def advanced_scan(self, target: str | None = None) -> str:
@@ -305,8 +303,6 @@ class Player:
             result += "\nUse 'analyze [item]' for detailed threat assessment and 'quarantine [virus]' to contain threats."
             return result
         else:
-            # Increase knowledge
-            self._increase_component_knowledge()
             return f"Advanced scan complete. No threats detected in {self.location.name}."
 
     def _analyze_item_for_threats(self, item_name: str, item_desc: str, in_inventory: bool = False) -> str:
@@ -362,7 +358,6 @@ class Player:
         """Record a found virus and update knowledge"""
         if virus not in self.found_viruses:
             self.found_viruses.append(virus)
-            self.knowledge['security'] = min(MAX_KNOWLEDGE, self.knowledge['security'] + 1)
 
     def quarantine(self, virus_name: str) -> str:
         """
@@ -393,8 +388,6 @@ class Player:
             # Add neutralized version
             self.location.items[f"quarantined_{virus_name}"] = f"A neutralized version of {virus_name}, safely contained and no longer a threat."
 
-            # Increase security knowledge
-            self.knowledge['security'] = min(MAX_KNOWLEDGE, self.knowledge['security'] + 2)
 
             return f"Success! The {virus_name} has been quarantined and can no longer harm the system."
 
@@ -409,8 +402,6 @@ class Player:
             # Add neutralized version
             self.items[f"quarantined_{virus_name}"] = f"A neutralized version of {virus_name}, safely contained and no longer a threat."
 
-            # Increase security knowledge
-            self.knowledge['security'] = min(MAX_KNOWLEDGE, self.knowledge['security'] + 2)
 
             return f"Success! The {virus_name} has been quarantined from your inventory and can no longer harm the system."
 

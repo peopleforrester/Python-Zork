@@ -144,6 +144,9 @@ class SaveLoadSystem:
         # Absent in 1.0 saves; default to empty rather than failing.
         player.solved_puzzles = set(player_state.get("solved_puzzles", []))
         player.attempted_puzzles = set(player_state.get("attempted_puzzles", []))
+        # Knowledge is derived state since the microquiz cutover: rederive
+        # from the solved set rather than trusting what the file stored.
+        self.game._recompute_knowledge()
 
         for room_id, room_state in state["components"].items():
             room = rooms_by_id.get(room_id)

@@ -72,14 +72,16 @@ class TestLoadGame(SaveLoadTestBase):
         # Mutate state, save, mutate again, load — restored state should match
         # the saved snapshot, not the post-save mutations.
         self.game.player.health = 7
-        self.game.player.knowledge["security"] = 3
+        # Knowledge is derived from solved puzzles since the microquiz
+        # cutover; seed a solve rather than poking the meter directly.
+        self.game.player.solved_puzzles.add("virus_signature_match")
         self.game.player.found_viruses.append("rootkit_virus")
         self.game.turns = 15
         self.save_load.save_game("checkpoint")
 
         # Post-save mutations
         self.game.player.health = 20
-        self.game.player.knowledge["security"] = 0
+        self.game.player.solved_puzzles.clear()
         self.game.player.found_viruses.clear()
         self.game.turns = 99
 
@@ -87,7 +89,8 @@ class TestLoadGame(SaveLoadTestBase):
         self.assertIn("Game loaded", result)
         self.assertEqual(self.game.turns, 15)
         self.assertEqual(self.game.player.health, 7)
-        self.assertEqual(self.game.player.knowledge["security"], 3)
+        # virus_signature_match is difficulty 1 -> security knowledge 1.
+        self.assertEqual(self.game.player.knowledge["security"], 1)
         self.assertIn("rootkit_virus", self.game.player.found_viruses)
 
     def test_load_missing_file_returns_clear_message(self) -> None:

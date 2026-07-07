@@ -667,7 +667,14 @@ class Game:
         lines = []
         if verdict.correct:
             self.player.solved_puzzles.add(puzzle.id)
+            before = self.player.knowledge.get(puzzle.subject_area, 0)
+            self._recompute_knowledge()
+            after = self.player.knowledge[puzzle.subject_area]
             lines.append(f"Correct! {puzzle.title} solved.")
+            if after > before:
+                lines.append(
+                    f"[ {puzzle.subject_area} knowledge: {before} -> {after} ]"
+                )
         else:
             lines.append(f"Not quite: {verdict.summary}.")
         for pos in verdict.positions:
@@ -695,6 +702,20 @@ class Game:
             self.player.attempted_puzzles.add(puzzle.id)
             suffix = "\n(That one cost you: this puzzle now counts as attempted.)"
         return f"Hint: {hint}{suffix}"
+
+    def _recompute_knowledge(self) -> None:
+        """Knowledge is a pure function of solved puzzles (decision 5):
+        min(5, sum of difficulty * 0.5 + 0.5 per solved puzzle in the
+        area). Visits, scans, and quarantines no longer contribute."""
+        totals: dict[str, float] = {area: 0.0 for area in self.player.knowledge}
+        for puzzle_id in self.player.solved_puzzles:
+            puzzle = self.puzzle_registry.by_id.get(puzzle_id)
+            if puzzle is not None:
+                totals[puzzle.subject_area] += puzzle.knowledge_weight()
+        self.player.knowledge = {
+            area: (int(v) if float(v).is_integer() else v)
+            for area, v in ((a, min(5.0, total)) for a, total in totals.items())
+        }
 
     def skip_puzzle(self) -> str:
         if self.current_puzzle is None:
