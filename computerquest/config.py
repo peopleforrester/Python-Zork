@@ -84,6 +84,6 @@ INVENTORY_LIMIT = 8
 MAX_HEALTH = 20
 
 # Feature flags
-# Minigames (CPU pipeline, memory hierarchy) ship as placeholder stubs.
-# Step 4.1 (tk-a7098e) flips this to True once real implementations land.
-ENABLE_MINIGAMES = False
+# Minigames (CPU pipeline, memory hierarchy) are simulator-backed and live
+# as of the microquiz step-7 cutover; both delegate to mechanics.simulators.
+ENABLE_MINIGAMES = True

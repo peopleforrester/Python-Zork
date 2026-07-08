@@ -385,8 +385,9 @@ class SimulateCommand(Command):
                 return str(self.game.start_cpu_minigame())
             return str(self.game.start_memory_minigame())
 
-        # Action for an already-running simulation
-        return str(self.game.handle_simulation(sim_action))
+        # Action for an already-running simulation; pass any trailing tokens
+        # (e.g. 'pattern loop', 'cache l1 8') through as params.
+        return str(self.game.handle_simulation(sim_action, self.args[1:]))
 
 class QuickHelpCommand(Command):
     """Command to display a quick help overlay"""

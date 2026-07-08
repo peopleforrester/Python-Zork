@@ -145,7 +145,7 @@ class TestGame(unittest.TestCase):
         result = self.game.start_cpu_minigame()
         self.assertIsNotNone(self.game.current_minigame)
         self.assertIsInstance(self.game.current_minigame, CPUPipelineMinigame)
-        self.assertIn("CPU Pipeline", result)
+        self.assertIn("PIPELINE", result.upper())
 
     def test_handle_visualization(self):
         """Test visualization handling"""
@@ -188,17 +188,17 @@ class TestGame(unittest.TestCase):
         result = self.game.handle_simulation()
         self.assertIn("Please specify a simulation action", result)
 
-        # Step
+        # Step advances the cycle counter and renders the pipeline.
         result = self.game.handle_simulation("step")
-        self.assertIn("Advanced pipeline by one step", result)
+        self.assertIn("Cycle", result)
 
-        # Toggle
+        # Toggle flips to non-pipelined and restarts.
         result = self.game.handle_simulation("toggle")
-        self.assertIn("Toggled pipeline mode", result)
+        self.assertIn("non-pipelined", result.lower())
 
-        # Reset
+        # Reset keeps the mode and returns to cycle 0.
         result = self.game.handle_simulation("reset")
-        self.assertIn("Reset pipeline simulation", result)
+        self.assertIn("Reset", result)
 
         # Stop
         result = self.game.handle_simulation("stop")
@@ -297,7 +297,8 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game._match_inventory_item_prefix("xyz"), "xyz")
 
 class TestCPUPipelineMinigame(unittest.TestCase):
-    """Test cases for the CPU Pipeline Minigame"""
+    """Smoke tests for the simulator-backed CPU minigame. Full mechanics
+    coverage lives in tests/test_minigames.py."""
 
     def setUp(self):
         """Set up test fixtures"""
@@ -305,29 +306,34 @@ class TestCPUPipelineMinigame(unittest.TestCase):
         self.minigame = CPUPipelineMinigame(self.game)
 
     def test_explain(self):
-        """Test explanation text"""
+        """Explanation lists the pipeline stages and the workload."""
         result = self.minigame.explain()
-        self.assertIn("CPU Pipeline Minigame", result)
+        self.assertIn("PIPELINE", result.upper())
+        self.assertIn("IF", result)
 
     def test_get_status(self):
-        """Test status display"""
+        """Status renders the current cycle without advancing it."""
         result = self.minigame.get_status()
-        self.assertIn("CPU Pipeline status", result)
+        self.assertIn("Cycle", result)
+        self.assertEqual(self.minigame.cycle, 0)
 
     def test_step(self):
-        """Test stepping the simulation"""
-        result = self.minigame.step()
-        self.assertIn("Advanced pipeline by one step", result)
+        """Stepping advances the cycle counter."""
+        self.minigame.step()
+        self.assertEqual(self.minigame.cycle, 1)
 
     def test_toggle_pipeline(self):
-        """Test toggling pipeline mode"""
+        """Toggling flips to non-pipelined mode and restarts."""
         result = self.minigame.toggle_pipeline()
-        self.assertIn("Toggled pipeline mode", result)
+        self.assertFalse(self.minigame.pipelined)
+        self.assertIn("non-pipelined", result.lower())
 
     def test_reset(self):
-        """Test resetting the simulation"""
+        """Reset returns to cycle 0."""
+        self.minigame.step()
         result = self.minigame.reset()
-        self.assertIn("Reset pipeline simulation", result)
+        self.assertEqual(self.minigame.cycle, 0)
+        self.assertIn("Reset", result)
 
 
 class TestGameFeed(unittest.TestCase):

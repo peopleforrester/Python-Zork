@@ -49,6 +49,14 @@ class PipelineResult:
     # ex_cycle[i] is the cycle instruction i occupied EX; feeds the minigame's
     # Gantt rendering later.
     ex_cycles: list[int] = field(default_factory=list)
+    # Full per-instruction stage timeline, so the CPU minigame can render a
+    # cycle-by-cycle Gantt without reimplementing hazard logic. All 1-indexed
+    # cycle numbers. ID spans id_entry_cycles[i]..id_exit_cycles[i] inclusive.
+    if_cycles: list[int] = field(default_factory=list)
+    id_entry_cycles: list[int] = field(default_factory=list)
+    id_exit_cycles: list[int] = field(default_factory=list)
+    mem_cycles: list[int] = field(default_factory=list)
+    wb_cycles: list[int] = field(default_factory=list)
 
 
 class PipelineSimulator:
@@ -87,6 +95,8 @@ class PipelineSimulator:
         wb_cycle: list[int] = []
         stalls: list[int] = []
         id_exit: list[int] = []  # last cycle instruction i sits in ID
+        if_cycle: list[int] = []
+        id_entry_cycle: list[int] = []
 
         # dest register -> index of the most recent producer.
         last_writer: dict[str, int] = {}
@@ -96,6 +106,8 @@ class PipelineSimulator:
             # Earliest ID entry: cycle after IF, and after the predecessor
             # has vacated ID.
             id_entry = fetch + 1 if i == 0 else max(fetch + 1, id_exit[i - 1] + 1)
+            if_cycle.append(fetch)
+            id_entry_cycle.append(id_entry)
 
             # RAW constraint: earliest cycle this instruction may enter EX.
             earliest_ex = id_entry + 1
@@ -129,4 +141,9 @@ class PipelineSimulator:
             total_cycles=wb_cycle[-1],
             stalls_per_instruction=stalls,
             ex_cycles=ex_cycle,
+            if_cycles=if_cycle,
+            id_entry_cycles=id_entry_cycle,
+            id_exit_cycles=id_exit,
+            mem_cycles=mem_cycle,
+            wb_cycles=wb_cycle,
         )

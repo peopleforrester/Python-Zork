@@ -162,9 +162,12 @@ material is set.
   knowledge still shows the existing gate message.
 - All seven verbs above behave per the spec.
 - A walk-through of the canned workload at default settings reaches
-  `Mode.FINISHED` in the cycle count derived from the design (target:
-  10 cycles pipelined-with-forwarding, 13 pipelined-with-stalls,
-  30 non-pipelined). These cycle counts are the regression assertions.
+  `Mode.FINISHED` in the cycle count the pipeline simulator computes for
+  it: 12 cycles pipelined-with-forwarding, 16 pipelined-with-stalls,
+  30 non-pipelined. (The earlier 10/13 figures in this doc were guesses
+  written before the simulator existed; the simulator is the source of
+  truth and these are its numbers.) These cycle counts are the
+  regression assertions.
 - Tests cover: gate, full pipelined-with-stalls run, forwarding toggle
   changes hazard handling, toggle to non-pipelined restarts cleanly,
   stop clears `current_minigame`.

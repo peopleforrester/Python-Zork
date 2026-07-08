@@ -793,6 +793,8 @@ class Game:
 │    {Colors.GREEN}simulate cpu{Colors.RESET}     - Start CPU pipeline simulation minigame             │
 │    {Colors.GREEN}simulate memory{Colors.RESET}  - Start memory hierarchy simulation                  │
 │    {Colors.GREEN}simulate step{Colors.RESET}    - Advance simulation by one step                     │
+│    {Colors.GREEN}simulate forward{Colors.RESET} - (CPU) toggle result forwarding on/off              │
+│    {Colors.GREEN}simulate pattern{Colors.RESET} - (memory) sequential|loop|stride|random             │
 │    {Colors.GREEN}simulate toggle{Colors.RESET}  - Toggle between simulation modes                    │
 │    {Colors.GREEN}simulate reset{Colors.RESET}   - Reset the simulation                               │
 │                                                                          │
@@ -899,34 +901,61 @@ Usage: viz [type] (e.g., 'viz cpu')"""
         else:
             return f"Unknown visualization type: {viz_type}. Try 'cpu', 'memory', 'network', 'storage', or 'motherboard'."
 
-    def handle_simulation(self, action: str | None = None) -> str:
-        """Handle simulation commands"""
+    def handle_simulation(self, action: str | None = None, params: list[str] | None = None) -> str:
+        """Handle simulation commands. `params` carries extra tokens for
+        verbs that take an argument (pattern <name>, cache <level> <size>)."""
         if not self.current_minigame:
             return "No active simulation. Start one with 'simulate cpu' or 'simulate memory'."
 
         if not action:
             return "Please specify a simulation action: 'step', 'toggle', 'reset', or 'stop'."
 
+        params = params or []
         action = action.lower()
+        mini = self.current_minigame
 
         if action == "step":
-            return self.current_minigame.step()
+            return mini.step()
+
+        elif action == "status":
+            return mini.get_status()
 
         elif action == "toggle":
-            if hasattr(self.current_minigame, "toggle_pipeline"):
-                return self.current_minigame.toggle_pipeline()
-            else:
-                return "This simulation doesn't support toggling modes."
+            if hasattr(mini, "toggle_pipeline"):
+                return mini.toggle_pipeline()
+            return "This simulation doesn't support toggling modes."
+
+        elif action == "forward":
+            if hasattr(mini, "toggle_forwarding"):
+                return mini.toggle_forwarding()
+            return "This simulation doesn't support forwarding."
+
+        elif action == "pattern":
+            if not hasattr(mini, "set_pattern"):
+                return "This simulation doesn't support access patterns."
+            if not params:
+                return "Usage: simulate pattern <sequential|loop|stride|random>"
+            return mini.set_pattern(params[0].lower())
+
+        elif action == "cache":
+            if not hasattr(mini, "set_cache_size"):
+                return "This simulation doesn't support cache tuning."
+            if len(params) < 2 or not params[1].isdigit():
+                return "Usage: simulate cache l1 <size>"
+            return mini.set_cache_size(int(params[1]))
 
         elif action == "reset":
-            return self.current_minigame.reset()
+            return mini.reset()
 
         elif action == "stop":
             self.current_minigame = None
             return "Simulation stopped."
 
         else:
-            return f"Unknown simulation action: {action}. Try 'step', 'toggle', 'reset', or 'stop'."
+            return (
+                f"Unknown simulation action: {action}. Try 'step', 'status', 'toggle', "
+                "'forward', 'pattern', 'cache', 'reset', or 'stop'."
+            )
 
     def get_component_info(self, topic: str) -> str:
         """Provide educational information about computer components"""

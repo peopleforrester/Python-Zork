@@ -104,3 +104,22 @@ class TestValidation(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTimelineFields(unittest.TestCase):
+    """simulate() exposes the full per-instruction stage timeline for the
+    CPU minigame's Gantt rendering, without the minigame recomputing it."""
+
+    def test_timeline_is_internally_consistent(self) -> None:
+        sim = PipelineSimulator()
+        r = sim.simulate(HAZARD_CHAIN, forwarding=False)
+        n = len(HAZARD_CHAIN)
+        for lst in (r.if_cycles, r.id_entry_cycles, r.id_exit_cycles, r.mem_cycles, r.wb_cycles):
+            self.assertEqual(len(lst), n)
+        for i in range(n):
+            self.assertLess(r.if_cycles[i], r.id_entry_cycles[i])
+            self.assertLessEqual(r.id_entry_cycles[i], r.id_exit_cycles[i])
+            self.assertEqual(r.id_exit_cycles[i] + 1, r.ex_cycles[i])
+            self.assertEqual(r.ex_cycles[i] + 1, r.mem_cycles[i])
+            self.assertEqual(r.mem_cycles[i] + 1, r.wb_cycles[i])
+        self.assertEqual(r.wb_cycles[-1], r.total_cycles)
