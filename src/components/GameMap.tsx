@@ -1,7 +1,7 @@
 // ABOUTME: Live map of the game world driven by the backend `game_state` event.
 // ABOUTME: Replaces the previous hardcoded sample with a real snapshot subscription.
 
-import { useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -12,6 +12,13 @@ import ReactFlow, {
 import { Socket } from 'socket.io-client';
 import 'reactflow/dist/style.css';
 
+/** Per-room puzzle progress, emitted by Game.snapshot() since the microquiz. */
+export interface PuzzleState {
+  available: string[];
+  solved: string[];
+  attempted: string[];
+}
+
 /** Wire shape from server.py; keep in sync with Game.snapshot() in Python. */
 export interface RoomSnapshot {
   id: string;
@@ -19,6 +26,25 @@ export interface RoomSnapshot {
   visited: boolean;
   doors: Record<string, string>;
   item_count: number;
+  puzzles: PuzzleState;
+}
+
+type PuzzleStatus = 'none' | 'available' | 'partial' | 'solved';
+
+/**
+ * Reduce a room's puzzle block to one status the map can color by:
+ *   none      - no puzzles bound here
+ *   available - has puzzles, none solved yet
+ *   partial   - some but not all solved
+ *   solved    - every bound puzzle solved
+ */
+function puzzleStatus(room: RoomSnapshot): PuzzleStatus {
+  const total = room.puzzles?.available.length ?? 0;
+  if (total === 0) return 'none';
+  const solved = room.puzzles.solved.length;
+  if (solved >= total) return 'solved';
+  if (solved > 0) return 'partial';
+  return 'available';
 }
 
 export interface GameSnapshot {
@@ -67,9 +93,29 @@ function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number 
 }
 
 function classForRoom(room: RoomSnapshot, isCurrent: boolean): string {
-  if (isCurrent) return 'node current';
-  if (room.visited) return 'node visited';
-  return 'node unvisited';
+  // Base background comes from visit state; puzzle status adds an outline so
+  // the two axes (where have I been, what's left to solve) read independently.
+  const base = isCurrent ? 'node current' : room.visited ? 'node visited' : 'node unvisited';
+  const status = puzzleStatus(room);
+  return status === 'none' ? base : `${base} puzzles-${status}`;
+}
+
+/** Compact solved/total badge for puzzle rooms, e.g. "◆ 1/2". */
+function puzzleLabel(room: RoomSnapshot): ReactNode {
+  const status = puzzleStatus(room);
+  if (status === 'none') return room.name;
+  const total = room.puzzles.available.length;
+  const solved = room.puzzles.solved.length;
+  const glyph = status === 'solved' ? '✓' : '◆';
+  return (
+    <span>
+      {room.name}
+      <span className={`puzzle-badge badge-${status}`}>
+        {' '}
+        {glyph} {solved}/{total}
+      </span>
+    </span>
+  );
 }
 
 function nodesFor(snapshot: GameSnapshot): Node[] {
@@ -80,7 +126,7 @@ function nodesFor(snapshot: GameSnapshot): Node[] {
     const pos = positions.get(room.id) ?? { x: 0, y: 0 };
     return {
       id: room.id,
-      data: { label: room.name },
+      data: { label: puzzleLabel(room) },
       position: pos,
       className: classForRoom(room, room.id === currentId),
     };
@@ -135,6 +181,18 @@ function GameMap({ socket }: GameMapProps) {
     return { nodes: nodesFor(snapshot), edges: edgesFor(snapshot) };
   }, [snapshot]);
 
+  // Game-wide puzzle totals across every room, for the header summary.
+  const { solvedCount, puzzleCount } = useMemo(() => {
+    if (!snapshot) return { solvedCount: 0, puzzleCount: 0 };
+    let solved = 0;
+    let total = 0;
+    for (const room of snapshot.rooms) {
+      total += room.puzzles?.available.length ?? 0;
+      solved += room.puzzles?.solved.length ?? 0;
+    }
+    return { solvedCount: solved, puzzleCount: total };
+  }, [snapshot]);
+
   return (
     <div className="map-container">
       <div className="map-title">
@@ -142,10 +200,17 @@ function GameMap({ socket }: GameMapProps) {
         {snapshot && (
           <span className="map-status">
             {' '}· Turn {snapshot.turn} · {snapshot.rooms.filter((r) => r.visited).length}/
-            {snapshot.rooms.length} visited
+            {snapshot.rooms.length} visited · {solvedCount}/{puzzleCount} puzzles
           </span>
         )}
       </div>
+      {snapshot && puzzleCount > 0 && (
+        <div className="map-legend">
+          <span className="legend-item legend-available">◆ available</span>
+          <span className="legend-item legend-partial">◆ started</span>
+          <span className="legend-item legend-solved">✓ solved</span>
+        </div>
+      )}
       <div className="map-content">
         {snapshot ? (
           <ReactFlow

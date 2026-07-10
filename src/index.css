@@ -121,6 +121,61 @@ button:hover {
   border: 1px solid #9090a8;
 }
 
+/* Puzzle status rings compose with the visit-state background above. A thick
+   outline stays legible even at the low zoom the full ring map fits at. */
+.node.puzzles-available {
+  outline: 3px solid #f5b342;
+  outline-offset: 1px;
+}
+
+.node.puzzles-partial {
+  outline: 3px dashed #f5b342;
+  outline-offset: 1px;
+}
+
+.node.puzzles-solved {
+  outline: 3px solid #35c46a;
+  outline-offset: 1px;
+}
+
+.puzzle-badge {
+  font-weight: 700;
+}
+
+.badge-available,
+.badge-partial {
+  color: #ffd98a;
+}
+
+.badge-solved {
+  color: #9cf0bd;
+}
+
+.map-legend {
+  display: flex;
+  gap: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: #cfcfe0;
+}
+
+.legend-item {
+  white-space: nowrap;
+}
+
+.legend-available {
+  color: #f5b342;
+}
+
+.legend-partial {
+  color: #f5b342;
+  font-style: italic;
+}
+
+.legend-solved {
+  color: #35c46a;
+}
+
 .edgePath path {
   stroke: #888;
   stroke-width: 2px;
