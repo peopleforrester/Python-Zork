@@ -113,3 +113,12 @@ saves/
 node_modules/
 .vite/
 *.tsbuildinfo
+
+# Playwright e2e artifacts
+test-results/
+playwright-report/
+.playwright/
+blob-report/
+
+# Vitest coverage output (default v8 reporter dir)
+/coverage/

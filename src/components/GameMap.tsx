@@ -38,7 +38,7 @@ type PuzzleStatus = 'none' | 'available' | 'partial' | 'solved';
  *   partial   - some but not all solved
  *   solved    - every bound puzzle solved
  */
-function puzzleStatus(room: RoomSnapshot): PuzzleStatus {
+export function puzzleStatus(room: RoomSnapshot): PuzzleStatus {
   const total = room.puzzles?.available.length ?? 0;
   if (total === 0) return 'none';
   const solved = room.puzzles.solved.length;
@@ -74,7 +74,7 @@ interface GameMapProps {
  * stable across renders. Good enough for a dev map; a real layout would use a
  * force-directed pass driven by the door graph.
  */
-function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number }> {
+export function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number }> {
   const sorted = [...rooms].sort((a, b) => a.id.localeCompare(b.id));
   const n = sorted.length;
   const radius = Math.max(280, n * 16);
@@ -92,7 +92,7 @@ function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number 
   return positions;
 }
 
-function classForRoom(room: RoomSnapshot, isCurrent: boolean): string {
+export function classForRoom(room: RoomSnapshot, isCurrent: boolean): string {
   // Base background comes from visit state; puzzle status adds an outline so
   // the two axes (where have I been, what's left to solve) read independently.
   const base = isCurrent ? 'node current' : room.visited ? 'node visited' : 'node unvisited';
@@ -101,7 +101,7 @@ function classForRoom(room: RoomSnapshot, isCurrent: boolean): string {
 }
 
 /** Compact solved/total badge for puzzle rooms, e.g. "◆ 1/2". */
-function puzzleLabel(room: RoomSnapshot): ReactNode {
+export function puzzleLabel(room: RoomSnapshot): ReactNode {
   const status = puzzleStatus(room);
   if (status === 'none') return room.name;
   const total = room.puzzles.available.length;
@@ -133,7 +133,7 @@ function nodesFor(snapshot: GameSnapshot): Node[] {
   });
 }
 
-function edgesFor(snapshot: GameSnapshot): Edge[] {
+export function edgesFor(snapshot: GameSnapshot): Edge[] {
   const edges: Edge[] = [];
   const seen = new Set<string>();
 
