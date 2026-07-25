@@ -59,3 +59,13 @@ checklist to 3.3 complete, updated Branch & Tests, and appended phase-history
 lines. No code changed. Recorded the open save/load contradiction (code keeps
 save/load; an earlier decision said remove it) as still needing a call from
 Michael.
+
+## 2026-07-25T00:00:00Z · correction · save/load is not an open contradiction
+
+Corrects the prior entry, which called the wired save/load an "open
+contradiction." It is not. The Step 1.2 decision (2026-05-02) removed only the
+placeholder save/load that silently lost data (99be8ed) and filed a follow-up
+to port a real one from archive/saveload.py. That follow-up (tk-24fa9f) shipped
+the real implementation (510ae26). The current SaveLoadSystem plus
+save/load/deletesave commands are the intended end state. No decision from
+Michael is pending on this.

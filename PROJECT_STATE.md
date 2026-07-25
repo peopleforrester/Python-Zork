@@ -42,7 +42,7 @@ Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (s
 
 `tk-a7098e` (4.1 minigames) is DONE: it was steps 1–7 above, all shipped and promoted. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1). Full-victory playthrough re-verified live (34 turns, all 5 viruses, Victory:true) and the Railway deploy confirmed serving the current bundle.
 
-**Open decision, not yet resolved:** save/load is fully wired (`SaveLoadSystem` in game.py plus save/load/deletesave commands), which contradicts the earlier recorded decision to remove it. The design docs also mark in-flight puzzle/minigame state as non-persistent. Needs a call: honor the removal decision, or supersede it.
+**Save/load status (not a contradiction):** the Step 1.2 decision (2026-05-02) removed the *placeholder* save/load that silently lost data (99be8ed) and filed a follow-up to reimplement it properly. That follow-up (tk-24fa9f) shipped a real implementation (510ae26). The currently-wired `SaveLoadSystem` plus save/load/deletesave commands are the intended end state. The design docs' "in-flight puzzle/minigame state is not persisted" note is a scoping choice for that feature, not a conflict.
 
 **Deferred features (design-doc "Out of scope"), available if picked up:** author-extensible puzzles, adaptive difficulty (reorder by solve history), higher-fidelity network/security simulators, persistence of in-flight puzzle/minigame state.
 
