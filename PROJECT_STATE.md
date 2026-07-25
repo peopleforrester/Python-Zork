@@ -1,6 +1,6 @@
 # Project State: Python-Zork
 
-Phase: 2.1 Test
+Phase: 3.3 Promote (complete) — no unit in flight
 Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
@@ -8,19 +8,19 @@ ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
 
 ## Lifecycle
 
-Current unit of work: **micro-puzzle implementation (tk-a7098e)** per `docs/architecture-microquiz.md`.
+No unit of work in flight. Last unit: **micro-puzzle implementation (tk-a7098e)** per `docs/architecture-microquiz.md`, complete and promoted; followed by a frontend test-suite unit and an npm-audit cleanup unit, both promoted.
 
 - [x] 1.1 Research (teaching-games spike in mrf-knowledge, 2026-06-22)
 - [x] 1.2 Plan (architecture-microquiz.md drafted b8a7a9b; six decisions resolved 4279a5a)
 - [x] 1.3 Approve (Michael, 2026-07-04; sha256:cde83dbaa90b)
-- [ ] 2.1 Test  ← you are here (migration step 1: simulator scaffolding, tests first)
-- [ ] 2.2 Implement
-- [ ] 2.3 Verify
-- [ ] 3.1 Stage
-- [ ] 3.2 Confirm CI
-- [ ] 3.3 Promote
+- [x] 2.1 Test (per-step failing tests, all 8 migration steps)
+- [x] 2.2 Implement (all 8 steps landed green)
+- [x] 2.3 Verify (277 pytest + 14 vitest + 3 Playwright e2e; ruff + mypy clean)
+- [x] 3.1 Stage (pushed to staging)
+- [x] 3.2 Confirm CI (green: Python matrix + frontend + e2e jobs)
+- [x] 3.3 Promote (ff-merged to main; all refs at 6349499)
 
-Note: the unit iterates 2.1→2.3 once per migration step (8 steps); the 3.x gates apply per landed step.
+Note: the unit iterated 2.1→2.3 once per migration step (8 steps); the 3.x gates applied per landed step. Two follow-on units (frontend test suite; npm audit 20→0) also completed through 3.3.
 
 Prior unit (senior-review remediation + Step 4.2/4.3 + save/load) completed through 3.3; promoted to `main` at 8ec133c on 2026-06-22.
 
@@ -40,15 +40,20 @@ Step 2 note: puzzles are one-YAML-per-file under `mechanics/puzzles/data/<catego
 
 Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (stall/forward RAW model) simulators landed with fidelity docstrings; timing conventions (write-through regfile, EX→EX forward, load-use bubble) documented in pipeline.py and pinned by tests (7/8/11 cycle counts). tlb/packet/storage/signature simulators land with their consuming puzzles in step 5.
 
-Remaining tracked task: `tk-a7098e` (4.1 minigames), now unblocked; it is steps 1–7 above. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1).
+`tk-a7098e` (4.1 minigames) is DONE: it was steps 1–7 above, all shipped and promoted. Step 4.2's browser verification is DONE (2026-07-03, headless Chromium walkthrough): welcome renders in xterm, typed command flows through the keystroke buffer into Game.feed, terminal prints the move, map re-renders live (Turn 1, current node CPU Package → Core 1). Three defects found and fixed during the walkthrough (d1b51e1). Full-victory playthrough re-verified live (34 turns, all 5 viruses, Victory:true) and the Railway deploy confirmed serving the current bundle.
+
+**Open decision, not yet resolved:** save/load is fully wired (`SaveLoadSystem` in game.py plus save/load/deletesave commands), which contradicts the earlier recorded decision to remove it. The design docs also mark in-flight puzzle/minigame state as non-persistent. Needs a call: honor the removal decision, or supersede it.
+
+**Deferred features (design-doc "Out of scope"), available if picked up:** author-extensible puzzles, adaptive difficulty (reorder by solve history), higher-fidelity network/security simulators, persistence of in-flight puzzle/minigame state.
 
 ## Branch & Tests
 
 - Branch: `staging`
-- Working tree: clean
-- Last CI: green on staging @ d1b51e1 (run 28671675746)
-- `staging` and `main` are in sync at d1b51e1 (promoted 2026-07-03 after the browser walkthrough cleared the verification gate).
-- Tests: 150/150 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix)
+- Working tree: clean (aside from this state reconciliation)
+- Last CI: green (Python matrix + frontend + e2e) @ 6349499
+- `staging` and `main` are in sync at 6349499 (all refs, local and origin).
+- Tests: 277/277 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
 ## Phase History
@@ -70,3 +75,7 @@ The senior-developer review (2026-04-19) produced a 26-step remediation plan. Al
 Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with visits" loop sits in the instructionist failed canon. Direction C adopted: keep the exploration shell and make knowledge rise on solved predict-and-verify micro-puzzles checked by real simulators.
 
 - 2026-07-06T00:00:00Z external live-play review: fixed map viewport clamp, two unreachable rooms (door-direction overwrites), node contrast (95b0c60); promoted and redeployed
+- 2026-07-06T00:00:00Z microquiz unit COMPLETE through step 8; recorded (a955b6e)
+- 2026-07-25T00:00:00Z frontend test-suite unit (vitest + Playwright e2e) landed and promoted (764d973, d7cbf2f)
+- 2026-07-25T00:00:00Z npm audit unit: 20 → 0 advisories; vite 5→8, vitest 3→4; promoted (6349499); Railway redeployed and live-verified
+- 2026-07-25T00:00:00Z state reconciliation: PROJECT_STATE + tasks.yaml corrected from stale Phase 2.1 to actual shipped state (all refs at 6349499)

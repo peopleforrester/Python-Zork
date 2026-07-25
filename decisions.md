@@ -47,3 +47,15 @@ verb, or plan-step content changed. New sha256:8abdc57a3d45. Same pass
 cleaned README (also fixing stale PTY-era architecture and security
 text), PROJECT_STATE, plan.md, design-minigames.md, and the three
 puzzle YAML files.
+
+## 2026-07-25T00:00:00Z · reconciliation · state files corrected to actual shipped state
+
+PROJECT_STATE.md and tasks.yaml had drifted: they still declared Phase 2.1
+Test, 150 tests, and CI at d1b51e1, while the repo had shipped the full
+eight-step microquiz unit plus a frontend test-suite unit and an npm-audit
+cleanup, all promoted to main (all refs at 6349499, 277 pytest + 14 vitest +
+3 Playwright e2e green). Marked tk-a7098e done, advanced the lifecycle
+checklist to 3.3 complete, updated Branch & Tests, and appended phase-history
+lines. No code changed. Recorded the open save/load contradiction (code keeps
+save/load; an earlier decision said remove it) as still needing a call from
+Michael.
