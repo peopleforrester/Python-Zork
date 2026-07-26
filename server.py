@@ -36,19 +36,64 @@ def _env_bool(env_value):
     return env_value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _resolve_host(cq_host, has_port):
+    """Resolve the bind address.
+
+    An explicit CQ_HOST always wins. Otherwise bind 0.0.0.0 when a platform
+    PORT is injected (Railway and most PaaS), since their edge proxy reaches the
+    container over its network interface, not loopback; fall back to loopback
+    for local dev so the dev server is not exposed on the LAN.
+    """
+    if cq_host:
+        return cq_host
+    return "0.0.0.0" if has_port else "127.0.0.1"
+
+
+def _socket_origins(serving_dist, cors_origins):
+    """Allowed Socket.IO handshake origins.
+
+    When the bundled dist/ is served (single-service production), the page and
+    socket share an origin that is the platform domain, unknown at build time,
+    so accept any origin for the handshake. In dev the page is served by Vite on
+    a known localhost port, so keep the explicit allowlist.
+    """
+    return "*" if serving_dist else cors_origins
+
+
+def _clamp_input(raw, limit):
+    """Truncate an oversized single input event.
+
+    Guards against a paste-bomb / echo-amplification event on the public,
+    unauthenticated socket: one giant string would otherwise be buffered and
+    echoed character by character.
+    """
+    return raw[:limit] if len(raw) > limit else raw
+
+
 # --- Configuration from environment -----------------------------------------
+
+# Longest single terminal_input event we accept, and the longest line we buffer
+# before dropping further keystrokes. Generous for real typing/pastes, small
+# enough to bound memory and echo work per event.
+MAX_INPUT_EVENT = 4096
+MAX_LINE = 1024
 
 CORS_ORIGINS = _parse_origins(os.environ.get("CQ_CORS_ORIGINS"))
 DEBUG = _env_bool(os.environ.get("CQ_DEBUG"))
-HOST = os.environ.get("CQ_HOST", "127.0.0.1")
+HOST = _resolve_host(os.environ.get("CQ_HOST"), "PORT" in os.environ)
 PORT = int(os.environ.get("CQ_PORT") or os.environ.get("PORT") or "5000")
+
+# Directory of the built frontend. When present we are in single-service mode
+# (Flask serves the page and the socket same-origin); when absent, dev mode.
+_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
+_SERVING_DIST = os.path.isdir(_DIST)
 
 
 # --- App ---------------------------------------------------------------------
 
 app = Flask(__name__)
 CORS(app, origins=CORS_ORIGINS)
-socketio = SocketIO(app, cors_allowed_origins=CORS_ORIGINS)
+socketio = SocketIO(app, cors_allowed_origins=_socket_origins(_SERVING_DIST, CORS_ORIGINS))
 
 # Per-session Game instances. Keyed by Socket.IO session id. Single-user dev
 # server, but the keying keeps state isolated if multiple browser tabs connect.
@@ -73,7 +118,6 @@ def health_check():
 # Serve the built frontend when dist/ exists (Railway single-service mode:
 # same origin for page + socket, so no CORS in production). Local dev keeps
 # using the Vite server on :5173 and this route 404s harmlessly.
-_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dist")
 
 
 @app.route("/")
@@ -190,13 +234,23 @@ def handle_input(data):
     raw = data.get("input", "") if isinstance(data, dict) else ""
     if not raw:
         return
+    raw = _clamp_input(raw, MAX_INPUT_EVENT)
 
     buf = _input_buffers.get(sid, "")
+    # Coalesce echoes into one emit per event instead of one per character, so a
+    # multi-character (pasted) event cannot amplify into a flood of socket sends.
+    echo: list[str] = []
+
+    def flush_echo() -> None:
+        if echo:
+            emit("terminal_output", {"output": "".join(echo)})
+            echo.clear()
 
     for char in raw:
         if char in ("\r", "\n"):
-            # Echo a newline so the terminal advances, then flush.
-            emit("terminal_output", {"output": "\n\r"})
+            # Echo a newline so the terminal advances, then flush the line.
+            echo.append("\n\r")
+            flush_echo()
             line, buf = buf, ""
             _input_buffers[sid] = buf
             _handle_line(sid, game, line)
@@ -207,17 +261,19 @@ def handle_input(data):
             # Backspace: drop one char from the buffer and erase visually.
             if buf:
                 buf = buf[:-1]
-                emit("terminal_output", {"output": "\b \b"})
+                echo.append("\b \b")
         elif char == "\x03":
             # Ctrl-C: abandon the current line.
             buf = ""
-            emit("terminal_output", {"output": "^C\n\r> "})
+            echo.append("^C\n\r> ")
         elif char >= " " and char != "\x7f":
-            # Printable. Append and echo.
-            buf += char
-            emit("terminal_output", {"output": char})
+            # Printable. Append and echo, unless the line is already at the cap.
+            if len(buf) < MAX_LINE:
+                buf += char
+                echo.append(char)
         # Drop anything else (escape sequences, arrow keys, tab — out of scope).
 
+    flush_echo()
     _input_buffers[sid] = buf
 
 

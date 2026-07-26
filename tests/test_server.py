@@ -53,6 +53,37 @@ class TestEnvFlags(unittest.TestCase):
         self.assertTrue(server._env_bool("yes"))
 
 
+class TestDeployHardening(unittest.TestCase):
+    """Deploy-safe defaults and input caps (review Phase 4)."""
+
+    def test_host_explicit_wins(self):
+        self.assertEqual(server._resolve_host("10.0.0.5", True), "10.0.0.5")
+        self.assertEqual(server._resolve_host("10.0.0.5", False), "10.0.0.5")
+
+    def test_host_binds_all_interfaces_under_platform_port(self):
+        # Railway injects PORT; the container must bind 0.0.0.0 to be reachable.
+        self.assertEqual(server._resolve_host(None, True), "0.0.0.0")
+
+    def test_host_defaults_loopback_in_dev(self):
+        self.assertEqual(server._resolve_host(None, False), "127.0.0.1")
+
+    def test_socket_origins_open_when_serving_bundle(self):
+        self.assertEqual(server._socket_origins(True, ["http://localhost:5173"]), "*")
+
+    def test_socket_origins_allowlist_in_dev(self):
+        self.assertEqual(
+            server._socket_origins(False, ["http://localhost:5173"]),
+            ["http://localhost:5173"],
+        )
+
+    def test_clamp_input_truncates_oversized_event(self):
+        clamped = server._clamp_input("x" * 10_000, server.MAX_INPUT_EVENT)
+        self.assertEqual(len(clamped), server.MAX_INPUT_EVENT)
+
+    def test_clamp_input_passes_small_event(self):
+        self.assertEqual(server._clamp_input("look\r", server.MAX_INPUT_EVENT), "look\r")
+
+
 class TestSocketHandlers(unittest.TestCase):
     """End-to-end test of the Socket.IO handlers via flask_socketio's
     test client. Verifies the in-process Game runs and snapshots flow back
@@ -140,6 +171,21 @@ class TestSocketHandlers(unittest.TestCase):
         # and the snapshot's turn counter should still be 0.
         snapshot = next(e for e in events if e["name"] == "game_state")["args"][0]
         self.assertEqual(snapshot["turn"], 0)
+
+    def test_oversized_paste_is_capped_and_echo_coalesced(self):
+        self.client.emit("start_game")
+        self.client.get_received()  # drain
+
+        # One huge paste with no newline: the buffer must stay bounded and the
+        # echo must not amplify into one socket send per character.
+        self.client.emit("terminal_input", {"input": "a" * 50_000})
+        events = self.client.get_received()
+
+        sid = next(iter(server._input_buffers))
+        self.assertLessEqual(len(server._input_buffers[sid]), server.MAX_LINE)
+
+        echoes = [e for e in events if e["name"] == "terminal_output"]
+        self.assertEqual(len(echoes), 1)
 
     def test_query_state_re_emits_snapshot(self):
         self.client.emit("start_game")
