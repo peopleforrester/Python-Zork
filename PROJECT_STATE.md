@@ -46,13 +46,28 @@ Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (s
 
 **Deferred features (design-doc "Out of scope"), available if picked up:** author-extensible puzzles, adaptive difficulty (reorder by solve history), higher-fidelity network/security simulators, persistence of in-flight puzzle/minigame state.
 
+**Code-review remediation (2026-07-26) COMPLETE and promoted.** A five-lens
+senior/architecture/refactor review ran; Michael approved fixing bugs + cleanup
++ DRY + deploy hardening (NOT the larger structural work). Shipped in four
+commits (a43897d, 35abc8a, d0c2c09, efede42): eight bug fixes (B1 web-quit hang,
+B2 CHOICE case-sensitivity, B3 all_viruses_found desync, B4-B8 latent/low),
+dead-code removal (archive/saveload.py gone, ruff 36 to 0), DRY collapses, and
+deploy/security hardening (deploy-safe HOST/CORS defaults, socket input caps).
+Test count 277 to 297.
+
+**Structural items reviewed but DEFERRED by choice (Michael declined for now):**
+game.py god-object split (lift help/welcome/component-info content out, extract
+a PuzzleSession); knowledge single-writer (apply_reward can be wiped by
+_recompute_knowledge, latent); "visited" and node-id modeled twice
+(Component.visited vs map_grid; Component.id vs rooms-key). None is a live bug.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ 6349499
-- `staging` and `main` are in sync at 6349499 (all refs, local and origin).
-- Tests: 277/277 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ efede42
+- `staging` and `main` are in sync at efede42 (all refs, local and origin).
+- Tests: 297/297 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -79,3 +94,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-25T00:00:00Z frontend test-suite unit (vitest + Playwright e2e) landed and promoted (764d973, d7cbf2f)
 - 2026-07-25T00:00:00Z npm audit unit: 20 → 0 advisories; vite 5→8, vitest 3→4; promoted (6349499); Railway redeployed and live-verified
 - 2026-07-25T00:00:00Z state reconciliation: PROJECT_STATE + tasks.yaml corrected from stale Phase 2.1 to actual shipped state (all refs at 6349499)
+- 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main

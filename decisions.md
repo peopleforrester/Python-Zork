@@ -69,3 +69,14 @@ to port a real one from archive/saveload.py. That follow-up (tk-24fa9f) shipped
 the real implementation (510ae26). The current SaveLoadSystem plus
 save/load/deletesave commands are the intended end state. No decision from
 Michael is pending on this.
+
+## 2026-07-26T00:00:00Z · review · code-review remediation scope approved and shipped
+
+A five-lens review (architecture, Python correctness, mechanics, frontend/server,
+refactor) surfaced eight bugs plus cleanup and hardening opportunities. Michael
+chose scope "Bugs + cleanup" (Phases 1-3) plus deploy/security hardening (Phase
+4), and explicitly DEFERRED the larger structural work (game.py god-object split,
+knowledge single-writer, visited/id-space dedup) as not-a-live-bug. Shipped in
+four commits a43897d..efede42, staging CI green, ff-merged to main. Test count
+277 to 297. The deferred structural items are recorded in PROJECT_STATE for a
+future decision.
