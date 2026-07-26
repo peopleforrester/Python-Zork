@@ -85,7 +85,12 @@ class PuzzleRegistry:
         if puzzle.answer_kind is AnswerKind.SEQUENCE:
             return verify_sequence([str(g) for g in given], [str(c) for c in canonical])
 
-        matched = given == canonical
+        if puzzle.answer_kind is AnswerKind.CHOICE:
+            # SEQUENCE grades case-insensitively (base._norm), so CHOICE must
+            # too, or a correct pick in the wrong case is marked wrong.
+            matched = str(given).strip().casefold() == str(canonical).strip().casefold()
+        else:
+            matched = given == canonical
         return Verdict(
             correct=matched,
             summary="correct" if matched else f"expected {canonical}, got {given}",

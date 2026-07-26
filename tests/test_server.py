@@ -186,6 +186,9 @@ class TestFeedCrashSafety(unittest.TestCase):
         emitted = []
 
         class ExplodingGame:
+            def _match_command_prefix(self, token):
+                return token
+
             def feed(self, line):
                 raise RuntimeError("boom")
 

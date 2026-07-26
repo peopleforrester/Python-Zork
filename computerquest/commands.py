@@ -117,11 +117,10 @@ class InventoryCommand(Command):
 class ScanCommand(Command):
     """Command to scan for viruses"""
     def execute(self) -> str:
+        # all_viruses_found is a derived property on Game (recomputed from the
+        # player's found list), so no scan variant needs to set it here.
         if not self.args:
             result = self.game.player.scan()
-            # Check for game winning conditions
-            if len(self.game.player.found_viruses) == len(VIRUS_TYPES):
-                self.game.all_viruses_found = True
         else:
             target = self.args[0].lower()
             result = self.game.player.scan(target)
@@ -134,9 +133,6 @@ class AdvancedScanCommand(Command):
     def execute(self) -> str:
         if not self.args:
             result = self.game.player.advanced_scan()
-            # Check for game winning conditions
-            if len(self.game.player.found_viruses) == len(VIRUS_TYPES):
-                self.game.all_viruses_found = True
         else:
             target = self.args[0].lower()
             result = self.game.player.advanced_scan(target)

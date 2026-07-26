@@ -129,9 +129,23 @@ def start_game():
     emit("game_state", game.snapshot())
 
 
+def _resolve_verb(game: Game, line: str) -> str:
+    """Resolve the first token of a line through the game's prefix matcher.
+
+    Game.feed() accepts abbreviations (``qui`` -> ``quit``), so the server must
+    resolve the same way before deciding whether to intercept an exit verb;
+    otherwise an abbreviated ``quit`` slips through to QuitCommand, which blocks
+    on input() with no client stdin.
+    """
+    token = line.strip().split(" ", 1)[0].lower() if line.strip() else ""
+    if not token:
+        return ""
+    return game._match_command_prefix(token)
+
+
 def _handle_line(sid: str, game: Game, line: str) -> None:
     """Feed one whole command line to the game and emit the result."""
-    verb = line.strip().split(" ", 1)[0].lower() if line.strip() else ""
+    verb = _resolve_verb(game, line)
 
     if verb in _INTERCEPTED_VERBS:
         emit("terminal_output", {"output": "\n\r[server] close the browser tab to exit.\n\r> "})

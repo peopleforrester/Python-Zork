@@ -26,7 +26,6 @@ class TestGame(unittest.TestCase):
         # (the welcome banner doesn't bump turns, but be explicit).
         self.game.turns = 0
         self.game.game_over = False
-        self.game.all_viruses_found = False
         self.game.victory = False
 
     def test_init(self):

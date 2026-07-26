@@ -148,7 +148,7 @@ class Player:
             if isinstance(v, dict):
                 for inner_name in list(v):
                     if inner_name == item:
-                        v.pop(inner_name)
+                        self.items.update({item: v.pop(inner_name)})
                         return f"Taken: {item}"
 
         return f"There is no {item} here to take."
@@ -313,7 +313,12 @@ class Player:
         if is_virus_name(item_name) or 'malicious' in item_desc.lower() or 'suspicious' in item_desc.lower():
             virus_type = self._detect_virus_type(item_name, item_desc)
 
-            if virus_type:
+            # Only record a real find when the item itself is a canonical virus.
+            # A benign-but-suspicious decoy can trip the keyword heuristic in
+            # _detect_virus_type; recording from that would add a virus the
+            # player never actually located. The location scan already gates on
+            # is_virus_name the same way.
+            if virus_type and is_virus_name(item_name):
                 self._record_virus_found(virus_type)
 
             return f"ADVANCED SCAN RESULTS:\n\nThreat detected {location} in {item_name}!\n" + \

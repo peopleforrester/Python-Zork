@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from computerquest.commands import CommandProcessor
-from computerquest.config import DIRECTION_MAPPING
+from computerquest.config import DIRECTION_MAPPING, VIRUS_TYPES
 from computerquest.mechanics.minigames import CPUPipelineMinigame, MemoryHierarchyMinigame
 from computerquest.mechanics.progress import ProgressSystem
 from computerquest.mechanics.puzzles import AnswerParseError, MicroPuzzle, load_registry
@@ -48,7 +48,6 @@ class Game:
         # Game state variables
         self.turns = 0
         self.game_over = False
-        self.all_viruses_found = False
         self.victory = False
         # Save tracking — set by SaveCommand/LoadCommand and read by QuitCommand
         # to offer a save prompt if there are unsaved changes.
@@ -256,6 +255,15 @@ class Game:
             print("Note: Command history and tab completion are not available on this system.")
             return False
 
+    @property
+    def all_viruses_found(self) -> bool:
+        """True once every canonical virus has been detected.
+
+        Derived from the player's found list so it stays correct no matter
+        which scan variant (whole-room or targeted) found the last virus.
+        """
+        return len(self.player.found_viruses) == len(VIRUS_TYPES)
+
     def feed(self, line: str) -> str:
         """
         Run one command cycle. Returns the response text.
@@ -272,7 +280,10 @@ class Game:
 
         response = self.command_processor.process(stripped)
 
-        verb = stripped.split()[0].lower()
+        # Resolve the verb the same way the command processor did, so an
+        # abbreviated read-only command (e.g. 'know' -> 'knowledge') is not
+        # mistaken for a state change and does not trigger a save prompt.
+        verb = self._match_command_prefix(stripped.split()[0].lower())
         if verb not in _READ_ONLY_VERBS:
             self.changes_since_save = True
 
@@ -575,7 +586,9 @@ class Game:
         solved difficulty >= N-1 puzzle in the same subject area."""
         shown: list[MicroPuzzle] = []
         for puzzle_id in self.player.location.puzzles:
-            puzzle = self.puzzle_registry.by_id[puzzle_id]
+            puzzle = self.puzzle_registry.by_id.get(puzzle_id)
+            if puzzle is None:
+                continue
             if puzzle.id in self.player.solved_puzzles:
                 continue
             if puzzle.difficulty > 1:

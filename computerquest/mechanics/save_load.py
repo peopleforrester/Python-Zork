@@ -124,7 +124,9 @@ class SaveLoadSystem:
         game_state = state["game_state"]
         game.game_over = game_state["game_over"]
         game.victory = game_state["victory"]
-        game.all_viruses_found = game_state["all_viruses_found"]
+        # all_viruses_found is derived from player.found_viruses (restored
+        # below), so there is nothing to assign here. The key is still written
+        # on save for schema stability and simply ignored on load.
 
         rooms_by_id = {room.id: room for room in game.game_map.rooms.values()}
 
