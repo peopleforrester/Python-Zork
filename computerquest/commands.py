@@ -25,6 +25,24 @@ class Command:
         """Check if command can be executed - optional validation"""
         return True, None
 
+    def _resolve_item(self, item_name: str) -> str:
+        """Resolve a possibly-abbreviated item name to a concrete key.
+
+        Prefers an exact match, then a room-item prefix, then an inventory
+        prefix. Returns item_name unchanged when nothing resolves. Shared by
+        the look and read commands so the lookup order lives in one place.
+        """
+        player = self.game.player
+        if item_name in player.location.items or item_name in player.items:
+            return item_name
+        room_match = self.game._match_item_prefix(item_name)
+        if room_match in player.location.items:
+            return room_match
+        inv_match = self.game._match_inventory_item_prefix(item_name)
+        if inv_match in player.items:
+            return inv_match
+        return item_name
+
 class MoveCommand(Command):
     """Command to move player between components"""
     def can_execute(self) -> tuple[bool, str | None]:
@@ -52,19 +70,7 @@ class LookCommand(Command):
                     result += f"\n[ puzzle available: {puzzle.title} ]"
             return result
         else:
-            item_name = self.args[0].lower()
-
-            # Try to match item prefix
-            if item_name not in self.game.player.location.items and item_name not in self.game.player.items:
-                room_match = self.game._match_item_prefix(item_name)
-                inv_match = self.game._match_inventory_item_prefix(item_name)
-
-                # Use the best match found
-                if room_match in self.game.player.location.items:
-                    item_name = room_match
-                elif inv_match in self.game.player.items:
-                    item_name = inv_match
-
+            item_name = self._resolve_item(self.args[0].lower())
             return self.game.player.look(item_name)
 
 class TakeCommand(Command):
@@ -229,38 +235,20 @@ class ReadCommand(Command):
         return True, None
 
     def execute(self) -> str:
-        item_name = self.args[0].lower()
+        item_name = self._resolve_item(self.args[0].lower())
 
-        # Try to match with room items first, then inventory items
-        if item_name not in self.game.player.location.items and item_name not in self.game.player.items:
-            room_match = self.game._match_item_prefix(item_name)
-            inv_match = self.game._match_inventory_item_prefix(item_name)
-            # Use the room match if found, otherwise use inventory match
-            if room_match in self.game.player.location.items:
-                item_name = room_match
-            elif inv_match in self.game.player.items:
-                item_name = inv_match
-
-        # Check if item is in inventory
+        # Inventory takes precedence over the room, matching the original order.
         if item_name in self.game.player.items:
             content = self.game.player.items[item_name]
-            if content.startswith('#'):
-                # Format as proper document if it starts with #
-                return content.replace('# ', '').replace('#', '')
-            else:
-                return content
-
-        # Check if item is in the room
         elif item_name in self.game.player.location.items:
             content = self.game.player.location.items[item_name]
-            if content.startswith('#'):
-                # Format as proper document if it starts with #
-                return content.replace('# ', '').replace('#', '')
-            else:
-                return content
-
         else:
             return f"There is no {item_name} to read here."
+
+        if content.startswith('#'):
+            # Format as a proper document if it starts with #
+            return content.replace('# ', '').replace('#', '')
+        return content
 
 class AboutCommand(Command):
     """Command to get information about computer components"""

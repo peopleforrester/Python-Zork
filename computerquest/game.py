@@ -6,6 +6,7 @@ Main game logic and controller
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 from computerquest.commands import CommandProcessor
@@ -1093,35 +1094,25 @@ Thank you for playing KodeKloud Computer Quest!
             knowledge_level=sum(self.player.knowledge.values()),
         )
 
+    def _match_prefix(self, prefix: str, candidates: Iterable[str]) -> str:
+        """Resolve a prefix against candidates, returning the unique full match.
+
+        Single-letter input is returned unchanged (too ambiguous to match), and
+        an ambiguous or absent prefix falls through to prefix_match's own
+        return-unchanged behavior.
+        """
+        if len(prefix) < 2:
+            return prefix
+        return prefix_match(prefix, list(candidates))
+
     def _match_command_prefix(self, cmd: str) -> str:
-        """Match command prefix with valid commands, return full command if unique match found"""
-        if len(cmd) < 2:
-            return cmd  # Don't try to match single-letter commands
-
-        # Get all command keys from the command processor
-        valid_commands = list(self.command_processor.commands.keys())
-
-        # Use the helper function
-        return prefix_match(cmd, valid_commands)
+        """Match a command prefix against the valid command names."""
+        return self._match_prefix(cmd, self.command_processor.commands.keys())
 
     def _match_item_prefix(self, item_prefix: str) -> str:
-        """Match item prefix with items in current room, return full item name if unique match found"""
-        if len(item_prefix) < 2:
-            return item_prefix  # Don't try to match single-letter items
-
-        # Get all items in current room
-        room_items = list(self.player.location.items.keys())
-
-        # Use the helper function
-        return prefix_match(item_prefix, room_items)
+        """Match an item prefix against items in the current room."""
+        return self._match_prefix(item_prefix, self.player.location.items.keys())
 
     def _match_inventory_item_prefix(self, item_prefix: str) -> str:
-        """Match item prefix with items in inventory, return full item name if unique match found"""
-        if len(item_prefix) < 2:
-            return item_prefix  # Don't try to match single-letter items
-
-        # Get all items in inventory
-        inventory_items = list(self.player.items.keys())
-
-        # Use the helper function
-        return prefix_match(item_prefix, inventory_items)
+        """Match an item prefix against items in the player's inventory."""
+        return self._match_prefix(item_prefix, self.player.items.keys())

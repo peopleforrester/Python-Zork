@@ -382,36 +382,24 @@ class Player:
         if virus_name in self.quarantined_viruses:
             return f"The {virus_name} has already been quarantined."
 
-        # Check if virus is in current location
+        # Locate the virus: current room first, then inventory. Both branches
+        # do the same pop/record/neutralize; only the success wording differs.
         if virus_name in self.location.items:
-            # Remove the virus
-            self.location.items.pop(virus_name)
-
-            # Add to quarantined list
-            self.quarantined_viruses.append(virus_name)
-
-            # Add neutralized version
-            self.location.items[f"quarantined_{virus_name}"] = f"A neutralized version of {virus_name}, safely contained and no longer a threat."
-
-
-            return f"Success! The {virus_name} has been quarantined and can no longer harm the system."
-
-        # Check if virus is in inventory
+            container = self.location.items
+            origin = ""
         elif virus_name in self.items:
-            # Remove the virus
-            self.items.pop(virus_name)
-
-            # Add to quarantined list
-            self.quarantined_viruses.append(virus_name)
-
-            # Add neutralized version
-            self.items[f"quarantined_{virus_name}"] = f"A neutralized version of {virus_name}, safely contained and no longer a threat."
-
-
-            return f"Success! The {virus_name} has been quarantined from your inventory and can no longer harm the system."
-
+            container = self.items
+            origin = " from your inventory"
         else:
             return f"The {virus_name} is not in this location. You need to find where it's hiding."
+
+        container.pop(virus_name)
+        self.quarantined_viruses.append(virus_name)
+        container[f"quarantined_{virus_name}"] = (
+            f"A neutralized version of {virus_name}, safely contained and no longer a threat."
+        )
+
+        return f"Success! The {virus_name} has been quarantined{origin} and can no longer harm the system."
 
     def analyze(self, target: str) -> str:
         """

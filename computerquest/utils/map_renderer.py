@@ -4,6 +4,31 @@ Map renderer module
 Handles the rendering of ASCII maps for the game.
 """
 
+# Row at which each revealed component part is merged into the fog frame.
+# Pure placement data, keyed by the component-group name.
+_PART_START_ROWS = {
+    "kernel": 5,
+    "virtual_memory": 10,
+    "cpu_package": 5,
+    "core1": 8,
+    "core2": 8,
+    "core_components": 10,
+    "l2_cache": 14,
+    "l3_cache": 18,
+    "ram_dimm1": 18,
+    "ram_dimm2": 22,
+    "ram_dimm3": 26,
+    "ram_dimm4": 30,
+    "dmi_link": 23,
+    "pch": 27,
+    "pch_controllers": 31,
+    "pch_components": 36,
+    "storage": 35,
+    "io_ports": 44,
+    "pcie_slots": 48,
+    "gpu": 48,
+}
+
 
 def render_map(game, map_grid):
     """
@@ -325,49 +350,8 @@ def render_map(game, map_grid):
         if part_name in component_parts:
             part_lines = component_parts[part_name]
 
-            # Determine where to place these component lines
-            if part_name == "kernel":
-                start_row = 5
-            elif part_name == "virtual_memory":
-                start_row = 10
-            elif part_name == "cpu_package":
-                start_row = 5
-            elif part_name == "core1":
-                start_row = 8
-            elif part_name == "core2":
-                start_row = 8
-            elif part_name == "core_components":
-                start_row = 10
-            elif part_name == "l2_cache":
-                start_row = 14
-            elif part_name == "l3_cache":
-                start_row = 18
-            elif part_name == "ram_dimm1":
-                start_row = 18
-            elif part_name == "ram_dimm2":
-                start_row = 22
-            elif part_name == "ram_dimm3":
-                start_row = 26
-            elif part_name == "ram_dimm4":
-                start_row = 30
-            elif part_name == "dmi_link":
-                start_row = 23
-            elif part_name == "pch":
-                start_row = 27
-            elif part_name == "pch_controllers":
-                start_row = 31
-            elif part_name == "pch_components":
-                start_row = 36
-            elif part_name == "storage":
-                start_row = 35
-            elif part_name == "io_ports":
-                start_row = 44
-            elif part_name == "pcie_slots":
-                start_row = 48
-            elif part_name == "gpu":
-                start_row = 48
-            else:
-                start_row = 1
+            # Where to place these component lines (data, not control flow).
+            start_row = _PART_START_ROWS.get(part_name, 1)
 
             # Merge the component part into the fog map
             for i, line in enumerate(part_lines):
