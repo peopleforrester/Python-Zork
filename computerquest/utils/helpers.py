@@ -59,53 +59,6 @@ def prefix_match(prefix: str, candidates: Iterable[str]) -> str:
         return prefix
 
 
-def format_box(title: str, content: str, width: int = 70) -> str:
-    """
-    Create a nicely formatted text box
-
-    Args:
-        title (str): Title for the box
-        content (str): Content to display in the box
-        width (int): Width of the box
-
-    Returns:
-        str: Formatted text box
-    """
-    result = "+" + "-" * width + "+\n"
-    result += "|" + title.center(width) + "|\n"
-    result += "+" + "-" * width + "+\n"
-
-    for line in content.split("\n"):
-        result += "| " + line.ljust(width - 1) + "|\n"
-
-    result += "+" + "-" * width + "+"
-    return result
-
-
-def format_fancy_box(title: str, content: str, width: int = 70, border_char: str = "━") -> str:
-    """
-    Create a fancy formatted text box with unicode characters
-
-    Args:
-        title (str): Title for the box
-        content (str): Content to display in the box
-        width (int): Width of the box
-        border_char (str): Character to use for borders
-
-    Returns:
-        str: Formatted fancy text box
-    """
-    result = "┏" + border_char * (width - 2) + "┓\n"
-    result += "┃ " + title.ljust(width - 4) + " ┃\n"
-    result += "┗" + border_char * (width - 2) + "┛\n"
-
-    # Process content lines
-    for line in content.split("\n"):
-        result += "  " + line + "\n"
-
-    return result
-
-
 def truncate_desc(desc: str | None, max_length: int = 50) -> str:
     """
     Truncate description to a reasonable length
@@ -128,23 +81,6 @@ def truncate_desc(desc: str | None, max_length: int = 50) -> str:
         short_desc = short_desc[: max_length - 3] + "..."
 
     return short_desc
-
-
-def format_list(items: Sequence[Any] | None, prefix: str = "- ") -> str:
-    """
-    Format a list of items with prefixes
-
-    Args:
-        items (list): List of items to format
-        prefix (str): Prefix for each line
-
-    Returns:
-        str: Formatted list as string
-    """
-    if not items:
-        return ""
-
-    return "\n".join(f"{prefix}{item}" for item in items)
 
 
 def format_look_output(

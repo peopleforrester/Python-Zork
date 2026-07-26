@@ -1,5 +1,5 @@
-# ABOUTME: Minigames subpackage; placeholder stubs gated by ENABLE_MINIGAMES.
-# ABOUTME: Public API for Step 4.1 to flesh out.
+# ABOUTME: Minigames subpackage; simulator-backed CPU pipeline and memory games.
+# ABOUTME: Public API re-exporting the two playable minigame classes.
 
 from computerquest.mechanics.minigames.cpu import CPUPipelineMinigame
 from computerquest.mechanics.minigames.memory import MemoryHierarchyMinigame

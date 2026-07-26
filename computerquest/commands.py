@@ -375,8 +375,7 @@ class SimulateCommand(Command):
         if sim_action in ('cpu', 'memory'):
             from computerquest import config
             if not config.ENABLE_MINIGAMES:
-                return ("Minigames are not yet available. "
-                        "Track progress in tk-a7098e (Step 4.1).")
+                return "Minigames are disabled in this build."
             if sim_action == 'cpu':
                 return str(self.game.start_cpu_minigame())
             return str(self.game.start_memory_minigame())

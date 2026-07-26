@@ -538,7 +538,7 @@ class TestSimulateGated(TestCommandBase):
         with patch.object(config, 'ENABLE_MINIGAMES', False):
             cmd = SimulateCommand(self.game, ["cpu"])
             result = cmd.execute()
-            self.assertIn("not yet available", result.lower())
+            self.assertIn("disabled", result.lower())
             self.assertIsNone(self.game.current_minigame)
 
     def test_simulate_memory_disabled_when_flag_off(self):
@@ -546,7 +546,7 @@ class TestSimulateGated(TestCommandBase):
         with patch.object(config, 'ENABLE_MINIGAMES', False):
             cmd = SimulateCommand(self.game, ["memory"])
             result = cmd.execute()
-            self.assertIn("not yet available", result.lower())
+            self.assertIn("disabled", result.lower())
             self.assertIsNone(self.game.current_minigame)
 
     def test_simulate_cpu_runs_when_flag_on(self):
@@ -556,7 +556,7 @@ class TestSimulateGated(TestCommandBase):
         with patch.object(config, 'ENABLE_MINIGAMES', True):
             cmd = SimulateCommand(self.game, ["cpu"])
             result = cmd.execute()
-            self.assertNotIn("not yet available", result.lower())
+            self.assertNotIn("disabled", result.lower())
 
 
 class TestSaveLoadRegistered(TestCommandBase):

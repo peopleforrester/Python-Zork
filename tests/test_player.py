@@ -363,36 +363,6 @@ class TestPlayer(unittest.TestCase):
         self.assertIn("Security: ★★★★★", knowledge)
         self.assertIn(f"Total Knowledge: 9/{len(self.player.knowledge) * MAX_KNOWLEDGE}", knowledge)
 
-    def test_component_knowledge_increase(self):
-        """Test knowledge increase based on component type"""
-        # Test CPU component
-        cpu_component = Component(name="CPU Core", description="A CPU component")
-        self.player.location = cpu_component
-
-        self.player._increase_component_knowledge()
-        self.assertEqual(self.player.knowledge["cpu"], 1)
-
-        # Test memory component
-        memory_component = Component(name="RAM Module", description="A memory component")
-        self.player.location = memory_component
-
-        self.player._increase_component_knowledge()
-        self.assertEqual(self.player.knowledge["memory"], 1)
-
-        # Test storage component
-        storage_component = Component(name="SSD Drive", description="A storage component")
-        self.player.location = storage_component
-
-        self.player._increase_component_knowledge()
-        self.assertEqual(self.player.knowledge["storage"], 1)
-
-        # Test network component
-        network_component = Component(name="Network Interface", description="A network component")
-        self.player.location = network_component
-
-        self.player._increase_component_knowledge()
-        self.assertEqual(self.player.knowledge["networking"], 1)
-
 if __name__ == "__main__":
     unittest.main()
 

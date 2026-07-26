@@ -360,7 +360,7 @@ class Player:
         return 'other'
 
     def _record_virus_found(self, virus: str) -> None:
-        """Record a found virus and update knowledge"""
+        """Record a detected virus. Knowledge is puzzle-driven, not touched here."""
         if virus not in self.found_viruses:
             self.found_viruses.append(virus)
 
@@ -560,16 +560,3 @@ class Player:
         result += "\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
 
         return result
-
-    def _increase_component_knowledge(self) -> None:
-        """Increase knowledge based on current component type"""
-        component_type = self._determine_component_type()
-
-        if component_type == 'cpu':
-            self.knowledge['cpu'] = min(MAX_KNOWLEDGE, self.knowledge['cpu'] + 1)
-        elif component_type == 'memory':
-            self.knowledge['memory'] = min(MAX_KNOWLEDGE, self.knowledge['memory'] + 1)
-        elif component_type == 'storage':
-            self.knowledge['storage'] = min(MAX_KNOWLEDGE, self.knowledge['storage'] + 1)
-        elif component_type == 'network':
-            self.knowledge['networking'] = min(MAX_KNOWLEDGE, self.knowledge['networking'] + 1)
