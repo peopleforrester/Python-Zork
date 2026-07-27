@@ -223,24 +223,12 @@ class TestProgressSystem(unittest.TestCase):
         # Check item was added to player inventory
         self.game.player.items.__setitem__.assert_called_with("trophy", "A shiny trophy")
 
-        # Test knowledge reward
-        knowledge_reward = {"knowledge": "cpu", "amount": 2}
-
-        # Set initial knowledge
+        # Knowledge is NOT grantable via rewards: it is derived from solved
+        # puzzles and PuzzleSession is its single writer, so a grant here would
+        # be wiped by the next recompute. See test_knowledge_single_writer.py.
         self.game.player.knowledge = {"cpu": 1, "memory": 0, "storage": 0, "networking": 0, "security": 0}
-
-        self.progress.apply_reward(knowledge_reward)
-
-        # Check knowledge was increased
-        self.assertEqual(self.game.player.knowledge["cpu"], 3)
-
-        # Test knowledge reward at max
-        self.game.player.knowledge = {"cpu": MAX_KNOWLEDGE - 1, "memory": 0, "storage": 0, "networking": 0, "security": 0}
-
-        self.progress.apply_reward(knowledge_reward)
-
-        # Check knowledge was capped at MAX_KNOWLEDGE
-        self.assertEqual(self.game.player.knowledge["cpu"], MAX_KNOWLEDGE)
+        self.progress.apply_reward({"knowledge": "cpu", "amount": 2})
+        self.assertEqual(self.game.player.knowledge["cpu"], 1)
 
     def test_calculate_score(self):
         """Test score calculation"""

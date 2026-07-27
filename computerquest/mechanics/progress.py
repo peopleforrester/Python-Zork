@@ -159,17 +159,18 @@ class ProgressSystem:
         return newly_unlocked
 
     def apply_reward(self, reward):
-        """Apply a reward to the player"""
+        """Apply an achievement reward to the player.
+
+        Items only. Knowledge is deliberately not grantable here: it is a pure
+        function of solved puzzles (docs/architecture-microquiz.md, "Knowledge
+        meter"), recomputed by PuzzleSession, which is its single writer. A
+        grant made here would be silently discarded by the next recompute, so
+        rewarding knowledge would look like it worked and then vanish.
+        """
         if isinstance(reward, dict):
             if 'item' in reward:
                 # Add an item to player inventory
                 self.game.player.items[reward['item']] = reward.get('description', 'A special item')
-            elif 'knowledge' in reward:
-                # Increase knowledge in specific area
-                area = reward['knowledge']
-                amount = reward.get('amount', 1)
-                if area in self.game.player.knowledge:
-                    self.game.player.knowledge[area] = min(MAX_KNOWLEDGE, self.game.player.knowledge[area] + amount)
 
     def calculate_score(self):
         """Calculate player's score based on various factors"""
