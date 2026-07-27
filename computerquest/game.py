@@ -11,6 +11,7 @@ from typing import Any
 
 from computerquest.commands import CommandProcessor
 from computerquest.config import DIRECTION_MAPPING, VIRUS_TYPES
+from computerquest.content import component_info, help_text, render_welcome
 from computerquest.mechanics.minigames import CPUPipelineMinigame, MemoryHierarchyMinigame
 from computerquest.mechanics.progress import ProgressSystem
 from computerquest.mechanics.puzzles import AnswerParseError, MicroPuzzle, load_registry
@@ -349,13 +350,7 @@ class Game:
 
     def welcome_text(self) -> str:
         """Render the welcome banner to a string instead of stdout."""
-        import contextlib
-        import io
-
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf):
-            self.display_welcome()
-        return buf.getvalue()
+        return render_welcome(self.player)
 
     def start(self) -> None:
         """
@@ -425,69 +420,8 @@ class Game:
             print("\nExiting KodeKloud Computer Quest. Goodbye!")
 
     def display_welcome(self) -> None:
-        """Display welcome message and game introduction"""
-        from computerquest.utils.helpers import Colors
-
-        # Title banner
-        print("━" * 78)
-        print(
-            f"{Colors.CYAN}   █▄▀ █▀█ █▀▄ █▀▀ █▄▀ █   █▀█ █░█ █▀▄   █▀▀ █▀█ █▀▄▀█ █▀█ █░█ ▀█▀ █▀▀ █▀█   █▀█ █░█ █▀▀ █▀ ▀█▀{Colors.RESET}"
-        )
-        print(
-            f"{Colors.CYAN}   █░█ █▄█ █▄▀ ██▄ █░█ █▄▄ █▄█ █▄█ █▄▀   █▄▄ █▄█ █░▀░█ █▀▀ █▄█ ░█░ ██▄ █▀▄   ▀▀█ █▄█ ██▄ ▄█ ░█░{Colors.RESET}"
-        )
-        print("━" * 78)
-
-        # Consolidated mission briefing
-        print(
-            f"\n┏━━━━━━━━━━━━━━━━━━━━━━━━ {Colors.YELLOW}{Colors.BOLD}MISSION BRIEFING{Colors.RESET} ━━━━━━━━━━━━━━━━━━━━━━━━┓"
-        )
-        print("│                                                                    │")
-        print(
-            f"│  Welcome to the {Colors.CYAN}KodeKloud Computer Architecture Quest!{Colors.RESET}             │"
-        )
-        print("│                                                                    │")
-        print("│  You are a security program deployed into a computer system        │")
-        print(
-            f"│  infected with multiple {Colors.RED}viruses{Colors.RESET}. Your mission is to locate and     │"
-        )
-        print("│  quarantine all viruses while learning about computer architecture.│")
-        print("│                                                                    │")
-        print("│  As you travel through the system, from CPU to memory to storage   │")
-        print("│  and beyond, you'll discover how each component works and how      │")
-        print("│  they interconnect.                                                │")
-        print("│                                                                    │")
-        print("│  Good luck, Security Program! The system's integrity depends on you│")
-        print("│                                                                    │")
-        print("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛")
-
-        # Welcome status bar reads from the real player so values stay in
-        # sync with mid-game state if display_welcome is ever re-invoked.
-        from computerquest.config import INVENTORY_LIMIT, VIRUS_TYPES
-        total_viruses = len(VIRUS_TYPES)
-        max_health = self.player.max_health
-        current_health = self.player.health
-        items_carried = len(self.player.items)
-        found = len(self.player.found_viruses)
-        quarantined = len(self.player.quarantined_viruses)
-
-        print("\n" + "━" * 78)
-        print(
-            f"  {Colors.BOLD}STATUS:{Colors.RESET} Health: {Colors.GREEN}{current_health}/{max_health}{Colors.RESET} | Items: {items_carried}/{INVENTORY_LIMIT} | Viruses: {Colors.GREEN}{found}/{total_viruses} Found, {quarantined}/{total_viruses} Quarantined{Colors.RESET}"
-        )
-        print("━" * 78)
-
-        # Help command reference - streamlined
-        print(
-            f"\n  {Colors.BOLD}CONTROLS:{Colors.RESET} Type '{Colors.GREEN}?{Colors.RESET}' for command help | '{Colors.GREEN}n/s/e/w{Colors.RESET}' to move | '{Colors.GREEN}l{Colors.RESET}' to look | '{Colors.GREEN}i{Colors.RESET}' for inventory"
-        )
-
-        # Show initial location using new format - KEEPING THIS AS THE MAIN FOCUS
-        from computerquest.utils.helpers import format_look_output
-
-        print(
-            f"\n{format_look_output(self.player.location, self.player.location.doors, list(self.player.location.items.keys()), player=self.player)}"
-        )
+        """Print the welcome banner. Text itself lives in computerquest.content."""
+        print(render_welcome(self.player), end="")
 
     def move(self, direction: str) -> str:
         """
@@ -757,82 +691,8 @@ class Game:
         return render_map(self, self.map_grid)
 
     def show_help(self) -> str:
-        """Show available commands"""
-        from computerquest.utils.helpers import Colors
-
-        help_text = f"""┏━━━━━━━━━━━━━━━━━━ {Colors.YELLOW}{Colors.BOLD}KODEKLOUD COMPUTER QUEST COMMANDS{Colors.RESET} ━━━━━━━━━━━━━━━━━━┓
-│                                                                          │
-│  {Colors.BOLD}Movement:{Colors.RESET}                                                               │
-│    go [direction]   - Move between components (n, s, e, w, ne, sw, etc.) │
-│    [direction]      - You can also just type the direction (n, s, e, w)  │
-│                                                                          │
-│  {Colors.BOLD}Exploration:{Colors.RESET}                                                            │
-│    {Colors.GREEN}look, l{Colors.RESET}          - Examine your current location                      │
-│    {Colors.GREEN}look [item]{Colors.RESET}      - Examine a specific item                            │
-│    {Colors.GREEN}read [item], r{Colors.RESET}   - Read text content of an item                       │
-│    {Colors.GREEN}map, m{Colors.RESET}           - Display a map of visited computer components       │
-│    {Colors.GREEN}motherboard, mb{Colors.RESET}  - Show the motherboard layout of the computer system │
-│                                                                          │
-│  {Colors.BOLD}Inventory:{Colors.RESET}                                                              │
-│    {Colors.GREEN}inventory, i{Colors.RESET}     - List items in your storage                         │
-│    {Colors.GREEN}take [item], t{Colors.RESET}   - Add an item to your inventory                      │
-│    {Colors.GREEN}drop [item]{Colors.RESET}      - Remove an item from your inventory                 │
-│                                                                          │
-│  {Colors.BOLD}Security Functions:{Colors.RESET}                                                     │
-│    {Colors.GREEN}scan, sc{Colors.RESET}         - Search for viruses in current location             │
-│    {Colors.GREEN}scan [item]{Colors.RESET}      - Check if a specific item contains a virus          │
-│    {Colors.GREEN}advscan{Colors.RESET}          - Perform advanced scan (requires decoder_tool)      │
-│    {Colors.GREEN}advscan [item]{Colors.RESET}   - Perform advanced scan on specific item             │
-│    {Colors.GREEN}analyze [item]{Colors.RESET}   - Deeply analyze an item for hidden properties       │
-│    {Colors.GREEN}quarantine [virus]{Colors.RESET} - Contain a discovered virus                       │
-│                                                                          │
-│  {Colors.BOLD}Puzzles:{Colors.RESET}                                                                │
-│    {Colors.GREEN}solve [id]{Colors.RESET}       - Start a puzzle in this room (or list them)         │
-│    {Colors.GREEN}answer [tokens]{Colors.RESET}  - Commit your prediction for the active puzzle       │
-│    {Colors.GREEN}hint{Colors.RESET}             - Next hint (the first one is free)                  │
-│    {Colors.GREEN}skip{Colors.RESET}             - Put the active puzzle aside                        │
-│                                                                          │
-│  {Colors.BOLD}Information:{Colors.RESET}                                                            │
-│    {Colors.GREEN}status{Colors.RESET}           - Check your virus discovery progress                │
-│    {Colors.GREEN}knowledge{Colors.RESET}        - View your computer architecture knowledge          │
-│    {Colors.GREEN}about [topic]{Colors.RESET}    - Get information about a computer component         │
-│                                                                          │
-│  {Colors.BOLD}Progress Tracking:{Colors.RESET}                                                      │
-│    {Colors.GREEN}achievements{Colors.RESET}     - View your achievements and progress report         │
-│    {Colors.GREEN}stats{Colors.RESET}            - Alternative command for achievements               │
-│                                                                          │
-│  {Colors.BOLD}Educational Features:{Colors.RESET}                                                   │
-│    {Colors.GREEN}visualize [comp]{Colors.RESET} - Show visualization of a component                  │
-│    {Colors.GREEN}viz [comp]{Colors.RESET}       - Shorthand for visualize                            │
-│    {Colors.GREEN}simulate cpu{Colors.RESET}     - Start CPU pipeline simulation minigame             │
-│    {Colors.GREEN}simulate memory{Colors.RESET}  - Start memory hierarchy simulation                  │
-│    {Colors.GREEN}simulate step{Colors.RESET}    - Advance simulation by one step                     │
-│    {Colors.GREEN}simulate forward{Colors.RESET} - (CPU) toggle result forwarding on/off              │
-│    {Colors.GREEN}simulate pattern{Colors.RESET} - (memory) sequential|loop|stride|random             │
-│    {Colors.GREEN}simulate toggle{Colors.RESET}  - Toggle between simulation modes                    │
-│    {Colors.GREEN}simulate reset{Colors.RESET}   - Reset the simulation                               │
-│                                                                          │
-│  {Colors.BOLD}Save/Load:{Colors.RESET}                                                              │
-│    {Colors.GREEN}save [name]{Colors.RESET}      - Save your game progress (optional name)            │
-│    {Colors.GREEN}load [name]{Colors.RESET}      - Load a saved game                                  │
-│    {Colors.GREEN}saves{Colors.RESET}            - List all available save files                      │
-│    {Colors.GREEN}deletesave [name]{Colors.RESET} - Delete a saved game                               │
-│                                                                          │
-│  {Colors.BOLD}System:{Colors.RESET}                                                                 │
-│    {Colors.GREEN}help, h{Colors.RESET}          - Show this help message                             │
-│    {Colors.GREEN}?{Colors.RESET}                - Show quick help overlay                            │
-│    {Colors.GREEN}clear, cls, c{Colors.RESET}    - Clear the screen and refresh display               │
-│    {Colors.GREEN}quit, q, exit{Colors.RESET}    - Exit the game                                      │
-│                                                                          │
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-{Colors.BOLD}Main Shortcuts:{Colors.RESET}
-  Movement: {Colors.GREEN}[N]{Colors.RESET}orth {Colors.GREEN}[S]{Colors.RESET}outh {Colors.GREEN}[E]{Colors.RESET}ast {Colors.GREEN}[W]{Colors.RESET}est {Colors.GREEN}[NE]{Colors.RESET} {Colors.GREEN}[SE]{Colors.RESET} {Colors.GREEN}[SW]{Colors.RESET} {Colors.GREEN}[NW]{Colors.RESET} {Colors.CYAN}[U]{Colors.RESET}p {Colors.CYAN}[D]{Colors.RESET}own
-  Commands: {Colors.GREEN}[L]{Colors.RESET}ook {Colors.GREEN}[I]{Colors.RESET}nventory {Colors.GREEN}[T]{Colors.RESET}ake {Colors.GREEN}[H]{Colors.RESET}elp {Colors.GREEN}[M]{Colors.RESET}ap {Colors.GREEN}[C]{Colors.RESET}lear {Colors.GREEN}[Q]{Colors.RESET}uit {Colors.GREEN}[Sc]{Colors.RESET}an
-
-Use '{Colors.GREEN}?{Colors.RESET}' for a quick command reference at any time.
-"""
-        return help_text
+        """Show available commands. Text lives in computerquest.content."""
+        return help_text()
 
     def start_cpu_minigame(self) -> str:
         """Start the CPU pipeline simulation minigame"""
@@ -972,95 +832,8 @@ Usage: viz [type] (e.g., 'viz cpu')"""
             )
 
     def get_component_info(self, topic: str) -> str:
-        """Provide educational information about computer components"""
-        topics = {
-            "cpu": """CPU (Central Processing Unit):
-The CPU is the primary component that executes instructions and processes data. It consists of:
-- Control Unit: Coordinates CPU operations and decodes instructions
-- ALU (Arithmetic Logic Unit): Performs mathematical calculations
-- Registers: Ultra-fast storage locations for immediate data
-- Cache: Fast memory that stores frequently used data
-The CPU operates using a cycle of fetch, decode, execute, and writeback phases.""",
-            "memory": """Computer Memory Hierarchy:
-Computer systems use multiple types of memory arranged in a hierarchy:
-1. Registers: Tiny, ultra-fast storage inside the CPU
-2. Cache Memory: Small, very fast memory close to the CPU (L1, L2, L3)
-3. RAM: Main system memory, volatile (erased when powered off)
-4. Virtual Memory: Uses hard drive space as an extension of RAM
-5. Storage: HDD/SSD for permanent data storage
-As you move down the hierarchy, capacity increases but speed decreases.""",
-            "cache": """Cache Memory:
-Cache memory serves as a high-speed buffer between the CPU and main memory.
-- L1 Cache: Smallest, fastest cache, located in the CPU
-- L2 Cache: Larger but slightly slower than L1
-- L3 Cache: Largest but slowest cache, often shared between CPU cores
-Caches use principles of temporal locality (recently used data will be used again soon) and spatial locality (data near recently used data will be used soon).""",
-            "storage": """Storage Systems:
-Storage provides permanent data retention, unlike volatile RAM:
-- SSD (Solid State Drive): Uses flash memory, no moving parts, fast
-- HDD (Hard Disk Drive): Uses magnetic storage on spinning platters
-- Storage Controller: Manages data flow between system and storage
-- File Systems: Organize data into files and directories
-Storage operations are much slower than memory but retain data without power.""",
-            "bus": """System Bus Architecture:
-Buses are communication pathways that transfer data between components:
-- System Bus: Main pathway connecting CPU, memory, and I/O
-- Address Bus: Carries memory addresses
-- Data Bus: Carries the actual data being transferred
-- Control Bus: Carries command signals
-- PCI/PCIe: High-speed buses for connecting expansion cards
-Bus width (16, 32, 64-bit) determines how much data can be transferred at once.""",
-            "network": """Network Interface:
-The network component connects the computer to other systems:
-- Network Interface Card: Hardware that enables network connectivity
-- Protocol Stack: Software layers that format and process network data
-- Packets: Units of data transferred over networks
-- Protocols: Rules that govern how data is transmitted (e.g., TCP/IP)
-Network interfaces handle encoding/decoding data and managing connections.""",
-            "firmware": """Firmware/BIOS:
-Firmware is software permanently programmed into hardware:
-- BIOS/UEFI: Initialize hardware components during boot
-- ROM (Read-Only Memory): Stores permanent firmware
-- Boot Sequence: Process of starting up computer hardware
-- Hardware Configuration: Settings for system components
-Firmware operates at a lower level than the operating system.""",
-            "gpu": """Graphics Processing Unit (GPU):
-The GPU specializes in parallel processing for graphics and computation:
-- Shader Cores: Small processors that handle graphical calculations
-- VRAM: Specialized memory for storing graphical data
-- Render Pipeline: Stages for transforming 3D data to 2D images
-- GPGPU: General-purpose computing on GPUs for non-graphics tasks
-GPUs excel at tasks that can be broken into many parallel operations.""",
-            "kernel": """Operating System Kernel:
-The kernel is the core of the operating system:
-- Process Management: Creates and schedules processes
-- Memory Management: Allocates and tracks system memory
-- Device Drivers: Interfaces with hardware components
-- File Systems: Manages data storage and retrieval
-- System Calls: Provides services to applications
-The kernel operates in a privileged mode with direct hardware access.""",
-            "virus": """Computer Viruses:
-Viruses are malicious programs that can damage systems:
-- Boot Sector Virus: Infects system startup areas
-- Rootkit: Hides in the operating system kernel
-- Memory-Resident Virus: Operates entirely in RAM
-- Firmware Virus: Infects system firmware/BIOS
-- Network Virus: Spreads via network connections
-Viruses typically attempt to hide their presence and propagate to other systems.""",
-        }
-
-        if topic in topics:
-            return topics[topic]
-        else:
-            related_topics = []
-            for key in topics:
-                if key in topic or topic in key:
-                    related_topics.append(key)
-
-            if related_topics:
-                return f"Topic '{topic}' not found. Did you mean: {', '.join(related_topics)}?"
-            else:
-                return f"No information available about '{topic}'. Try topics like: cpu, memory, cache, storage, bus, network, firmware, gpu, kernel, or virus."
+        """Educational article for a topic. Text lives in computerquest.content."""
+        return component_info(topic)
 
     def display_motherboard(self) -> str:
         """Display the full motherboard layout of the computer system.
