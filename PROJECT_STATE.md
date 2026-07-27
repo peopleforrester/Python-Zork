@@ -55,19 +55,38 @@ dead-code removal (archive/saveload.py gone, ruff 36 to 0), DRY collapses, and
 deploy/security hardening (deploy-safe HOST/CORS defaults, socket input caps).
 Test count 277 to 297.
 
-**Structural items reviewed but DEFERRED by choice (Michael declined for now):**
-game.py god-object split (lift help/welcome/component-info content out, extract
-a PuzzleSession); knowledge single-writer (apply_reward can be wiped by
-_recompute_knowledge, latent); "visited" and node-id modeled twice
-(Component.visited vs map_grid; Component.id vs rooms-key). None is a live bug.
+**Structural work COMPLETE and promoted (2026-07-27).** The items previously
+deferred were all done in four commits (c1af2f7, bfe5da2, 021a361, 25ea2ae):
+
+- **Content extraction.** Help screen, welcome banner, and the ten component
+  articles moved to `computerquest/content/`. A golden fixture
+  (`tests/fixtures/golden_content.json`) captured before the move pins the
+  output byte-for-byte. `render_welcome()` returns a string, removing the
+  stdout-redirect hack in `welcome_text()`.
+- **PuzzleSession.** Puzzle orchestration moved to
+  `mechanics/puzzles/session.py`; Game delegates and keeps its old attributes
+  as properties, so commands.py, save/load, and existing tests are unchanged.
+  The puzzle flow is now unit-testable without constructing a Game.
+- **Knowledge single-writer.** `apply_reward` could bump `player.knowledge`,
+  which the recompute then silently discarded. Rewards are items only now; the
+  approved contract defines knowledge as a function of solved puzzles.
+- **visited / id-space.** `map_grid` is a derived view over `game_map.rooms`.
+  This fixed a LIVE bug: at turn 0 the starting room was visited in map_grid
+  but not on the component, so the ASCII map and the React map disagreed (the
+  web map showed 0/35 visited when the player was standing in a room).
+  Components now carry their rooms-key, so snapshot no longer rebuilds a
+  reverse map per call and `current_room_id` is an attribute read. Emitted
+  door graph verified byte-identical.
+
+game.py went 1114 -> 772 lines. Tests 297 -> 318. Deployed and verified live.
 
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ efede42
-- `staging` and `main` are in sync at efede42 (all refs, local and origin).
-- Tests: 297/297 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ 25ea2ae
+- `staging` and `main` are in sync at 25ea2ae (all refs, local and origin).
+- Tests: 318/318 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -94,4 +113,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-25T00:00:00Z frontend test-suite unit (vitest + Playwright e2e) landed and promoted (764d973, d7cbf2f)
 - 2026-07-25T00:00:00Z npm audit unit: 20 → 0 advisories; vite 5→8, vitest 3→4; promoted (6349499); Railway redeployed and live-verified
 - 2026-07-25T00:00:00Z state reconciliation: PROJECT_STATE + tasks.yaml corrected from stale Phase 2.1 to actual shipped state (all refs at 6349499)
+- 2026-07-27T00:00:00Z structural refactor shipped: content extraction, PuzzleSession, knowledge single-writer, visited/id-space dedup (c1af2f7..25ea2ae); 318 tests; promoted and redeployed
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main

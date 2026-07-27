@@ -80,3 +80,24 @@ knowledge single-writer, visited/id-space dedup) as not-a-live-bug. Shipped in
 four commits a43897d..efede42, staging CI green, ff-merged to main. Test count
 277 to 297. The deferred structural items are recorded in PROJECT_STATE for a
 future decision.
+
+## 2026-07-27T00:00:00Z · refactor · deferred structural work completed
+
+Michael asked for the structural items the earlier review had deferred. All
+four shipped: static-content extraction out of game.py (guarded by a
+byte-exact golden fixture), PuzzleSession extraction, knowledge reduced to a
+single writer, and the visited/id-space duplication removed.
+
+The visited work turned out to fix a live defect rather than a latent one: at
+turn 0 the starting room was recorded visited in map_grid but not on the
+Component, so the ASCII map and the React map disagreed, and the web map
+reported 0/35 visited while the player stood in a room. map_grid is now
+derived from Component.visited.
+
+Knowledge rewards were removed rather than made durable, because the approved
+contract (architecture-microquiz.md, Knowledge meter) defines knowledge as a
+function of demonstrated solves; granting it from an achievement would be a
+contract deviation requiring re-approval, not a bug fix.
+
+game.py 1114 -> 772 lines, tests 297 -> 318. CI green, promoted to main,
+redeployed to Railway and verified live in a browser.
