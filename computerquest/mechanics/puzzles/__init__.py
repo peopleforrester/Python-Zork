@@ -7,6 +7,7 @@ from computerquest.mechanics.puzzles.registry import (
     PuzzleRegistry,
     load_registry,
 )
+from computerquest.mechanics.puzzles.session import PuzzleSession
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 
 __all__ = [
@@ -14,6 +15,7 @@ __all__ = [
     "MicroPuzzle",
     "PuzzleDataError",
     "PuzzleRegistry",
+    "PuzzleSession",
     "load_registry",
     "parse_answer",
 ]

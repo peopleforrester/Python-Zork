@@ -14,7 +14,7 @@ from computerquest.config import DIRECTION_MAPPING, VIRUS_TYPES
 from computerquest.content import component_info, help_text, render_welcome
 from computerquest.mechanics.minigames import CPUPipelineMinigame, MemoryHierarchyMinigame
 from computerquest.mechanics.progress import ProgressSystem
-from computerquest.mechanics.puzzles import AnswerParseError, MicroPuzzle, load_registry
+from computerquest.mechanics.puzzles import MicroPuzzle, PuzzleSession, load_registry
 from computerquest.mechanics.visualizer import ComponentVisualizer
 from computerquest.utils.helpers import prefix_match
 from computerquest.world.architecture import ComputerArchitecture
@@ -66,14 +66,10 @@ class Game:
         self.current_minigame = None
         self.current_visualization = None
 
-        # Micro-puzzle state (contract: docs/architecture-microquiz.md).
-        # current_puzzle persists across rooms; it ends on answer or skip.
-        # prompted_rooms is session-only: each room auto-presents its
-        # primary puzzle once per session (decision 4).
+        # Micro-puzzle state lives in PuzzleSession (contract:
+        # docs/architecture-microquiz.md); Game delegates to it.
         self.puzzle_registry = load_registry()
-        self.current_puzzle: MicroPuzzle | None = None
-        self.puzzle_hints_used = 0
-        self.prompted_rooms: set[str] = set()
+        self.puzzles = PuzzleSession(self.puzzle_registry, self.player, self.game_map.rooms)
 
         # Initialize save/load system
         from computerquest.mechanics.save_load import SaveLoadSystem
@@ -507,171 +503,56 @@ class Game:
             # Failed to move
             return f"┏━━━━━━━━━━━━━━━━━━━━ ERROR ━━━━━━━━━━━━━━━━━━━━┓\n  There is no connection to the {direction} from {self.player.location.name}.\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛"
 
-    # --- Micro-puzzle surface (contract: docs/architecture-microquiz.md) ---
+    # --- Micro-puzzle surface: delegates to PuzzleSession -------------------
+    # These wrappers keep Game's public API stable for commands.py, the save
+    # system, and existing tests while the state itself lives in the session.
+
+    @property
+    def current_puzzle(self) -> MicroPuzzle | None:
+        return self.puzzles.current
+
+    @current_puzzle.setter
+    def current_puzzle(self, value: MicroPuzzle | None) -> None:
+        self.puzzles.current = value
+
+    @property
+    def puzzle_hints_used(self) -> int:
+        return self.puzzles.hints_used
+
+    @puzzle_hints_used.setter
+    def puzzle_hints_used(self, value: int) -> None:
+        self.puzzles.hints_used = value
+
+    @property
+    def prompted_rooms(self) -> set[str]:
+        return self.puzzles.prompted_rooms
 
     def _current_room_id(self) -> str | None:
-        for room_id, room in self.game_map.rooms.items():
-            if room is self.player.location:
-                return room_id
-        return None
+        return self.puzzles.current_room_id()
 
     def _gated_room_puzzles(self) -> list[MicroPuzzle]:
-        """Unsolved puzzles in the current room that the soft difficulty
-        gate shows (decision 2): difficulty 1 always; difficulty N needs a
-        solved difficulty >= N-1 puzzle in the same subject area."""
-        shown: list[MicroPuzzle] = []
-        for puzzle_id in self.player.location.puzzles:
-            puzzle = self.puzzle_registry.by_id.get(puzzle_id)
-            if puzzle is None:
-                continue
-            if puzzle.id in self.player.solved_puzzles:
-                continue
-            if puzzle.difficulty > 1:
-                unlocked = any(
-                    self.puzzle_registry.by_id[s].subject_area == puzzle.subject_area
-                    and self.puzzle_registry.by_id[s].difficulty >= puzzle.difficulty - 1
-                    for s in self.player.solved_puzzles
-                    if s in self.puzzle_registry.by_id
-                )
-                if not unlocked:
-                    continue
-            shown.append(puzzle)
-        return shown
-
-    def _present_puzzle(self, puzzle: MicroPuzzle, auto: bool = False) -> str:
-        self.current_puzzle = puzzle
-        self.puzzle_hints_used = 0
-        lines = [
-            f"┏━━━ PUZZLE: {puzzle.title} ━━━┓",
-            "",
-            puzzle.prompt.rstrip(),
-            "",
-            f"Answer with 'answer <...>' ({puzzle.answer_grammar}).",
-            "A 'hint' is available; 'skip' puts the puzzle aside.",
-        ]
-        if auto:
-            lines.append("(Type 'skip' to put this aside and keep exploring.)")
-        return "\n".join(lines)
+        return self.puzzles.gated_room_puzzles()
 
     def _maybe_auto_prompt(self) -> str:
-        room = self.player.location
-        room_id = self._current_room_id()
-        if not room.puzzles or room_id is None:
-            return ""
-        if self.current_puzzle is not None:
-            return ""
-        if room_id in self.prompted_rooms:
-            return ""
-        primary = room.puzzles[0]
-        if primary in self.player.solved_puzzles or primary in self.player.attempted_puzzles:
-            return ""
-        self.prompted_rooms.add(room_id)
-        return self._present_puzzle(self.puzzle_registry.by_id[primary], auto=True)
+        return self.puzzles.maybe_auto_prompt()
 
     def list_room_puzzles(self) -> str:
-        shown = self._gated_room_puzzles()
-        if not shown:
-            return "There is no puzzle available here."
-        lines = ["Puzzles in this room:"]
-        for puzzle in shown:
-            lines.append(f"  - {puzzle.id} (difficulty {puzzle.difficulty}): {puzzle.title}")
-        lines.append("Enter 'solve <id>' to begin one, or 'solve' for the first.")
-        return "\n".join(lines)
+        return self.puzzles.list_room_puzzles()
 
     def start_puzzle(self, puzzle_id: str | None = None) -> str:
-        room = self.player.location
-        if puzzle_id:
-            # Explicit id bypasses the soft gate but must live in this room.
-            if puzzle_id not in room.puzzles or puzzle_id not in self.puzzle_registry.by_id:
-                return f"There is no puzzle named {puzzle_id!r} in this room."
-            return self._present_puzzle(self.puzzle_registry.by_id[puzzle_id])
-
-        shown = self._gated_room_puzzles()
-        if not shown:
-            return "There is no puzzle here. Explore other components and try 'solve' there."
-        if len(shown) > 1:
-            return self.list_room_puzzles()
-        return self._present_puzzle(shown[0])
+        return self.puzzles.start(puzzle_id)
 
     def answer_puzzle(self, raw: str) -> str:
-        if self.current_puzzle is None:
-            return "No active puzzle. Enter 'solve' in a room that has one."
-        puzzle = self.current_puzzle
-        try:
-            verdict = self.puzzle_registry.evaluate(puzzle.id, raw)
-        except AnswerParseError as exc:
-            # Wrong shape is never graded; the puzzle stays active.
-            return str(exc)
-
-        if not verdict.correct and not verdict.positions and verdict.summary.startswith("answer has"):
-            # Token-count mismatch is a shape problem, not a wrong answer:
-            # do not grade, do not record an attempt.
-            return f"I need an answer like: {puzzle.answer_grammar}"
-
-        self.player.attempted_puzzles.add(puzzle.id)
-        self.current_puzzle = None
-        self.puzzle_hints_used = 0
-
-        lines = []
-        if verdict.correct:
-            self.player.solved_puzzles.add(puzzle.id)
-            before = self.player.knowledge.get(puzzle.subject_area, 0)
-            self._recompute_knowledge()
-            after = self.player.knowledge[puzzle.subject_area]
-            lines.append(f"Correct! {puzzle.title} solved.")
-            if after > before:
-                lines.append(
-                    f"[ {puzzle.subject_area} knowledge: {before} -> {after} ]"
-                )
-        else:
-            lines.append(f"Not quite: {verdict.summary}.")
-        for pos in verdict.positions:
-            mark = "ok" if pos.matched else f"expected {pos.expected}"
-            lines.append(f"  {pos.index + 1}. {pos.given} ({mark})")
-        lines.append("")
-        lines.append(puzzle.explanation.rstrip())
-        if not verdict.correct:
-            lines.append("")
-            lines.append("Run 'solve' to try again whenever you like.")
-        return "\n".join(lines)
+        return self.puzzles.answer(raw)
 
     def puzzle_hint(self) -> str:
-        if self.current_puzzle is None:
-            return "No active puzzle. Enter 'solve' in a room that has one."
-        puzzle = self.current_puzzle
-        if self.puzzle_hints_used >= len(puzzle.hints):
-            return "No more hints for this puzzle."
-        hint = puzzle.hints[self.puzzle_hints_used]
-        self.puzzle_hints_used += 1
-        suffix = ""
-        if self.puzzle_hints_used >= 2:
-            # Decision 3: the second and later hints give the answer's shape
-            # away, so the puzzle counts as attempted from here on.
-            self.player.attempted_puzzles.add(puzzle.id)
-            suffix = "\n(That one cost you: this puzzle now counts as attempted.)"
-        return f"Hint: {hint}{suffix}"
-
-    def _recompute_knowledge(self) -> None:
-        """Knowledge is a pure function of solved puzzles (decision 5):
-        min(5, sum of difficulty * 0.5 + 0.5 per solved puzzle in the
-        area). Visits, scans, and quarantines no longer contribute."""
-        totals: dict[str, float] = {area: 0.0 for area in self.player.knowledge}
-        for puzzle_id in self.player.solved_puzzles:
-            puzzle = self.puzzle_registry.by_id.get(puzzle_id)
-            if puzzle is not None:
-                totals[puzzle.subject_area] += puzzle.knowledge_weight()
-        self.player.knowledge = {
-            area: (int(v) if float(v).is_integer() else v)
-            for area, v in ((a, min(5.0, total)) for a, total in totals.items())
-        }
+        return self.puzzles.hint()
 
     def skip_puzzle(self) -> str:
-        if self.current_puzzle is None:
-            return "No active puzzle to skip."
-        title = self.current_puzzle.title
-        self.current_puzzle = None
-        self.puzzle_hints_used = 0
-        return f"Putting '{title}' aside. Enter 'solve' any time to pick it back up."
+        return self.puzzles.skip()
+
+    def _recompute_knowledge(self) -> None:
+        self.puzzles.recompute_knowledge()
 
     def display_map(self) -> str:
         """
