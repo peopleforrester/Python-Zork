@@ -63,8 +63,8 @@ class Game:
         self.visualizer = ComponentVisualizer()
 
         # Initialize minigame state
-        self.current_minigame = None
-        self.current_visualization = None
+        self.current_minigame: CPUPipelineMinigame | MemoryHierarchyMinigame | None = None
+        self.current_visualization: str | None = None
 
         # Micro-puzzle state lives in PuzzleSession (contract:
         # docs/architecture-microquiz.md); Game delegates to it.
@@ -78,85 +78,27 @@ class Game:
         # Initialize command processor
         self.command_processor = CommandProcessor(self)
 
-        # Initialize map grid for tracking visited rooms
-        self._init_map_grid()
-
-        # Mark the starting room as visited on the map
-        for room_id, room in self.game_map.rooms.items():
-            if room == self.player.location:
-                if room_id in self.map_grid:
-                    self.map_grid[room_id]["visited"] = True
-                break
+        # The player starts standing in a room, so it counts as visited. This
+        # is recorded on the component itself, the single source of truth that
+        # both the ASCII map and the web snapshot read.
+        self.player.location.mark_visited()
 
         # Welcome message is shown by start(), not __init__, so the constructor
         # has no I/O side effects and remains testable.
 
-    def _init_map_grid(self) -> None:
-        """Initialize the map grid for tracking visited components"""
-        self.map_grid = {}
+    @property
+    def map_grid(self) -> dict[str, dict[str, bool]]:
+        """Per-room visit state for the ASCII map renderer.
 
-        # CPU and cores
-        cpu_components = [
-            "cpu_package",
-            "core1",
-            "core1_cu",
-            "core1_alu",
-            "core1_registers",
-            "core1_l1",
-            "core2",
-            "core2_cu",
-            "core2_alu",
-            "core2_registers",
-            "core2_l1",
-        ]
-
-        # Cache and memory
-        memory_components = [
-            "l2_cache1",
-            "l2_cache2",
-            "l3_cache",
-            "memory_controller",
-            "ram_dimm1",
-            "ram_dimm2",
-            "ram_dimm3",
-            "ram_dimm4",
-        ]
-
-        # Conceptual components
-        conceptual_components = ["kernel", "virtual_memory"]
-
-        # PCH components
-        pch_components = [
-            "pch",
-            "storage_controller",
-            "pcie_controller",
-            "network_interface",
-            "bios",
-        ]
-
-        # Storage components
-        storage_components = ["sata_ports", "ssd", "hdd"]
-
-        # PCIe components
-        pcie_components = ["pcie_x16", "pcie_x1_1", "pcie_x1_2", "gpu"]
-
-        # External ports
-        port_components = ["usb_ports", "ethernet"]
-
-        # Combine all components
-        all_components = (
-            cpu_components
-            + memory_components
-            + conceptual_components
-            + pch_components
-            + storage_components
-            + pcie_components
-            + port_components
-        )
-
-        # Initialize all as not visited
-        for component in all_components:
-            self.map_grid[component] = {"visited": False}
+        A derived view over game_map.rooms rather than stored state: the
+        component's own `visited` flag is the single source of truth, so the
+        ASCII map and the web snapshot can never disagree, and adding a room
+        needs no second registration here.
+        """
+        return {
+            room_id: {"visited": room.visited}
+            for room_id, room in self.game_map.rooms.items()
+        }
 
     def setup_readline(self) -> bool:
         """
@@ -298,16 +240,15 @@ class Game:
         internal `Component.id` (e.g. 'CPU000'). The frontend treats those
         keys as opaque node identifiers.
         """
-        # Reverse lookup so door destinations can be translated from
-        # Component instances back to their dict-key identifier.
-        room_id_by_component = {room: rid for rid, room in self.game_map.rooms.items()}
-
+        # Door destinations are Component instances; each carries the key it
+        # is filed under (assign_room_keys), so translating back to the wire
+        # id space is an attribute read rather than a reverse-map rebuild.
         rooms = []
         for room_id, room in self.game_map.rooms.items():
             doors = {
-                direction: room_id_by_component[dest]
+                direction: dest.key
                 for direction, dest in room.doors.items()
-                if dest in room_id_by_component
+                if getattr(dest, "key", None) is not None
             }
             rooms.append({
                 "id": room_id,
@@ -324,7 +265,7 @@ class Game:
                 },
             })
 
-        player_location_id = room_id_by_component.get(self.player.location)
+        player_location_id = self._current_room_id()
 
         return {
             "turn": self.turns,
@@ -436,16 +377,9 @@ class Game:
             # If successfully moved
             curr_location = self.player.location
 
-            # Mark newly visited components
+            # Mark newly visited components. map_grid derives from this, so
+            # there is no second bookkeeping step.
             curr_location.mark_visited()
-
-            # Update map - find which room this is
-            for room_id, room in self.game_map.rooms.items():
-                if room == curr_location:
-                    # Found the room ID
-                    if room_id in self.map_grid:
-                        self.map_grid[room_id]["visited"] = True
-                    break
 
             # Update turn counter
             self.turns += 1
@@ -561,12 +495,9 @@ class Game:
         """
         from computerquest.utils.map_renderer import render_map
 
-        # Make sure starting room is always marked as visited
-        for room_id, room in self.game_map.rooms.items():
-            if room == self.player.location:
-                if room_id in self.map_grid:
-                    self.map_grid[room_id]["visited"] = True
-                break
+        # The room the player is standing in is visited by definition; the
+        # constructor and move() both record it on the component.
+        self.player.location.mark_visited()
 
         # Generate and return the map
         return render_map(self, self.map_grid)

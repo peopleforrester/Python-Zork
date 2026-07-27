@@ -28,6 +28,11 @@ class Component:
         self.lit = lit    # If component is accessible without special tools
         self.save = save  # If component state needs saving
         self.id = iden   # Component identifier
+        # Key this component is filed under in ComputerArchitecture.rooms, the
+        # id space the world graph and the web snapshot use. Stamped by
+        # ComputerArchitecture.assign_room_keys(); None for standalone
+        # components built outside a world (tests, fixtures).
+        self.key: str | None = None
         self.security_level = 0  # Security restriction level (0=none, 1=user, 2=admin, 3=system)
         self.data_types = []  # Types of data typically found in this component
         self.performance = {  # Performance characteristics

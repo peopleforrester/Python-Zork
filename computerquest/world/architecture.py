@@ -24,6 +24,18 @@ class ComputerArchitecture:
         self.create_items()
         self.create_player()
         self.bind_puzzles()
+        self.assign_room_keys()
+
+    def assign_room_keys(self):
+        """Stamp each component with the key it is filed under in `rooms`.
+
+        Components carry an internal `id` ("CPU000") while the world and the
+        web snapshot address them by dict key ("cpu_package"). Recording the
+        key on the component turns every reverse lookup into an attribute
+        read instead of a linear scan over all rooms.
+        """
+        for room_key, room in self.rooms.items():
+            room.key = room_key
 
     def bind_puzzles(self):
         """

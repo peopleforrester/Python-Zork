@@ -34,8 +34,18 @@ class PuzzleSession:
     # --- room helpers -------------------------------------------------------
 
     def current_room_id(self) -> str | None:
+        """The rooms-dict key for the player's location.
+
+        Components carry their key (assign_room_keys), so this is an attribute
+        read. Falls back to a scan for components built outside a world, which
+        tests do.
+        """
+        location = self.player.location
+        key: str | None = getattr(location, "key", None)
+        if key is not None and self.rooms.get(key) is location:
+            return key
         for room_id, room in self.rooms.items():
-            if room is self.player.location:
+            if room is location:
                 return room_id
         return None
 

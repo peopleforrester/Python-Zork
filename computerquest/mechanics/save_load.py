@@ -161,10 +161,8 @@ class SaveLoadSystem:
             if hasattr(room, "power_state"):
                 room.power_state = room_state.get("power_state", "on")
 
-        # Sync the map_grid visited markers with restored room state.
-        for room_key, room in game.game_map.rooms.items():
-            if room_key in game.map_grid and room.visited:
-                game.map_grid[room_key]["visited"] = True
+        # No map_grid sync needed: it is a derived view over room.visited,
+        # which was just restored above.
 
         if hasattr(game, "progress"):
             game.progress.update()
