@@ -78,15 +78,21 @@ deferred were all done in four commits (c1af2f7, bfe5da2, 021a361, 25ea2ae):
   reverse map per call and `current_room_id` is an attribute read. Emitted
   door graph verified byte-identical.
 
-game.py went 1114 -> 772 lines. Tests 297 -> 318. Deployed and verified live.
+game.py went 1114 -> 703 lines. Tests 297 -> 322. Deployed and verified live.
+
+Follow-on: the win condition now has a real end-to-end playthrough test
+(`tests/test_playthrough_victory.py`). The prior victory test mocked out
+quarantine and victory_message, so the actual path was never executed. Routes
+are BFS-computed, and the test was mutation-checked. Railway was not
+redeployed for it: tests and docs only, no runtime change.
 
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ 25ea2ae
-- `staging` and `main` are in sync at 25ea2ae (all refs, local and origin).
-- Tests: 318/318 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ 8ead16b
+- `staging` and `main` are in sync at 8ead16b (all refs, local and origin).
+- Tests: 322/322 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
