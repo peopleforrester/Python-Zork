@@ -86,13 +86,30 @@ quarantine and victory_message, so the actual path was never executed. Routes
 are BFS-computed, and the test was mutation-checked. Railway was not
 redeployed for it: tests and docs only, no runtime change.
 
+**Live victory playthrough (2026-07-28).** Full 26-turn run against production:
+all five viruses found and quarantined, MISSION SUCCESSFUL, `game_ended
+{victory:true}`. It surfaced two real ASCII-map defects, both fixed in ec630da:
+
+- **The map was non-deterministic.** Overlapping component art was merged in
+  set-iteration order, which follows Python's per-process string hash seed, so
+  the same game rendered differently between runs (5 runs produced 4 distinct
+  outputs). The merge now walks the authored `component_parts` dict. Pinned by
+  a test across four PYTHONHASHSEED values.
+- **`memory_controller` had no map position**, so it never drew a marker even
+  when visited. Same class as the clipped `pcie_x1_2` (B7).
+
+After the fix all three views agree exactly: ASCII markers 11, snapshot
+visited 11, React nodes 11. A false alarm was also ruled out during this run:
+a low live marker count was a probe artifact (xterm virtualizes its DOM, so an
+80-line map only has ~39 rows present), not a product bug.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ 8ead16b
-- `staging` and `main` are in sync at 8ead16b (all refs, local and origin).
-- Tests: 322/322 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ ec630da
+- `staging` and `main` are in sync at ec630da (all refs, local and origin).
+- Tests: 328/328 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -120,4 +137,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-25T00:00:00Z npm audit unit: 20 → 0 advisories; vite 5→8, vitest 3→4; promoted (6349499); Railway redeployed and live-verified
 - 2026-07-25T00:00:00Z state reconciliation: PROJECT_STATE + tasks.yaml corrected from stale Phase 2.1 to actual shipped state (all refs at 6349499)
 - 2026-07-27T00:00:00Z structural refactor shipped: content extraction, PuzzleSession, knowledge single-writer, visited/id-space dedup (c1af2f7..25ea2ae); 318 tests; promoted and redeployed
+- 2026-07-28T00:00:00Z live victory playthrough; fixed non-deterministic map render and missing memory_controller marker (ec630da); 328 tests; promoted and redeployed
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
