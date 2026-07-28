@@ -103,13 +103,26 @@ visited 11, React nodes 11. A false alarm was also ruled out during this run:
 a low live marker count was a probe artifact (xterm virtualizes its DOM, so an
 80-line map only has ~39 rows present), not a product bug.
 
+**Live 28-puzzle playthrough (2026-07-28).** Browser-automated run against
+production solving every shipped puzzle: 43 turns, 22 rooms, **28/28 solved,
+0 failed**, all five knowledge areas at 5/5 (100%, 25/25). Verified against the
+server snapshot (`solved 28 / available 28`) and the map header
+(`28/28 puzzles`, 22 nodes marked solved, 0 partial). Plan was validated
+locally first, then replayed live; results matched exactly.
+
+Found and fixed one UI defect (a17353e): React Flow's MiniMap rendered 200x150
+inside a 298x209 panel, covering ~48% of the map in opaque white on a dark UI
+and hiding the graph it was meant to help navigate. fitView already frames the
+whole ring at that size, so it showed an already-visible graph. Removed; the
+zoom/fit Controls remain.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ ec630da
-- `staging` and `main` are in sync at ec630da (all refs, local and origin).
-- Tests: 328/328 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 14 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ a17353e
+- `staging` and `main` are in sync at a17353e (all refs, local and origin).
+- Tests: 328/328 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -138,4 +151,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-25T00:00:00Z state reconciliation: PROJECT_STATE + tasks.yaml corrected from stale Phase 2.1 to actual shipped state (all refs at 6349499)
 - 2026-07-27T00:00:00Z structural refactor shipped: content extraction, PuzzleSession, knowledge single-writer, visited/id-space dedup (c1af2f7..25ea2ae); 318 tests; promoted and redeployed
 - 2026-07-28T00:00:00Z live victory playthrough; fixed non-deterministic map render and missing memory_controller marker (ec630da); 328 tests; promoted and redeployed
+- 2026-07-28T00:00:00Z live 28/28 puzzle playthrough; removed the map minimap covering half the panel (a17353e); promoted and redeployed
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
