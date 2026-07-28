@@ -199,4 +199,24 @@ describe('<GameMap />', () => {
     expect(screen.getByText(/solved/)).toBeInTheDocument();
     expect(screen.queryByText(/Waiting for game state/i)).not.toBeInTheDocument();
   });
+
+  it('does not render a minimap over the graph', () => {
+    // The panel is ~300px wide and fitView already frames the whole ring, so a
+    // minimap showed a graph that was fully visible anyway while covering
+    // roughly half the panel in opaque white. Keep the panel clear.
+    const socket = makeMockSocket();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { container } = render(<GameMap socket={socket as any} />);
+
+    act(() => {
+      socket.fire(
+        'game_state',
+        makeSnapshot([makeRoom({ id: 'core1', name: 'Core 1', visited: true })], 'core1')
+      );
+    });
+
+    expect(container.querySelector('.react-flow__minimap')).toBeNull();
+    // The zoom/fit controls are the navigation affordance that remains.
+    expect(container.querySelector('.react-flow__controls')).not.toBeNull();
+  });
 });

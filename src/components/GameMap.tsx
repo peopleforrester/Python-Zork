@@ -6,7 +6,6 @@ import ReactFlow, {
   Background,
   Controls,
   Edge,
-  MiniMap,
   Node,
 } from 'reactflow';
 import { Socket } from 'socket.io-client';
@@ -222,8 +221,10 @@ function GameMap({ socket }: GameMapProps) {
             minZoom={0.05}
             fitViewOptions={{ padding: 0.1 }}
           >
+            {/* No MiniMap: the panel is ~300px and fitView already shows the
+                whole ring, so a minimap of an already-visible graph bought
+                nothing while covering ~48% of the panel in opaque white. */}
             <Controls />
-            <MiniMap />
             <Background gap={12} size={1} />
           </ReactFlow>
         ) : (
