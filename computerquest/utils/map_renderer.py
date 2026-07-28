@@ -268,6 +268,9 @@ def render_map(game, map_grid):
         "l2_cache1": (15, 15),  # L2 Cache 1
         "l2_cache2": (15, 38),  # L2 Cache 2
         "l3_cache": (19, 30),  # L3 Cache
+        # Between the RAM DIMMs (col 8) and L3 (col 30), matching the role it
+        # plays between the cache hierarchy and main memory.
+        "memory_controller": (24, 20),  # Memory Controller
         "ram_dimm1": (19, 8),  # RAM DIMM 1
         "ram_dimm2": (23, 8),  # RAM DIMM 2
         "ram_dimm3": (27, 8),  # RAM DIMM 3
@@ -345,11 +348,15 @@ def render_map(game, map_grid):
             ]:
                 revealed_parts.add("core_components")
 
-    # Reveal map sections based on exploration
-    for part_name in revealed_parts:
-        if part_name in component_parts:
-            part_lines = component_parts[part_name]
-
+    # Reveal map sections based on exploration.
+    #
+    # Iterate component_parts rather than the revealed_parts set: several parts
+    # write overlapping rows, so whichever is merged last wins those cells.
+    # Set iteration order follows Python's per-process string hash seed, which
+    # made the rendered map differ between runs. Driving the loop from the
+    # authored dict makes the layering explicit and stable.
+    for part_name, part_lines in component_parts.items():
+        if part_name in revealed_parts:
             # Where to place these component lines (data, not control flow).
             start_row = _PART_START_ROWS.get(part_name, 1)
 
