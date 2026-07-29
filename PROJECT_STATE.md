@@ -116,6 +116,24 @@ and hiding the graph it was meant to help navigate. fitView already frames the
 whole ring at that size, so it showed an already-visible graph. Removed; the
 zoom/fit Controls remain.
 
+**Live combined playthrough (2026-07-29).** One browser-automated run doing
+both: **28/28 puzzles solved AND all 5 viruses quarantined**, ending in
+MISSION SUCCESSFUL with `game_ended {victory:true}`. 59 turns, 27/35 rooms.
+Final stats read `Knowledge gained: 25` (the puzzle-free victory run reported
+0), and the snapshot confirmed solved 28/28, quarantined 5, victory true,
+knowledge 5/5 in every area.
+
+Route deliberately defers the last virus (kernel's rootkit) so victory lands
+after every puzzle is solved; all five virus rooms also hold puzzles, so one
+route covers both goals. Plan was dry-run locally first and the live run
+matched it exactly (same 59 turns, 27 visited, same totals).
+
+This run reached achievements no earlier run could: the five per-area
+knowledge experts plus **Computer Scientist** (max knowledge in all areas),
+12 unlocked, score 2825. That exercises ProgressSystem's knowledge-gated
+conditions, confirming puzzle-derived knowledge still drives achievements
+after the Phase C single-writer change. No new defects found.
+
 ## Branch & Tests
 
 - Branch: `staging`
@@ -152,4 +170,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-27T00:00:00Z structural refactor shipped: content extraction, PuzzleSession, knowledge single-writer, visited/id-space dedup (c1af2f7..25ea2ae); 318 tests; promoted and redeployed
 - 2026-07-28T00:00:00Z live victory playthrough; fixed non-deterministic map render and missing memory_controller marker (ec630da); 328 tests; promoted and redeployed
 - 2026-07-28T00:00:00Z live 28/28 puzzle playthrough; removed the map minimap covering half the panel (a17353e); promoted and redeployed
+- 2026-07-29T00:00:00Z live combined playthrough: 28/28 puzzles + 5/5 viruses + victory, knowledge 25/25, 12 achievements; no defects found
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
