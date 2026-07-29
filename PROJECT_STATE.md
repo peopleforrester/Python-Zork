@@ -134,13 +134,31 @@ knowledge experts plus **Computer Scientist** (max knowledge in all areas),
 conditions, confirming puzzle-derived knowledge still drives achievements
 after the Phase C single-writer change. No new defects found.
 
+**Coverage pass (2026-07-29).** Verified all 35 rooms are reachable (max 4
+hops), so no dead content and the visit-everything achievement is attainable.
+Then closed the three worthwhile coverage gaps, project total 87% -> 91%,
+tests 328 -> 373:
+
+- `visualizer.py` 58% -> 100%. The `visualize`/`viz` command is advertised in
+  help but half its render code had no test. Every alias and diagram now
+  asserts on substance (stack layers, hierarchy levels, HDD vs SSD).
+- `player.py` 77% -> 91%. The inventory branch of `quarantine` was dark
+  despite being half the body collapsed during the DRY pass; also advscan
+  gating and hidden-threat reporting, and the analyze hint ladder.
+- `game.py` 72% -> 76%. The simulate cross-capability refusals (pattern/cache
+  at the CPU sim, forward at the memory sim) were entirely untested.
+
+Every new test was mutation-checked. The remaining `game.py` gap is
+`setup_readline` and the CLI `input()` loop, deliberately skipped: terminal-only
+plumbing whose mocking cost exceeds its value.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ a17353e
-- `staging` and `main` are in sync at a17353e (all refs, local and origin).
-- Tests: 328/328 via `uv run pytest`; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ e0cb224
+- `staging` and `main` are in sync at e0cb224 (all refs, local and origin).
+- Tests: 373/373 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -171,4 +189,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-28T00:00:00Z live victory playthrough; fixed non-deterministic map render and missing memory_controller marker (ec630da); 328 tests; promoted and redeployed
 - 2026-07-28T00:00:00Z live 28/28 puzzle playthrough; removed the map minimap covering half the panel (a17353e); promoted and redeployed
 - 2026-07-29T00:00:00Z live combined playthrough: 28/28 puzzles + 5/5 viruses + victory, knowledge 25/25, 12 achievements; no defects found
+- 2026-07-29T00:00:00Z coverage pass: visualizer/player/simulate surfaces tested, 87% -> 91%, 373 tests (934c872, 2dc840b, e0cb224)
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
