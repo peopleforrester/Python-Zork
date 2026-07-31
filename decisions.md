@@ -101,3 +101,25 @@ contract deviation requiring re-approval, not a bug fix.
 
 game.py 1114 -> 772 lines, tests 297 -> 318. CI green, promoted to main,
 redeployed to Railway and verified live in a browser.
+
+## 2026-07-31T00:00:00Z · 1.3 · amendment · decision 7, adaptive difficulty
+
+Michael asked for the adaptive-difficulty feature, which the sealed contract
+listed under "Out of scope" ("the puzzle order is room-determined, not
+player-skill-determined; a future pass could re-order based on solve history").
+Implementing it therefore required amending the contract, not just coding.
+
+Two design forks were put to Michael before any source was touched. He chose
+(a) reorder within a room in both directions, leaving the gate and the
+knowledge formula alone, over the wider options of relaxing the unlock gate for
+strong players or adding scaffolding for strugglers; and (b) silent adaptation
+over announcing it, so a struggling player is not told the game thinks they are
+struggling.
+
+The narrow scope is the point: because the feature only reorders, it cannot
+open a gate or grant knowledge, so a wrong standing costs a player nothing but
+which puzzle appears first. Standing reuses signals already tracked, so no new
+save state and no schema bump.
+
+Contract body updated (decision 7 added, the out-of-scope bullet struck);
+new sha256:2949c0833fdf.

@@ -9,6 +9,11 @@ from computerquest.mechanics.puzzles.parsers import AnswerParseError
 from computerquest.mechanics.puzzles.registry import PuzzleRegistry
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 
+# Clean solves in one subject area before that area counts as 'strong'. Two is
+# enough to be a signal without waiting until an area is nearly exhausted; the
+# smallest area ships four puzzles.
+_STRONG_SOLVES = 2
+
 
 class PuzzleSession:
     """The puzzle half of a play session.
@@ -49,10 +54,59 @@ class PuzzleSession:
                 return room_id
         return None
 
+    def area_standing(self, area: str) -> str:
+        """How the player is faring in one subject area.
+
+        Reads the two durable signals the session already keeps: puzzles solved,
+        and puzzles attempted but still unsolved (a wrong answer or a costly
+        hint records an attempt). Returns 'struggling', 'strong', or 'neutral'.
+
+        Deliberately coarse. This orders what a room offers; it never unlocks
+        anything, so a mistake here costs a player nothing but a reordering.
+        """
+        by_id = self.registry.by_id
+        solved = sum(
+            1 for p in self.player.solved_puzzles
+            if p in by_id and by_id[p].subject_area == area
+        )
+        unresolved = sum(
+            1 for p in self.player.attempted_puzzles
+            if p in by_id and by_id[p].subject_area == area
+            and p not in self.player.solved_puzzles
+        )
+
+        if unresolved and unresolved >= solved:
+            return "struggling"
+        if solved >= _STRONG_SOLVES and not unresolved:
+            return "strong"
+        return "neutral"
+
+    def _adaptive_order(self, puzzles: list[MicroPuzzle]) -> list[MicroPuzzle]:
+        """Order a room's offer to match the player's standing.
+
+        Struggling players meet the easiest available puzzle first, strong
+        players the hardest; everyone else keeps the authored order. Sorting is
+        stable, so equal-difficulty puzzles never move relative to each other.
+        """
+        if len(puzzles) < 2:
+            return puzzles
+        # A room's puzzles share a subject area in the shipped content, but
+        # take the first as the reference rather than assuming it.
+        standing = self.area_standing(puzzles[0].subject_area)
+        if standing == "struggling":
+            return sorted(puzzles, key=lambda p: p.difficulty)
+        if standing == "strong":
+            return sorted(puzzles, key=lambda p: -p.difficulty)
+        return puzzles
+
     def gated_room_puzzles(self) -> list[MicroPuzzle]:
         """Unsolved puzzles in the current room that the soft difficulty
         gate shows (decision 2): difficulty 1 always; difficulty N needs a
-        solved difficulty >= N-1 puzzle in the same subject area."""
+        solved difficulty >= N-1 puzzle in the same subject area.
+
+        The surviving puzzles are then ordered by the player's standing in the
+        area (decision 7); the gate itself is unaffected.
+        """
         by_id = self.registry.by_id
         shown: list[MicroPuzzle] = []
         for puzzle_id in self.player.location.puzzles:
@@ -71,7 +125,7 @@ class PuzzleSession:
                 if not unlocked:
                     continue
             shown.append(puzzle)
-        return shown
+        return self._adaptive_order(shown)
 
     # --- presentation -------------------------------------------------------
 
@@ -99,7 +153,14 @@ class PuzzleSession:
             return ""
         if room_id in self.prompted_rooms:
             return ""
-        primary = room.puzzles[0]
+        # Which puzzle leads is the player's standing to decide (decision 7);
+        # the once-per-room and already-seen guards below are unchanged.
+        candidates = self._adaptive_order(
+            [self.registry.by_id[p] for p in room.puzzles if p in self.registry.by_id]
+        )
+        if not candidates:
+            return ""
+        primary = candidates[0].id
         if primary in self.player.solved_puzzles or primary in self.player.attempted_puzzles:
             return ""
         self.prompted_rooms.add(room_id)

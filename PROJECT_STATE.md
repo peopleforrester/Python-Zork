@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -26,7 +26,7 @@ Prior unit (senior-review remediation + Step 4.2/4.3 + save/load) completed thro
 
 ## Contracts
 
-- 2026-07-04T00:00:00Z · sha256:cde83dbaa90b · docs/architecture-microquiz.md approved by Michael. Amended 2026-07-06 (prose-style pass, semantics unchanged; new sha256:8abdc57a3d45). Predict-and-verify micro-puzzle system: data model, simulator protocol with per-module fidelity statements, five new verbs, difficulty-weighted knowledge meter (cap 5), tiered hints, first-visit auto-prompt, save schema 1.1, eight-step migration plan. Deviations require /prd-amend and re-approval.
+- 2026-07-04T00:00:00Z · sha256:cde83dbaa90b · docs/architecture-microquiz.md approved by Michael. Amended 2026-07-06 (prose-style pass, semantics unchanged; new sha256:8abdc57a3d45). Predict-and-verify micro-puzzle system: data model, simulator protocol with per-module fidelity statements, five new verbs, difficulty-weighted knowledge meter (cap 5), tiered hints, first-visit auto-prompt, save schema 1.1, eight-step migration plan. Deviations require /prd-amend and re-approval. Amended 2026-07-31: decision 7 adds adaptive difficulty (presentation-order only), approved by Michael; new sha256:2949c0833fdf.
 
 _(Decision history predating the schema lives in `decisions.md` and project memory.)_
 
@@ -152,13 +152,34 @@ Every new test was mutation-checked. The remaining `game.py` gap is
 `setup_readline` and the CLI `input()` loop, deliberately skipped: terminal-only
 plumbing whose mocking cost exceeds its value.
 
+**Adaptive difficulty shipped (2026-07-31).** Contract decision 7, amending an
+item that was explicitly out of scope. A room offering more than one puzzle now
+orders its offer by the player's standing in that subject area: struggling
+players meet the easiest first, strong players the hardest, everyone else keeps
+the authored order.
+
+Standing comes from signals already tracked, so no new persisted state: solved
+puzzles, and puzzles attempted but still unsolved. `struggling` when unsolved
+attempts at least match solves, `strong` after two clean solves with none
+outstanding, `neutral` otherwise.
+
+Scope was kept deliberately narrow. The gate (decision 2) still decides what is
+visible at all, and the knowledge formula (decision 5) is untouched, so the
+feature cannot unlock or award anything; a misjudged standing only changes which
+puzzle leads. Adaptation is silent, and sorting is stable so equal-difficulty
+puzzles never move. It bites in the six multi-puzzle rooms.
+
+Verified: 14 new tests, mutation-checked in both directions (disabling
+adaptation and flipping it fail the suite), and the full 28-puzzle + victory
+playthrough is byte-identical at 59 turns.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ e0cb224
 - `staging` and `main` are in sync at e0cb224 (all refs, local and origin).
-- Tests: 373/373 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 387/387 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -190,4 +211,6 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-28T00:00:00Z live 28/28 puzzle playthrough; removed the map minimap covering half the panel (a17353e); promoted and redeployed
 - 2026-07-29T00:00:00Z live combined playthrough: 28/28 puzzles + 5/5 viruses + victory, knowledge 25/25, 12 achievements; no defects found
 - 2026-07-29T00:00:00Z coverage pass: visualizer/player/simulate surfaces tested, 87% -> 91%, 373 tests (934c872, 2dc840b, e0cb224)
+- 2026-07-31T00:00:00Z 1.2 -> 1.3 contract amended: decision 7 adaptive difficulty approved by Michael (sha256:2949c0833fdf)
+- 2026-07-31T00:00:00Z 2.1 -> 2.3 adaptive difficulty implemented and verified; 387 tests
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main

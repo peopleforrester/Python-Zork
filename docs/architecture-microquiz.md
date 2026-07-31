@@ -33,6 +33,8 @@ The six open questions in the original draft are resolved as follows. Rationale 
 
 6. **Each simulator carries a fidelity statement in its module docstring.** Drafts are committed alongside each module's first commit and become the verdict's authority claim. See [Per-simulator fidelity](#per-simulator-fidelity) below.
 
+7. **Adaptive difficulty reorders a room's offer, and nothing else.** (Amendment 2026-07-31; this was previously out of scope.) Each subject area gets a standing derived from the two signals already tracked: puzzles solved, and puzzles attempted but still unsolved. A player is `struggling` when unsolved attempts at least match solves, `strong` after two clean solves with no unsolved attempts, and `neutral` otherwise. When a room offers more than one puzzle, a struggling player meets the easiest first and a strong player the hardest; neutral keeps the authored order. Sorting is stable, so equal-difficulty puzzles never move. The adaptation is silent, and it changes only presentation order: decision 2's gate still decides what is visible at all, and decision 5's knowledge formula is untouched. Because it cannot open a gate or grant knowledge, a misjudged standing only changes which puzzle is offered first.
+
 The Lifecycle, Snapshot, Save/Load, Tests, and Migration plan sections that follow are written against these decisions.
 
 ---
@@ -593,9 +595,9 @@ branch.
 - **Author-extensible puzzles.** Players cannot write their own puzzles in
   the first pass. The infrastructure supports it (puzzles are data, not
   code), but no in-game editor.
-- **Adaptive difficulty.** The puzzle order is room-determined, not
-  player-skill-determined. A future pass could re-order based on solve
-  history.
+- ~~**Adaptive difficulty.**~~ Implemented 2026-07-31 as decision 7: a room's
+  offer is reordered by the player's standing in the subject area. The gate and
+  the knowledge formula are unchanged, so this stays presentation-only.
 - **Multiplayer / leaderboards.** Single-player tool.
 - **Persistence of in-flight puzzles.** A loaded game starts fresh; the room
   re-offers the puzzle.
