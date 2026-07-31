@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation 2026-08-01 sha256:65767d1a411e)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -210,13 +210,35 @@ technical contrasts ("data, not code"; "declarative, not derived"; "the gate is
 on the listing UI, not on the engine"). Rewriting them would blur precise
 statements and churn the sealed contract's sha for nothing. Left as is.
 
+**Phase 0 hardening shipped (2026-08-01, PRD 1).** Three defects closed before
+any feature work:
+
+- **Shipped puzzle answers are now pinned.** The canonical answer is recomputed
+  from simulator code and stored nowhere, so a simulator edit rewrote shipped
+  content silently. Proven by mutating the signature scanner: it flipped
+  `signature_first_match` to contradict its own printed explanation and all 404
+  tests still passed. All 28 answers now assert against literals.
+- **Simulator inputs are bounded.** The registry validates by *running* the
+  author's setup, so unbounded values were executed at load. `size_lines: 10**9`
+  allocated to OOM in about five seconds and SSTF's quadratic loop hung with no
+  memory signature; both now raise instantly with a naming message. Bounds sit
+  three to four orders of magnitude above anything shipped content uses.
+- **The validator no longer swallows `MemoryError`** (it produced an empty
+  "setup is not runnable: " and defeated watchdogs), and now cross-checks
+  `answer_kind` against the simulator's, a mismatch that previously loaded
+  cleanly and made every answer wrong forever.
+
+Also reconciled the contract's per-simulator fidelity statements, which were
+drafted before the simulators existed and had drifted in four places. No
+simulator behaviour changed.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 404/404 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 425/425 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -251,4 +273,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-31T00:00:00Z 1.2 -> 1.3 contract amended: decision 7 adaptive difficulty approved by Michael (sha256:2949c0833fdf)
 - 2026-07-31T00:00:00Z 2.1 -> 2.3 adaptive difficulty implemented and verified; 387 tests
 - 2026-07-31T00:00:00Z deploy verification added (cc6d54f, 642ffc6); prose check on the contract doc reviewed and dismissed as false positives; 404 tests
+- 2026-08-01T00:00:00Z PRD backlog added and PRD 1 approved/scoped; Phase 0 hardening shipped; 425 tests
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main

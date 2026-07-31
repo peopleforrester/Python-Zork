@@ -7,6 +7,34 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, ClassVar, Protocol
 
+# Upper bounds on author-supplied setup values.
+#
+# The registry validates a puzzle by *running* it, so any unbounded quantity in
+# a setup is executed at load time. One integer was enough to make the cache
+# simulator allocate until the OOM killer intervened, and SSTF is quadratic, so
+# a long request list is a wall-clock hang with no memory signature.
+#
+# The shipped tree's largest values are size_lines 4, line_size_bytes 64,
+# accesses 10, requests 4, instructions 4, tlb_entries 2, so these sit three to
+# four orders of magnitude above any real puzzle and constrain only inputs that
+# could not teach anything.
+MAX_TRACE_LENGTH = 4096      # accesses, requests, instructions, page-table rows
+MAX_CACHE_LINES = 65536
+MAX_LINE_SIZE_BYTES = 1 << 20
+MAX_TLB_ENTRIES = 65536
+MAX_PAGE_SIZE = 1 << 30
+
+
+def require_within(name: str, value: int, limit: int) -> int:
+    """Reject a setup value above `limit`, naming the offender.
+
+    Raises ValueError so the registry reports it as a puzzle data error rather
+    than a crash, which is how every other authoring mistake surfaces.
+    """
+    if value > limit:
+        raise ValueError(f"{name} is {value}, above the maximum of {limit}")
+    return value
+
 
 class AnswerKind(str, Enum):
     """Shape of the answer a player commits for a puzzle."""

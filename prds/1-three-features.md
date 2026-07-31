@@ -1,6 +1,6 @@
 # PRD 1: Persistence, simulator fidelity, and author-extensible puzzles
 
-Status: **awaiting approval (Phase 1.2)**
+Status: **approved 2026-08-01 by Michael, scoped as below**
 Author: research pass 2026-08-01
 Contract affected: `docs/architecture-microquiz.md`, `docs/design-minigames.md`
 
@@ -241,10 +241,16 @@ commit.
 
 Each step lands green and is separately shippable.
 
-## Open questions
+## Decisions (Michael, 2026-08-01)
 
-1. Feature C: player-authored puzzles, or more puzzles? Changes scope by roughly
-   10x.
-2. Feature A: include minigame state, or puzzle state only?
-3. Feature B: how many new puzzles are worth authoring, given neither category
-   can gain further knowledge progression?
+1. **Feature C: parked.** Neither player-authored puzzles nor the user-directory
+   layer. Sticking with the shipped content model for now. This drops the F2
+   security work from "blocker" to "hardening worth doing anyway", since without
+   user-supplied content those bounds only guard against authoring typos.
+2. **Feature A: puzzle state only.** No minigame persistence, so
+   `design-minigames.md` is not amended and its "do not re-litigate" note stands.
+3. **Feature B: the free win only.** The false-positive security puzzle, one YAML
+   file, no code. The new scanners and the link-cost simulator are not being
+   authored now.
+4. **Build order: Phase 0 first**, as its own shippable unit.
+5. **Sister repo `kodequest` stays untouched.** Read-only reference only.

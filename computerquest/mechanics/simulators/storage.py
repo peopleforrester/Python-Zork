@@ -15,7 +15,11 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from computerquest.mechanics.simulators.base import AnswerKind
+from computerquest.mechanics.simulators.base import (
+    MAX_TRACE_LENGTH,
+    AnswerKind,
+    require_within,
+)
 
 _ALGORITHMS = frozenset({"FCFS", "SSTF"})
 
@@ -31,6 +35,9 @@ class SeekDistanceSimulator:
             raise ValueError(f"unknown scheduling algorithm {setup['algorithm']!r}")
         head = int(setup["start_track"])
         pending = [int(t) for t in setup["requests"]]
+        # SSTF is quadratic (min then remove, both O(n), inside a loop of n),
+        # so an unbounded request list is a hang rather than a slow answer.
+        require_within("len(requests)", len(pending), MAX_TRACE_LENGTH)
 
         total = 0
         if algorithm == "FCFS":

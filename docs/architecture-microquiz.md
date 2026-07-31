@@ -632,25 +632,27 @@ Each simulator module ships with a fidelity statement as a top-of-module docstri
 
 ### `simulators/pipeline.py`
 
-> Educational 5-stage CPU pipeline simulator (IF, ID, EX, MEM, WB). Models in-order issue, RAW data hazards with configurable stall or forward resolution, and structural hazards on shared resources. NOT modeled: branch prediction, speculative execution, out-of-order execution, register renaming, superscalar issue, control hazards from real branches (every puzzle is straight-line code), or any hazard beyond RAW. Verdicts cite the textbook MIPS pipeline (Patterson & Hennessy).
+> Educational 5-stage CPU pipeline simulator (IF, ID, EX, MEM, WB). Models in-order issue and RAW data hazards with configurable stall-or-forward resolution. NOT modeled: structural hazards on shared resources, branch prediction, speculative execution, out-of-order execution, register renaming, superscalar issue, control hazards from real branches (every puzzle is straight-line code), or any hazard beyond RAW. Verdicts cite the textbook MIPS pipeline (Patterson & Hennessy).
 
 ### `simulators/tlb.py`
 
-> Educational virtual-to-physical translation simulator. Models a single-level page table with 4KB pages and a fully-associative TLB with configurable size and replacement policy. Translation walks the page table on a miss; the TLB caches the result. NOT modeled: multi-level page tables; huge or transparent huge pages; TLB shootdown across cores; ASIDs or process tagging; PCID. Verdicts cite the textbook x86 paging model.
+> Educational virtual-to-physical translation simulator. Models a single-level page table with fixed-size pages and a fully-associative TLB with configurable size and replacement policy (LRU and FIFO). Translation walks the page table on a miss; the TLB caches the VPN. NOT modeled: multi-level page tables; huge or transparent huge pages; TLB shootdown across cores; ASIDs or process tagging; PCID; page faults (an unmapped VPN is an authoring error, not a simulated fault). Verdicts cite the textbook x86 paging model.
 
 ### `simulators/packet.py`
 
-> Educational network routing simulator. Models OSI layers 1 to 3: link-layer framing, IP routing through a small static topology, ARP resolution against a fixed table. NOT modeled: TCP windowing, congestion control, retransmit, NAT, firewall policy, MTU fragmentation, IPv6, or any wireless effect. Verdicts assume a quiet, lossless wire.
+> Educational network routing simulator. Models static next-hop routing over a small named topology, the shape of an IP forwarding table reduced to component names. NOT modeled: link-layer framing, ARP resolution, TCP windowing, congestion control, retransmit, NAT, firewall policy, MTU fragmentation, IPv6, or any wireless effect. Verdicts assume a quiet, lossless wire.
 
 ### `simulators/storage.py`
 
-> Educational block-storage simulator. Models block-level reads and writes, a flat LBA space, a simple HDD seek model (track-to-track distance contributes to access time), and an SSD block-remap counter. NOT modeled: SSD garbage collection, write amplification, wear leveling beyond the remap count, NCQ, command queuing depth effects, controller-cached writes. Verdicts cite the textbook HDD geometry and the abstract SSD model from Bryant and O'Hallaron.
+> Educational block-storage simulator. Models a disk head moving across numbered tracks, and the total seek distance for a request queue under FCFS or SSTF scheduling. NOT modeled: rotational latency, transfer time, SCAN and elevator variants, SSD internals (garbage collection, wear leveling, write amplification), NCQ, or controller caching. Verdicts cite the textbook HDD seek model.
 
 ### `simulators/signature.py`
 
-> Educational virus-signature matching simulator. Models exact-pattern matching against a curated signature list. The "found virus" verdict comes from matching a file's contents against the canonical signature for that virus. NOT modeled: heuristic detection, behavior monitoring, polymorphic-virus dynamic matching, sandbox emulation. Verdicts say "this matches the canonical signature for X"; they do not say "this is, in the world, a virus."
+> Educational virus-signature matching simulator. Models exact-pattern matching of file contents against a curated signature list; the first matching signature, in database order, names the verdict, and no match is "clean". NOT modeled: heuristic detection, behavior monitoring, polymorphic-virus dynamic matching, sandbox emulation. Verdicts say "this matches the canonical signature for X"; they do not say "this is, in the world, a virus."
 
 Each fidelity statement is a contract. If a puzzle's verdict relies on behaviour the statement excludes, either the puzzle is wrong or the statement needs amending. Both cases are reviewable.
+
+These statements were drafted before the simulators were written and drifted from what shipped. They were reconciled on 2026-08-01 to match the module docstrings verbatim, which are the authority: the drafts had promised ARP and link-layer framing the packet simulator never implemented, claimed structural hazards the pipeline does not model, described an SSD remap counter the storage simulator does not have, and omitted the first-match-in-database-order rule that `signature_first_match` depends on entirely. No simulator behaviour changed.
 
 ---
 

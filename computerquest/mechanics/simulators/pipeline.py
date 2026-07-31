@@ -26,7 +26,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
-from computerquest.mechanics.simulators.base import AnswerKind
+from computerquest.mechanics.simulators.base import (
+    MAX_TRACE_LENGTH,
+    AnswerKind,
+    require_within,
+)
 
 _STAGES = 5  # IF, ID, EX, MEM, WB
 
@@ -75,9 +79,11 @@ class PipelineSimulator:
         """
         if int(setup["stages"]) != _STAGES:
             raise ValueError(f"only {_STAGES}-stage pipelines are modeled")
+        raw = list(setup["instructions"])
+        require_within("len(instructions)", len(raw), MAX_TRACE_LENGTH)
         instructions = [
             i if isinstance(i, Instruction) else Instruction(i[0], tuple(i[1]), i[2])
-            for i in setup["instructions"]
+            for i in raw
         ]
         return self.simulate(instructions, bool(setup["forwarding"])).total_cycles
 

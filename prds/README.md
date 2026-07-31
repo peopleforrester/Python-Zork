@@ -7,7 +7,7 @@ on approval (Phase 1.3).
 
 | # | Title | Status | Origin |
 |---|---|---|---|
-| 1 | [Persistence, simulator fidelity, author-extensible puzzles](1-three-features.md) | awaiting approval | requested 2026-08-01 |
+| 1 | [Persistence, simulator fidelity, author-extensible puzzles](1-three-features.md) | approved, scoped (Phase 0 in progress) | requested 2026-08-01 |
 | 2 | [Progressive hints + difficulty/tutorial modes](2-progressive-hints-difficulty-modes.md) | backlog | KubeQuest #50 |
 | 3 | [Objectives, progressive reveal](3-objectives-progressive-reveal.md) | backlog | KubeQuest #51 |
 | 4 | [Web tab completion + per-command help](4-web-completion-and-per-command-help.md) | backlog | KubeQuest #52 |

@@ -17,7 +17,13 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from computerquest.mechanics.simulators.base import AnswerKind
+from computerquest.mechanics.simulators.base import (
+    MAX_PAGE_SIZE,
+    MAX_TLB_ENTRIES,
+    MAX_TRACE_LENGTH,
+    AnswerKind,
+    require_within,
+)
 
 _POLICIES = frozenset({"LRU", "FIFO"})
 
@@ -37,13 +43,24 @@ class TLBSimulator:
         policy = str(setup["policy"]).upper()
         if policy not in _POLICIES:
             raise ValueError(f"unknown replacement policy {setup['policy']!r}")
+        # Without these, tlb_entries <= 0 fails only by an incidental IndexError
+        # from popping an empty list, and page_size 0 by ZeroDivisionError.
+        if entries <= 0:
+            raise ValueError("tlb_entries must be positive")
+        if page_size <= 0:
+            raise ValueError("page_size must be positive")
+        require_within("tlb_entries", entries, MAX_TLB_ENTRIES)
+        require_within("page_size", page_size, MAX_PAGE_SIZE)
         page_table = {int(k): int(v) for k, v in dict(setup["page_table"]).items()}
+        require_within("len(page_table)", len(page_table), MAX_TRACE_LENGTH)
 
         # Ordered VPN list; index 0 is the next victim. LRU refreshes hits
         # to the back; FIFO leaves insertion order untouched.
         tlb: list[int] = []
         result: list[str] = []
-        for vaddr in setup["accesses"]:
+        accesses = list(setup["accesses"])
+        require_within("len(accesses)", len(accesses), MAX_TRACE_LENGTH)
+        for vaddr in accesses:
             vpn, _ = _split(int(vaddr), page_size)
             if vpn not in page_table:
                 raise ValueError(f"VPN {vpn} not present in the page table")
@@ -67,7 +84,11 @@ class TLBTranslateSimulator:
 
     def run(self, setup: dict[str, Any]) -> int:
         page_size = int(setup["page_size"])
+        if page_size <= 0:
+            raise ValueError("page_size must be positive")
+        require_within("page_size", page_size, MAX_PAGE_SIZE)
         page_table = {int(k): int(v) for k, v in dict(setup["page_table"]).items()}
+        require_within("len(page_table)", len(page_table), MAX_TRACE_LENGTH)
         vpn, offset = _split(int(setup["vaddr"]), page_size)
         if vpn not in page_table:
             raise ValueError(f"VPN {vpn} not present in the page table")

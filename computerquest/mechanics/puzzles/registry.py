@@ -134,10 +134,26 @@ def _validate_playable(puzzle: MicroPuzzle, path: Path) -> None:
     simulator = SIMULATORS.get(puzzle.simulator)
     if simulator is None:
         raise PuzzleDataError(f"{path}: unknown simulator {puzzle.simulator!r}")
+    # Validation runs the author's setup, so resource exhaustion is a real
+    # outcome here rather than a hypothetical. Those are not data errors and
+    # must not be relabelled: MemoryError carries no message, so wrapping it
+    # produced the useless "setup is not runnable: " with nothing after the
+    # colon, and swallowing it also defeats any watchdog wrapped around load.
     try:
         simulator.run(puzzle.setup)
+    except (MemoryError, RecursionError, KeyboardInterrupt, SystemExit):
+        raise
     except Exception as exc:  # noqa: BLE001 — any author-side failure is a data error
         raise PuzzleDataError(f"{path}: setup is not runnable: {exc}") from exc
+
+    if puzzle.answer_kind is not simulator.answer_kind:
+        # A mismatch loads cleanly today and then compares an int against a
+        # list forever, so every answer is wrong with no error at any layer.
+        raise PuzzleDataError(
+            f"{path}: answer_kind {puzzle.answer_kind.value!r} does not match "
+            f"simulator {puzzle.simulator!r} which returns "
+            f"{simulator.answer_kind.value!r}"
+        )
 
 
 def load_registry() -> PuzzleRegistry:

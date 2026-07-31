@@ -17,7 +17,13 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from computerquest.mechanics.simulators.base import AnswerKind
+from computerquest.mechanics.simulators.base import (
+    MAX_CACHE_LINES,
+    MAX_LINE_SIZE_BYTES,
+    MAX_TRACE_LENGTH,
+    AnswerKind,
+    require_within,
+)
 
 _POLICIES = frozenset({"LRU", "FIFO"})
 
@@ -49,6 +55,11 @@ class CacheSimulator:
 
         if size_lines <= 0 or line_size <= 0 or associativity <= 0:
             raise ValueError("size_lines, line_size_bytes, associativity must be positive")
+        # size_lines sizes the set list below, so it decides how much memory this
+        # call asks for; the trace bound keeps the per-access scan finite.
+        require_within("size_lines", size_lines, MAX_CACHE_LINES)
+        require_within("line_size_bytes", line_size, MAX_LINE_SIZE_BYTES)
+        require_within("len(accesses)", len(accesses), MAX_TRACE_LENGTH)
         if size_lines % associativity != 0:
             raise ValueError(
                 f"associativity {associativity} does not divide size_lines {size_lines}"

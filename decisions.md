@@ -123,3 +123,35 @@ save state and no schema bump.
 
 Contract body updated (decision 7 added, the out-of-scope bullet struck);
 new sha256:2949c0833fdf.
+
+## 2026-08-01T00:00:00Z · 2.2 · Phase 0 hardening (PRD 1)
+
+Michael approved PRD 1 with Feature C parked, Feature A scoped to puzzle state
+only, Feature B scoped to the one zero-code puzzle, and Phase 0 first.
+
+Phase 0 closed two defects found during research and one documentation drift.
+
+Shipped puzzle answers were unguarded: the canonical answer is recomputed from
+simulator code on every call and stored nowhere, so a simulator edit rewrote
+shipped content silently. Demonstrated by mutating the signature scanner to take
+the last match instead of the first, which flipped signature_first_match's answer
+to contradict its own printed explanation while all 404 tests passed. All 28
+answers are now pinned to literals.
+
+Author-supplied setup values were unbounded, and the registry validates a puzzle
+by running it. A single integer made the cache simulator allocate to OOM in
+about five seconds, and SSTF is quadratic so a long request list hung with no
+memory signature. Both now raise immediately with a naming message. The bounds
+sit three to four orders of magnitude above anything shipped content uses.
+
+The validator also relabelled MemoryError as an empty "setup is not runnable: "
+and swallowed watchdog signals; those now propagate. A missing answer_kind
+cross-check was added at the same seam, since a mismatch previously loaded
+cleanly and then made every answer wrong forever with no error.
+
+The contract's per-simulator fidelity statements were drafted before the
+simulators existed and had drifted: they promised ARP and link-layer framing
+never implemented, structural hazards not modelled, and an SSD remap counter
+that does not exist, while omitting the first-match rule signature_first_match
+depends on. Reconciled to the module docstrings verbatim. No simulator behaviour
+changed; new sha256:65767d1a411e.

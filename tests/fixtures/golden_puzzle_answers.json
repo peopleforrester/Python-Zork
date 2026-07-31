@@ -1,0 +1,265 @@
+{
+  "hdd_seek_fcfs": {
+    "answer_kind": "number",
+    "canonical_answer": 60,
+    "difficulty": 1,
+    "simulator": "seek",
+    "subject_area": "storage"
+  },
+  "hdd_seek_sstf": {
+    "answer_kind": "number",
+    "canonical_answer": 50,
+    "difficulty": 2,
+    "simulator": "seek",
+    "subject_area": "storage"
+  },
+  "hdd_seek_sstf_zigzag": {
+    "answer_kind": "number",
+    "canonical_answer": 145,
+    "difficulty": 3,
+    "simulator": "seek",
+    "subject_area": "storage"
+  },
+  "hdd_seek_zigzag": {
+    "answer_kind": "number",
+    "canonical_answer": 336,
+    "difficulty": 2,
+    "simulator": "seek",
+    "subject_area": "storage"
+  },
+  "l1_associativity_2way": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "M",
+      "M",
+      "M",
+      "M",
+      "H",
+      "M",
+      "H",
+      "H"
+    ],
+    "difficulty": 2,
+    "simulator": "cache",
+    "subject_area": "memory"
+  },
+  "l1_lru_basic": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "M",
+      "M",
+      "M",
+      "M",
+      "H",
+      "M",
+      "H"
+    ],
+    "difficulty": 1,
+    "simulator": "cache",
+    "subject_area": "memory"
+  },
+  "l2_fifo_eviction": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "M",
+      "M",
+      "H",
+      "M",
+      "M"
+    ],
+    "difficulty": 2,
+    "simulator": "cache",
+    "subject_area": "memory"
+  },
+  "l3_loop_pathology": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "M",
+      "M",
+      "M",
+      "M",
+      "M",
+      "M",
+      "M",
+      "M",
+      "M",
+      "M"
+    ],
+    "difficulty": 3,
+    "simulator": "cache",
+    "subject_area": "memory"
+  },
+  "packet_route_dma_gpu": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "nic",
+      "pch",
+      "pcie_controller",
+      "pcie_x16",
+      "gpu"
+    ],
+    "difficulty": 2,
+    "simulator": "packet",
+    "subject_area": "networking"
+  },
+  "packet_route_dma_to_ram": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "ssd",
+      "storage_controller",
+      "pch",
+      "memory_controller",
+      "ram_dimm1"
+    ],
+    "difficulty": 3,
+    "simulator": "packet",
+    "subject_area": "networking"
+  },
+  "packet_route_kernel": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "nic",
+      "pch",
+      "cpu_package",
+      "kernel"
+    ],
+    "difficulty": 1,
+    "simulator": "packet",
+    "subject_area": "networking"
+  },
+  "packet_route_reply": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "kernel",
+      "cpu_package",
+      "pch",
+      "nic"
+    ],
+    "difficulty": 2,
+    "simulator": "packet",
+    "subject_area": "networking"
+  },
+  "packet_route_ssd": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "nic",
+      "pch",
+      "storage_controller",
+      "ssd"
+    ],
+    "difficulty": 2,
+    "simulator": "packet",
+    "subject_area": "networking"
+  },
+  "page_table_in_ram": {
+    "answer_kind": "number",
+    "canonical_answer": 6844,
+    "difficulty": 2,
+    "simulator": "tlb_translate",
+    "subject_area": "memory"
+  },
+  "pipeline_alu_chain": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 2,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_double_load_use": {
+    "answer_kind": "number",
+    "canonical_answer": 10,
+    "difficulty": 3,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_forwarding_intro": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 2,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_load_use": {
+    "answer_kind": "number",
+    "canonical_answer": 7,
+    "difficulty": 1,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_no_hazards": {
+    "answer_kind": "number",
+    "canonical_answer": 7,
+    "difficulty": 1,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_regfile_timing": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 3,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "pipeline_stall_no_forwarding": {
+    "answer_kind": "number",
+    "canonical_answer": 11,
+    "difficulty": 2,
+    "simulator": "pipeline",
+    "subject_area": "cpu"
+  },
+  "seek_order_matters": {
+    "answer_kind": "number",
+    "canonical_answer": 145,
+    "difficulty": 3,
+    "simulator": "seek",
+    "subject_area": "storage"
+  },
+  "signature_first_match": {
+    "answer_kind": "choice",
+    "canonical_answer": "boot_sector_virus",
+    "difficulty": 3,
+    "simulator": "signature",
+    "subject_area": "security"
+  },
+  "signature_near_miss": {
+    "answer_kind": "choice",
+    "canonical_answer": "clean",
+    "difficulty": 2,
+    "simulator": "signature",
+    "subject_area": "security"
+  },
+  "signature_rootkit_hunt": {
+    "answer_kind": "choice",
+    "canonical_answer": "rootkit_virus",
+    "difficulty": 2,
+    "simulator": "signature",
+    "subject_area": "security"
+  },
+  "tlb_hitmiss_lru": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "M",
+      "M",
+      "H",
+      "M",
+      "M"
+    ],
+    "difficulty": 2,
+    "simulator": "tlb",
+    "subject_area": "memory"
+  },
+  "tlb_walk_translate": {
+    "answer_kind": "number",
+    "canonical_answer": 37428,
+    "difficulty": 3,
+    "simulator": "tlb_translate",
+    "subject_area": "memory"
+  },
+  "virus_signature_match": {
+    "answer_kind": "choice",
+    "canonical_answer": "boot_sector_virus",
+    "difficulty": 1,
+    "simulator": "signature",
+    "subject_area": "security"
+  }
+}
