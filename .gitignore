@@ -122,3 +122,6 @@ blob-report/
 
 # Vitest coverage output (default v8 reporter dir)
 /coverage/
+
+# Deploy stamp written by scripts/deploy.py just before upload
+/deploy-stamp.txt
