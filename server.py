@@ -78,10 +78,6 @@ def _clamp_input(raw, limit):
 MAX_INPUT_EVENT = 4096
 MAX_LINE = 1024
 
-# Written beside server.py by scripts/deploy.py just before upload, so the
-# running service can report exactly which commit it is serving.
-STAMP_FILE = "deploy-stamp.txt"
-
 CORS_ORIGINS = _parse_origins(os.environ.get("CQ_CORS_ORIGINS"))
 DEBUG = _env_bool(os.environ.get("CQ_DEBUG"))
 HOST = _resolve_host(os.environ.get("CQ_HOST"), "PORT" in os.environ)
@@ -114,28 +110,24 @@ _input_buffers: dict[str, str] = {}
 _INTERCEPTED_VERBS = frozenset({"quit", "exit", "q"})
 
 
-def _deploy_commit(env=None, stamp_path=None):
+def _deploy_commit(env=None):
     """The commit this process is serving, or 'unknown'.
 
-    Checked in order: an explicit DEPLOY_SHA, the platform-injected
-    RAILWAY_GIT_COMMIT_SHA, then a stamp file written next to server.py at
-    upload time. Without this a deploy cannot be confirmed from outside: the
-    platform reporting "Online" only means the service is up on its last
-    successful build, which may predate the commit you just pushed.
+    Read from DEPLOY_SHA, which scripts/deploy.py sets on the service before
+    uploading, falling back to the platform-injected RAILWAY_GIT_COMMIT_SHA.
+    Without this a deploy cannot be confirmed from outside: the platform
+    reporting "Online" only means the service is up on its last successful
+    build, which may predate the commit you just pushed.
+
+    A file-based stamp was tried first and does not work here, because the
+    uploader honours .gitignore and an ignored stamp never reaches the image.
     """
     env = os.environ if env is None else env
     for key in ("DEPLOY_SHA", "RAILWAY_GIT_COMMIT_SHA"):
         value = (env.get(key) or "").strip()
         if value:
             return value
-
-    path = stamp_path or os.path.join(os.path.dirname(os.path.abspath(__file__)), STAMP_FILE)
-    try:
-        with open(path) as handle:
-            stamped = handle.read().strip()
-    except OSError:
-        return "unknown"
-    return stamped or "unknown"
+    return "unknown"
 
 
 @app.route("/api/health", methods=["GET"])

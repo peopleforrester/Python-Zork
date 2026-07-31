@@ -27,7 +27,6 @@ import urllib.request
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-STAMP_PATH = REPO_ROOT / "deploy-stamp.txt"
 HEALTH_URL = "https://python-zork-production.up.railway.app/api/health"
 
 TERMINAL_OK = {"SUCCESS"}
@@ -163,37 +162,41 @@ def main() -> int:
         print("MISMATCH: production is NOT serving HEAD.")
         return 1
 
-    STAMP_PATH.write_text(expected + "\n")
-    try:
-        print("uploading...")
-        code, out = _run(["railway", "up", "--ci"], timeout=900)
-        # A non-zero exit is worth reporting but is not decisive either way:
-        # the upload often succeeds while log streaming fails.
-        if code != 0:
-            print(f"  railway up exited {code}; continuing to check the build")
-            print("  " + out.strip().splitlines()[-1] if out.strip() else "")
+    # Stamp the service before uploading. --skip-deploys so setting it does not
+    # kick off a build of the *old* code that we would then have to wait out.
+    print(f"stamping DEPLOY_SHA={expected[:12]}")
+    code, out = _run(["railway", "variable", "set", f"DEPLOY_SHA={expected}",
+                      "--skip-deploys"], timeout=180)
+    if code != 0:
+        print(f"FAILED: could not set DEPLOY_SHA: {out.strip()[:200]}")
+        return 1
 
-        newest = newest_deployment()
-        if newest is None:
-            print("FAILED: could not read the deployment list.")
-            return 1
-        deploy_id, state = newest
-        print(f"watching deployment {deploy_id[:8]} (currently {state})")
+    print("uploading...")
+    code, out = _run(["railway", "up", "--ci"], timeout=900)
+    # A non-zero exit is worth reporting but is not decisive either way: the
+    # upload often succeeds while log streaming fails.
+    if code != 0:
+        print(f"  railway up exited {code}; continuing to check the build")
 
-        outcome = wait_for_build(deploy_id, args.build_timeout)
-        if outcome == "bad":
-            print("FAILED: the build did not succeed.")
-            return 1
-        if outcome == "pending":
-            print("FAILED: the build did not finish in time.")
-            return 1
+    newest = newest_deployment()
+    if newest is None:
+        print("FAILED: could not read the deployment list.")
+        return 1
+    deploy_id, state = newest
+    print(f"watching deployment {deploy_id[:8]} (currently {state})")
 
-        print("build succeeded; confirming the live commit")
-        if not wait_for_commit(expected, args.verify_timeout):
-            print("FAILED: build succeeded but production is not serving HEAD.")
-            return 1
-    finally:
-        STAMP_PATH.unlink(missing_ok=True)
+    outcome = wait_for_build(deploy_id, args.build_timeout)
+    if outcome == "bad":
+        print("FAILED: the build did not succeed.")
+        return 1
+    if outcome == "pending":
+        print("FAILED: the build did not finish in time.")
+        return 1
+
+    print("build succeeded; confirming the live commit")
+    if not wait_for_commit(expected, args.verify_timeout):
+        print("FAILED: build succeeded but production is not serving HEAD.")
+        return 1
 
     print("DEPLOYED and VERIFIED.")
     return 0

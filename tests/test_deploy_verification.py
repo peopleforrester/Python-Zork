@@ -87,24 +87,12 @@ class TestServerReportsItsCommit(unittest.TestCase):
             "aaa",
         )
 
-    def test_stamp_file_is_the_fallback(self, ):
-        import tempfile
-
-        with tempfile.TemporaryDirectory() as tmp:
-            stamp = Path(tmp) / "deploy-stamp.txt"
-            stamp.write_text("stamped999\n")
-            self.assertEqual(server._deploy_commit(env={}, stamp_path=str(stamp)), "stamped999")
-
-    def test_missing_stamp_reports_unknown(self):
-        self.assertEqual(
-            server._deploy_commit(env={}, stamp_path="/nonexistent/deploy-stamp.txt"), "unknown"
-        )
+    def test_no_variables_reports_unknown(self):
+        """'unknown' is the honest answer, and never matches a real commit."""
+        self.assertEqual(server._deploy_commit(env={}), "unknown")
 
     def test_blank_env_falls_through_rather_than_reporting_blank(self):
-        self.assertEqual(
-            server._deploy_commit(env={"DEPLOY_SHA": "   "}, stamp_path="/nonexistent"),
-            "unknown",
-        )
+        self.assertEqual(server._deploy_commit(env={"DEPLOY_SHA": "   "}), "unknown")
 
     def test_health_endpoint_reports_status_and_commit(self):
         with server.app.test_client() as client:
