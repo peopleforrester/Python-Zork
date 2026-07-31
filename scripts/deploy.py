@@ -178,6 +178,10 @@ def main() -> int:
     if code != 0:
         print(f"  railway up exited {code}; continuing to check the build")
 
+    # If the new deployment has not registered yet this can pick up the
+    # previous one. That is tolerable: the build watch is a progress display,
+    # and the commit check below is what actually decides success, so watching
+    # the wrong build only means reaching that check sooner.
     newest = newest_deployment()
     if newest is None:
         print("FAILED: could not read the deployment list.")

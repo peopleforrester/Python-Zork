@@ -184,13 +184,39 @@ it was `railway deployment list`, which showed the real per-deploy state, plus
 a functional probe of the live site. Keep using a behavioural probe rather than
 status or a zero exit code to decide whether a deploy actually landed.
 
+**Deploy verification (2026-07-31).** `/api/health` now reports the commit the
+process is serving, and `scripts/deploy.py` refuses to call a deploy done until
+the live endpoint returns the commit that was uploaded. Run it instead of bare
+`railway up`; `--verify-only` answers "is production serving HEAD?" and exits
+non-zero when it is not.
+
+The commit comes from `DEPLOY_SHA`, set on the service with `--skip-deploys`
+before uploading, falling back to `RAILWAY_GIT_COMMIT_SHA`. A file-based stamp
+was tried first and cannot work: the uploader honours `.gitignore`, so an
+ignored stamp never reaches the image. Dogfooding caught that, with the verifier
+correctly refusing to pass a deploy reporting `commit: unknown`.
+
+A commit stamp was chosen over a behavioural probe because it verifies any
+change rather than one feature, so it never needs rewriting per deploy. The
+build watch is only a progress display; the commit match is what decides.
+
+**Prose check on the contract doc: no fix warranted (2026-07-31).** The AI-isms
+script labels `architecture-microquiz.md` CRITICAL, but the doc scores
+em/1k = 0.0 with no em-dashes and no emphasis-italics, and the rubric reserves
+CRITICAL for >8/1k plus three other categories. All 8 hits across 4,744 words
+were checked individually: the "let's" is the verb "Lets", the two hype verbs
+are "unlock" in its literal game sense, and the five antithesis hits are real
+technical contrasts ("data, not code"; "declarative, not derived"; "the gate is
+on the listing UI, not on the engine"). Rewriting them would blur precise
+statements and churn the sealed contract's sha for nothing. Left as is.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ 2edaac7
-- `staging` and `main` are in sync at 2edaac7 (all refs, local and origin).
-- Tests: 387/387 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
+- `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
+- Tests: 404/404 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
@@ -224,4 +250,5 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-29T00:00:00Z coverage pass: visualizer/player/simulate surfaces tested, 87% -> 91%, 373 tests (934c872, 2dc840b, e0cb224)
 - 2026-07-31T00:00:00Z 1.2 -> 1.3 contract amended: decision 7 adaptive difficulty approved by Michael (sha256:2949c0833fdf)
 - 2026-07-31T00:00:00Z 2.1 -> 2.3 adaptive difficulty implemented and verified; 387 tests
+- 2026-07-31T00:00:00Z deploy verification added (cc6d54f, 642ffc6); prose check on the contract doc reviewed and dismissed as false positives; 404 tests
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
