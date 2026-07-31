@@ -171,14 +171,25 @@ puzzles never move. It bites in the six multi-puzzle rooms.
 
 Verified: 14 new tests, mutation-checked in both directions (disabling
 adaptation and flipping it fail the suite), and the full 28-puzzle + victory
-playthrough is byte-identical at 59 turns.
+playthrough is byte-identical at 59 turns. Confirmed live in production both
+ways: a strong player is offered BIOS difficulty 3 ahead of difficulty 1, a
+struggling player the reverse.
+
+**Deploy note (2026-07-31).** Railway was degraded for roughly an hour: API
+timeouts, JSON decode errors, a spurious "Unauthorized", and build logs that
+would not stream. Two deploys hung in INITIALIZING/BUILDING while
+`railway status` reported "Online", which only means the service is up on the
+last *successful* build. Do not treat that as deploy confirmation. What settled
+it was `railway deployment list`, which showed the real per-deploy state, plus
+a functional probe of the live site. Keep using a behavioural probe rather than
+status or a zero exit code to decide whether a deploy actually landed.
 
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ e0cb224
-- `staging` and `main` are in sync at e0cb224 (all refs, local and origin).
+- Last CI: green (Python matrix + frontend + e2e) @ 2edaac7
+- `staging` and `main` are in sync at 2edaac7 (all refs, local and origin).
 - Tests: 387/387 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
