@@ -45,12 +45,15 @@ function App() {
           ? matches[0].slice(lastWord.length)
           : matches[0];
         if (remainder) {
-          term.write(remainder);
+          // Do not write locally: the server echoes printable input back, the
+          // same as ordinary typing. Writing here too rendered 'solveve'.
           socketRef.current?.emit('terminal_input', { input: remainder });
           pendingRef.current = typed + remainder;
         }
       } else {
-        term.write('\r\n' + matches.join('  ') + '\r\n> ');
+        // Several matches: list them the way a shell does. This is client-only
+        // output, so writing directly is correct here.
+        term.write('\r\n' + matches.join('  ') + '\r\n> ' + pendingRef.current);
       }
     };
     socket.on('completions', onCompletions);
