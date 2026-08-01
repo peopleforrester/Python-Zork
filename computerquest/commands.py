@@ -179,6 +179,15 @@ class QuarantineCommand(Command):
 
         return result
 
+class ObjectivesCommand(Command):
+    """Show the next few things worth doing, derived from live state."""
+
+    def execute(self) -> str:
+        from computerquest.mechanics.objectives import render_objectives
+
+        return render_objectives(self.game)
+
+
 class HelpCommand(Command):
     """Command to show help message"""
     def execute(self) -> str:
@@ -529,6 +538,8 @@ class CommandProcessor:
             'deletesave': DeleteSaveCommand,
             'solve': SolveCommand,
             'answer': AnswerCommand,
+            'objectives': ObjectivesCommand,
+            'next': ObjectivesCommand,
             'hint': HintCommand,
             'difficulty': DifficultyCommand,
             'mode': DifficultyCommand,

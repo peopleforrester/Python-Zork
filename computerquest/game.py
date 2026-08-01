@@ -30,7 +30,7 @@ _READ_ONLY_VERBS = frozenset({
     "look", "l", "examine", "ex", "map", "m", "motherboard", "mb",
     "status", "progress", "knowledge", "achievements", "stats",
     "inventory", "i", "about", "visualize", "viz",
-    "solve", "hint", "skip",
+    "solve", "hint", "skip", "objectives", "next", "difficulty", "mode",
 })
 
 

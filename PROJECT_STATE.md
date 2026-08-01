@@ -295,13 +295,31 @@ achievements, stats, knowledge). A test pins that narrative output never pages.
 No contract amendment: this is presentation, and the content functions still
 return whole strings, so the byte-exact golden fixtures stay valid.
 
+**PRD 3 shipped: objectives (2026-08-01).** `objectives` (alias `next`) answers
+"what should I do now", showing at most four items derived entirely from live
+state: pending quarantines, a puzzle in this room, unexplored regions, and the
+thinnest knowledge area. Read-only, consumes no turn, and does not disturb an
+active puzzle.
+
+It deliberately does not spoil the search. Unlocated viruses are pointed at by
+*region* ("the PCIe complex"), never by room, because finding one is the
+investigation that `scan` exists for. Once a virus is found, naming its room
+becomes help rather than a spoiler, and a test pins both halves.
+
+Two defects were caught by looking at the rendered output rather than trusting
+green tests: the panel used a fixed-width box that could not align around
+variable-length text, and it reported "5 of 5 viruses still loose" while
+simultaneously telling the player to quarantine one they had just found. The
+panel now uses rules with wrapping, and the count reports viruses still
+*unlocated*. Both are pinned.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 469/469 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 484/484 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

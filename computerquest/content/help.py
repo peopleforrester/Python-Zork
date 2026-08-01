@@ -46,6 +46,7 @@ def help_text() -> str:
 │    {Colors.GREEN}difficulty [mode]{Colors.RESET} - Hint cost: learning, standard, or strict          │
 │                                                                          │
 │  {Colors.BOLD}Information:{Colors.RESET}                                                            │
+│    {Colors.GREEN}objectives{Colors.RESET}       - What to do next, based on where you are            │
 │    {Colors.GREEN}status{Colors.RESET}           - Check your virus discovery progress                │
 │    {Colors.GREEN}knowledge{Colors.RESET}        - View your computer architecture knowledge          │
 │    {Colors.GREEN}about [topic]{Colors.RESET}    - Get information about a computer component         │
