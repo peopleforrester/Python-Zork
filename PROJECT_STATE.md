@@ -330,8 +330,18 @@ that could drift from it. An unrecognised topic falls back through prefix, then
 substring, then difflib, so `help scn` finds `scan`.
 
 Tab never reaches the game: the client intercepts it and asks for completions,
-so the input caps and the line buffer are untouched. E2E confirms the keystroke
-path still works.
+so the input caps and the line buffer are untouched.
+
+Two rendering defects were found by driving real Tab keystrokes in the deployed
+browser, neither visible to any test. Completing a single match first inserted
+the whole match on top of the prefix already typed, then, once that was fixed to
+insert only the remainder, rendered it twice because the client wrote locally
+*and* the server echoed the input back. Ordinary typing has always relied on the
+server echo alone. Both fixed; `sol` + Tab now yields exactly `solve`.
+
+The first of those was masked in play: the dispatcher's difflib fallback
+resolved `solveve` to `solve`, so the game behaved correctly while the line read
+wrong. Only looking at the screen caught it.
 
 ## Branch & Tests
 
