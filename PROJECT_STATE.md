@@ -343,13 +343,34 @@ The first of those was masked in play: the dispatcher's difflib fallback
 resolved `solveve` to `solve`, so the game behaved correctly while the line read
 wrong. Only looking at the screen caught it.
 
+**Full live playthrough (2026-08-02).** One browser run exercising everything
+shipped this session: **29/29 puzzles solved and all 5 viruses quarantined**,
+MISSION SUCCESSFUL at 59 turns, 27/35 rooms, knowledge 25/25. Snapshot confirmed
+solved 29/29, victory true, and the map header read `29/29 puzzles` with 22
+solved nodes and no minimap. Matched the local dry run exactly.
+
+Also exercised in the same run: `objectives` at the start and again near the end
+(where it correctly narrowed to "1 of 5 viruses are still unlocated"),
+`difficulty` reporting and setting a mode, `help quarantine` returning a single
+entry, and a save/load round trip mid-run that preserved knowledge at 25/25.
+
+Found one defect. Pagination matched on verb *strings*, so `map` paged while its
+documented shortcut `m` did not: a one-character verb never resolves through the
+prefix matcher, and `m` was not in the literal set. Same for `h` and `mb`.
+Paging is now decided by the command *class* from the registry, which covers
+every alias by construction.
+
+The probe nearly hid it. Testing `m` straight after `map` appeared to pass,
+because sending `m` was advancing the pager left pending by `map` rather than
+paginating on its own.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 500/500 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 503/503 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

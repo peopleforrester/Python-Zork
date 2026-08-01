@@ -50,6 +50,35 @@ class TestPaginate(unittest.TestCase):
         self.assertEqual(server.paginate("", rows=24), [""])
 
 
+class TestPagedCommandsCoverAliases(unittest.TestCase):
+    """Matching on verb strings meant `map` paged while its documented shortcut
+    `m` did not, because a one-character verb never resolves through the prefix
+    matcher. A live playthrough surfaced it; deriving from the command registry
+    covers every alias by construction."""
+
+    def setUp(self):
+        from tests._helpers import build_real_game
+
+        self.game = build_real_game()
+
+    def test_aliases_page_exactly_like_their_full_verb(self):
+        for alias, full in (("m", "map"), ("h", "help"), ("mb", "motherboard")):
+            with self.subTest(alias=alias):
+                self.assertEqual(
+                    server._is_paged(self.game, alias),
+                    server._is_paged(self.game, full),
+                )
+                self.assertTrue(server._is_paged(self.game, alias))
+
+    def test_narrative_verbs_are_not_paged(self):
+        for verb in ("look", "l", "n", "solve", "answer", "take", "scan"):
+            with self.subTest(verb=verb):
+                self.assertFalse(server._is_paged(self.game, verb))
+
+    def test_an_unknown_verb_is_not_paged(self):
+        self.assertFalse(server._is_paged(self.game, "wibble"))
+
+
 class TestTerminalSizeTracking(unittest.TestCase):
     def setUp(self):
         server._sessions.clear()

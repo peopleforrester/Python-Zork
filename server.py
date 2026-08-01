@@ -108,9 +108,21 @@ _input_buffers: dict[str, str] = {}
 # nature, and safe to read a page at a time. Narrative output (look, move,
 # puzzle text) is deliberately excluded: paging it breaks the flow of play,
 # which the end-to-end tests caught immediately when this paged everything.
-_PAGED_VERBS = frozenset({
-    "help", "?", "map", "motherboard", "achievements", "stats", "knowledge",
+#
+# Identified by command *class*, not by verb string. Matching on strings meant
+# "map" paged while its documented shortcut "m" did not, because a one-character
+# verb never resolves through the prefix matcher. Deriving from the registry
+# covers every alias by construction.
+_PAGED_COMMANDS = frozenset({
+    "HelpCommand", "QuickHelpCommand", "MapCommand", "MotherboardCommand",
+    "AchievementsCommand", "KnowledgeCommand",
 })
+
+
+def _is_paged(game, verb: str) -> bool:
+    """True when this verb's command produces long reference output."""
+    command = game.command_processor.commands.get(verb)
+    return command is not None and command.__name__ in _PAGED_COMMANDS
 
 # Reported terminal height per session, used to page long output. Absent until
 # the client reports it, in which case output is emitted whole as before.
@@ -230,12 +242,12 @@ def paginate(text: str, rows: int | None) -> list[str]:
     ]
 
 
-def _emit_paged(sid: str, text: str, verb: str = "") -> None:
+def _emit_paged(sid: str, text: str, paged: bool = False) -> None:
     """Emit `text`, holding the remainder when it does not fit the viewport.
 
     Only reference output pages; everything else is emitted whole.
     """
-    rows = _terminal_rows.get(sid) if verb in _PAGED_VERBS else None
+    rows = _terminal_rows.get(sid) if paged else None
     pages = paginate(text, rows)
     emit("terminal_output", {"output": f"\n\r{pages[0]}\n\r"})
     rest = pages[1:]
@@ -306,7 +318,7 @@ def _handle_line(sid: str, game: Game, line: str) -> None:
         )
         return
     if response:
-        _emit_paged(sid, response, verb)
+        _emit_paged(sid, response, _is_paged(game, verb))
 
     logger.info("line handled for %s: %r -> turn=%d", sid, line, game.turns)
     emit("game_state", game.snapshot())
