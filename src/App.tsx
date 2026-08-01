@@ -16,6 +16,7 @@ function App() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const fitAddon = useRef<FitAddon>(new FitAddon());
+  const pendingRef = useRef<string>('');
 
   // Refs mirror socket/isGameRunning so the terminal's onData handler (bound
   // once at terminal creation) always reads current values instead of a
@@ -35,8 +36,19 @@ function App() {
       const matches = payload?.matches ?? [];
       if (!term || matches.length === 0) return;
       if (matches.length === 1) {
-        term.write(matches[0]);
-        socketRef.current?.emit('terminal_input', { input: matches[0] });
+        // The player has already typed a prefix, and the server's buffer
+        // holds it, so send only the remainder. Sending the whole match
+        // produced 'solsolve'.
+        const typed = pendingRef.current;
+        const lastWord = typed.endsWith(' ') ? '' : (typed.split(' ').pop() ?? '');
+        const remainder = matches[0].startsWith(lastWord)
+          ? matches[0].slice(lastWord.length)
+          : matches[0];
+        if (remainder) {
+          term.write(remainder);
+          socketRef.current?.emit('terminal_input', { input: remainder });
+          pendingRef.current = typed + remainder;
+        }
       } else {
         term.write('\r\n' + matches.join('  ') + '\r\n> ');
       }
@@ -125,8 +137,13 @@ function App() {
     // Handle user input
     // Mirror of the line being typed, so Tab can ask the server for
     // completions. The server owns the authoritative buffer; this is only
-    // what we need to form the request.
+    // what we need to form the request and to know how much of a match the
+    // player has already typed.
     let pending = '';
+    const setPending = (next: string) => {
+      pending = next;
+      pendingRef.current = next;
+    };
 
     term.onData((data) => {
       if (data === '\t') {
@@ -135,11 +152,11 @@ function App() {
         return;
       }
       if (data === '\r' || data === '\n') {
-        pending = '';
+        setPending('');
       } else if (data === '\x7f' || data === '\b') {
-        pending = pending.slice(0, -1);
+        setPending(pending.slice(0, -1));
       } else if (data >= ' ') {
-        pending += data;
+        setPending(pending + data);
       }
       const activeSocket = socketRef.current;
       if (activeSocket && isGameRunningRef.current) {
