@@ -39,6 +39,8 @@ The six open questions in the original draft are resolved as follows. Rationale 
 
     The original exclusion said only that this mirrored the minigame decision, whose stated rationale was that active sessions are "not long-running state worth persisting." That holds for minigames, which restart in one command and feed nothing else, and they remain out of scope. It does not hold for puzzles: `prompted_rooms` is what stops a room re-offering a puzzle the player already set aside, and losing the hint counter while keeping its consequence left a reloaded game granting two more free hints on an already-attempted puzzle.
 
+
+9. **Difficulty modes decide what a hint costs, never what it reveals.** (Amendment 2026-08-01.) Decision 3 fixed one bargain for everyone. It is now the default, `standard`, and is unchanged. `learning` makes hints free and never marks a puzzle attempted, so a new player can ask a question without quietly forfeiting the knowledge they are about to earn. `strict` withholds hints entirely for a harder replay, while leaving the post-answer explanation intact: strict means no help before committing, not learning nothing afterwards. The mode is a player preference set with `difficulty <mode>` and persisted in the save (schema 1.3; older saves restore `standard`). Decision 5 is untouched in every mode, because the modes change only whether a hint records an attempt, and knowledge remains a pure function of solved puzzles.
 The Lifecycle, Snapshot, Save/Load, Tests, and Migration plan sections that follow are written against these decisions.
 
 ---

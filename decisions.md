@@ -183,3 +183,23 @@ Prose note: the antithesis count in the contract rose by one during Phase 0's
 fidelity reconciliation, from quoting tlb.py's docstring verbatim ("an unmapped
 VPN is an authoring error, not a simulated fault"). Rewording it would restore
 the doc/code drift that reconciliation removed, so it stays.
+
+## 2026-08-01T00:00:00Z · 1.3 · amendment · decision 9, difficulty modes
+
+PRD 2. Decision 3 fixed one hint bargain for every player: first free, second
+marks the puzzle attempted. That is now `standard` and is unchanged.
+
+`learning` waives the attempt mark so a new player can lean on hints without
+quietly forfeiting the knowledge they are about to earn. `strict` withholds
+hints for a harder replay but deliberately leaves the post-answer explanation
+running, since the explanation is where the teaching lives and removing it would
+make strict mode punitive rather than harder.
+
+Knowledge was the thing to protect. Decision 5 makes it a pure function of
+solved puzzles with PuzzleSession as the single writer, so the modes were built
+to touch only whether a hint records an attempt. A test asserts the meter does
+not move for any of the three modes.
+
+Schema 1.2 to 1.3 for the preference. PRD 2 had asked to share a bump with
+Feature A, which was no longer possible because A shipped first; both bumps are
+additive and older saves restore `standard`. New sha256:3a650b2e76b6.

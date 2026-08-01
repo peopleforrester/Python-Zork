@@ -1,5 +1,5 @@
 # ABOUTME: Micro-puzzle infrastructure — types, parsers, YAML registry.
-# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:73cd234c9b75).
+# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:3a650b2e76b6).
 
 from computerquest.mechanics.puzzles.parsers import AnswerParseError, parse_answer
 from computerquest.mechanics.puzzles.registry import (
@@ -7,11 +7,12 @@ from computerquest.mechanics.puzzles.registry import (
     PuzzleRegistry,
     load_registry,
 )
-from computerquest.mechanics.puzzles.session import PuzzleSession
+from computerquest.mechanics.puzzles.session import HintMode, PuzzleSession
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 
 __all__ = [
     "AnswerParseError",
+    "HintMode",
     "MicroPuzzle",
     "PuzzleDataError",
     "PuzzleRegistry",

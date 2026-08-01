@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decision 8 puzzle persistence 2026-08-01 sha256:73cd234c9b75)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decisions 8 and 9 2026-08-01 sha256:3a650b2e76b6)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -265,13 +265,28 @@ behaviour instead: the bounds test checks that content validates at all, and the
 e2e checks the badge ticks 0 to 1 without pinning a total the golden fixture
 already owns.
 
+**PRD 2 shipped: difficulty modes (2026-08-01, decision 9).** `difficulty
+<mode>` (alias `mode`) selects what a hint costs. `standard` is decision 3
+unchanged and remains the default. `learning` makes hints free and never marks a
+puzzle attempted. `strict` withholds hints while leaving the post-answer
+explanation intact, so a strict player still learns from a wrong answer.
+
+Save schema 1.2 to 1.3 for the preference; 1.0 through 1.2 saves restore
+`standard`, and an unrecognised mode in a file falls back rather than refusing
+the save. Decision 5 holds in every mode: the modes change only whether a hint
+records an attempt, never the knowledge formula, and a test asserts that for all
+three.
+
+The schema bump PRD 2 hoped to share with Feature A was no longer available,
+since A had already shipped at 1.2. Both bumps are additive and tolerant.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 438/438 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 455/455 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

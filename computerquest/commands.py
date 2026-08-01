@@ -337,6 +337,32 @@ class HintCommand(Command):
         return str(self.game.puzzle_hint())
 
 
+class DifficultyCommand(Command):
+    """Show or set what a hint costs (decision 9)."""
+
+    def execute(self) -> str:
+        from computerquest.mechanics.puzzles import HintMode
+
+        session = self.game.puzzles
+        if not self.args:
+            return (
+                f"Hint mode: {session.hint_mode.value}\n"
+                "  learning - hints are free and never count against you\n"
+                "  standard - first hint free, later ones mark the puzzle attempted\n"
+                "  strict   - no hints; the explanation still follows your answer\n"
+                "Set one with 'difficulty <mode>'."
+            )
+
+        wanted = self.args[0].lower()
+        for mode in HintMode:
+            if mode.value.startswith(wanted):
+                session.hint_mode = mode
+                return f"Hint mode set to {mode.value}."
+        return (
+            f"Unknown mode {self.args[0]!r}. Choose learning, standard, or strict."
+        )
+
+
 class SkipCommand(Command):
     """Put the active micro-puzzle aside without recording an attempt."""
     def execute(self) -> str:
@@ -504,6 +530,8 @@ class CommandProcessor:
             'solve': SolveCommand,
             'answer': AnswerCommand,
             'hint': HintCommand,
+            'difficulty': DifficultyCommand,
+            'mode': DifficultyCommand,
             'skip': SkipCommand,
             'visualize': VisualizeCommand,
             'viz': VisualizeCommand,

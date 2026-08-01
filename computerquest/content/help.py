@@ -43,6 +43,7 @@ def help_text() -> str:
 │    {Colors.GREEN}answer [tokens]{Colors.RESET}  - Commit your prediction for the active puzzle       │
 │    {Colors.GREEN}hint{Colors.RESET}             - Next hint (the first one is free)                  │
 │    {Colors.GREEN}skip{Colors.RESET}             - Put the active puzzle aside                        │
+│    {Colors.GREEN}difficulty [mode]{Colors.RESET} - Hint cost: learning, standard, or strict          │
 │                                                                          │
 │  {Colors.BOLD}Information:{Colors.RESET}                                                            │
 │    {Colors.GREEN}status{Colors.RESET}           - Check your virus discovery progress                │

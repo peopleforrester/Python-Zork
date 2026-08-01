@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from enum import Enum
 from typing import Any
 
 from computerquest.mechanics.puzzles.parsers import AnswerParseError
@@ -13,6 +14,29 @@ from computerquest.mechanics.puzzles.types import MicroPuzzle
 # enough to be a signal without waiting until an area is nearly exhausted; the
 # smallest area ships four puzzles.
 _STRONG_SOLVES = 2
+
+
+class HintMode(str, Enum):
+    """What a hint costs the player.
+
+    Decision 3 fixed one bargain for everyone: the first hint is free and the
+    second marks the puzzle attempted, so a solve after it does not raise
+    knowledge. That is the STANDARD mode and its behaviour is unchanged.
+
+    The two additions change only the cost, never what a hint reveals, and
+    none of them touches decision 5: knowledge stays a pure function of solved
+    puzzles in every mode.
+    """
+
+    #: Hints are free and never mark a puzzle attempted. For a first playthrough,
+    #: where quietly forfeiting knowledge for asking a question teaches nothing.
+    LEARNING = "learning"
+    #: Decision 3 as written. The default.
+    STANDARD = "standard"
+    #: Hints are withheld entirely, for a harder replay. The explanation shown
+    #: after an answer is unaffected: strict means no help before committing,
+    #: not learning nothing afterwards.
+    STRICT = "strict"
 
 
 class PuzzleSession:
@@ -35,6 +59,8 @@ class PuzzleSession:
         # Session-only: each room auto-presents its primary puzzle once
         # per session (decision 4).
         self.prompted_rooms: set[str] = set()
+        # What a hint costs (decision 9). Player-set, persisted with the save.
+        self.hint_mode: HintMode = HintMode.STANDARD
 
     # --- room helpers -------------------------------------------------------
 
@@ -237,14 +263,25 @@ class PuzzleSession:
         if self.current is None:
             return "No active puzzle. Enter 'solve' in a room that has one."
         puzzle = self.current
+
+        if self.hint_mode is HintMode.STRICT:
+            # Withheld before committing, but the post-answer explanation still
+            # runs, so a strict player still learns from a wrong answer.
+            return (
+                "Hints are off in strict mode. Commit an answer with "
+                "'answer <...>'; the explanation follows either way."
+            )
+
         if self.hints_used >= len(puzzle.hints):
             return "No more hints for this puzzle."
         text = puzzle.hints[self.hints_used]
         self.hints_used += 1
+
         suffix = ""
-        if self.hints_used >= 2:
+        if self.hints_used >= 2 and self.hint_mode is HintMode.STANDARD:
             # Decision 3: the second and later hints give the answer's shape
-            # away, so the puzzle counts as attempted from here on.
+            # away, so the puzzle counts as attempted from here on. Learning
+            # mode deliberately waives this.
             self.player.attempted_puzzles.add(puzzle.id)
             suffix = "\n(That one cost you: this puzzle now counts as attempted.)"
         return f"Hint: {text}{suffix}"

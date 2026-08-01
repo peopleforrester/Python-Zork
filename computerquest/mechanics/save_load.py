@@ -10,14 +10,16 @@ from pathlib import Path
 from typing import Any
 
 from computerquest.config import SAVE_DIR
+from computerquest.mechanics.puzzles.session import HintMode
 
 # Bump when the on-disk schema changes in a way old saves can't be read.
 # 1.1 adds player.solved_puzzles / attempted_puzzles; 1.0 saves still load
 # (the new fields default to empty).
 # 1.2 adds puzzle_session (active puzzle id, hints used, prompted rooms);
 # 1.0 and 1.1 saves still load, restoring an empty session.
-SAVE_SCHEMA_VERSION = "1.2"
-_COMPATIBLE_VERSIONS = frozenset({"1.0", "1.1", SAVE_SCHEMA_VERSION})
+# 1.3 adds puzzle_session.hint_mode; older saves restore the standard bargain.
+SAVE_SCHEMA_VERSION = "1.3"
+_COMPATIBLE_VERSIONS = frozenset({"1.0", "1.1", "1.2", SAVE_SCHEMA_VERSION})
 
 
 def _default_save_root() -> Path:
@@ -87,6 +89,9 @@ class SaveLoadSystem:
                 "current": puzzles.current.id if puzzles.current else None,
                 "hints_used": puzzles.hints_used,
                 "prompted_rooms": sorted(puzzles.prompted_rooms),
+                # Schema 1.3 (decision 9). A player preference, so an older
+                # save simply restores the standard bargain.
+                "hint_mode": puzzles.hint_mode.value,
             },
         }
         return state
@@ -208,6 +213,13 @@ class SaveLoadSystem:
             session.hints_used = max(0, min(int(blob.get("hints_used", 0)), len(puzzle.hints)))
 
         session.prompted_rooms = set(blob.get("prompted_rooms", []))
+
+        # Unknown or absent mode falls back to the default rather than failing:
+        # a hint preference is never worth refusing a save over.
+        try:
+            session.hint_mode = HintMode(blob.get("hint_mode", HintMode.STANDARD.value))
+        except ValueError:
+            session.hint_mode = HintMode.STANDARD
 
     def list_saves(self) -> str:
         """Format a human-readable listing of all save files."""

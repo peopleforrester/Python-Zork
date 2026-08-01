@@ -34,12 +34,27 @@ class _SaveDir(unittest.TestCase):
 
 
 class TestSchemaVersion(_SaveDir):
-    def test_version_is_now_1_2(self):
-        self.assertEqual(SAVE_SCHEMA_VERSION, "1.2")
+    def test_version_is_current(self):
+        """A literal, so a bump is a conscious edit rather than a side effect."""
+        self.assertEqual(SAVE_SCHEMA_VERSION, "1.3")
 
     def test_saves_declare_the_new_version(self):
         self.game.save_load.save_game("t")
-        self.assertEqual(self._saved_json()["version"], "1.2")
+        self.assertEqual(self._saved_json()["version"], "1.3")
+
+    def test_a_1_2_save_still_loads(self):
+        """1.2 predates hint_mode; it must restore the standard bargain."""
+        self.game.save_load.save_game("t")
+        path = Path(self._tmp.name) / "t.json"
+        data = json.loads(path.read_text())
+        data["version"] = "1.2"
+        data["puzzle_session"].pop("hint_mode", None)
+        path.write_text(json.dumps(data))
+
+        fresh = build_real_game()
+        fresh.save_load.save_root = Path(self._tmp.name)
+        self.assertNotIn("incompatible", fresh.save_load.load_game("t").lower())
+        self.assertEqual(fresh.puzzles.hint_mode.value, "standard")
 
     def test_a_1_1_save_still_loads(self):
         """Additive change, so the previous version must keep working."""
@@ -101,7 +116,9 @@ class TestActivePuzzleRoundtrips(_SaveDir):
         serialized = json.dumps(blob)
         self.assertNotIn(puzzle.prompt[:30], serialized)
         self.assertNotIn(puzzle.explanation[:30], serialized)
-        self.assertEqual(set(blob), {"current", "hints_used", "prompted_rooms"})
+        self.assertEqual(
+            set(blob), {"current", "hints_used", "prompted_rooms", "hint_mode"}
+        )
 
 
 class TestPromptedRoomsRoundtrips(_SaveDir):

@@ -141,7 +141,7 @@ class TestSchemaMigration(SaveLoadTestBase):
         self.save_load.save_game("versioned")
         data = json.loads((self.save_root / "versioned.json").read_text())
         self.assertEqual(data["version"], SAVE_SCHEMA_VERSION)
-        self.assertEqual(data["version"], "1.2")
+        self.assertEqual(data["version"], "1.3")
 
     def test_schema_1_0_save_still_loads_with_empty_puzzle_sets(self) -> None:
         """A pre-microquiz save has no puzzle fields; loading must succeed
