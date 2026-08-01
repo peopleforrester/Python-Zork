@@ -89,7 +89,9 @@ test.describe('microquiz play-through', () => {
     await page.getByRole('button', { name: 'Show Map' }).click();
 
     const mapTitle = page.locator('.map-title');
-    await expect(mapTitle).toContainText('0/28 puzzles');
+    // Match the solved count, not the total: the total is content-dependent
+    // and is pinned by the golden-answer fixture, not here.
+    await expect(mapTitle).toContainText(/0\/\d+ puzzles/);
 
     await walk(page, [
       ['n', 'Core 1'],
@@ -101,7 +103,7 @@ test.describe('microquiz play-through', () => {
 
     // The header total ticks up. Core 1 L1 Cache has two puzzles, so solving
     // one flips that node to the partial (started) class, not solved.
-    await expect(mapTitle).toContainText('1/28 puzzles');
+    await expect(mapTitle).toContainText(/1\/\d+ puzzles/);
     await expect(page.locator('.node.puzzles-partial')).toHaveCount(1);
     await expect(page.locator('.node.puzzles-solved')).toHaveCount(0);
   });

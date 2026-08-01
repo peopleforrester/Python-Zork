@@ -1,0 +1,48 @@
+# Canonical answer per the signature simulator: boot_sector_virus (the
+# quarantine log quotes the signature it is reporting on).
+id: signature_false_positive
+component_category: security
+subject_area: security
+difficulty: 2
+title: "Signature scan: the scanner's own logbook"
+simulator: signature
+prompt: |
+  Same signature database as the BIOS scanner:
+
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus:     "hide_proc("
+
+  The scanner is now asked to scan its own quarantine log, a plain text
+  file the antivirus itself wrote earlier:
+
+    "2026-03-04 quarantined boot_sector_virus, matched XJMP:0x7C00, contained OK"
+
+  What does the scanner report? Answer with a virus name, or "clean".
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "2026-03-04 quarantined boot_sector_virus, matched XJMP:0x7C00, contained OK"
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "The scanner does not know what kind of file it is reading. It only looks for its patterns."
+  - "Read the log line as bytes rather than as prose. Is the signature present in it?"
+explanation: |
+  The scanner reports boot_sector_virus, and the file is completely
+  harmless. The log line quotes the signature it is reporting on, so
+  the bytes XJMP:0x7C00 really are present, and exact-substring
+  matching has no way to tell a quoted pattern from an executable one.
+
+  This is a false positive, and it is the cost paid for the sensitivity
+  that catches real infections. A match is evidence, not a verdict:
+  it says these bytes appear here, and says nothing about whether the
+  file does anything. Antivirus quarantine logs, signature databases,
+  and security advisories are all documents that legitimately contain
+  virus signatures, which is why real scanners carry exclusion lists
+  for their own files.
+
+  Together with the one-byte mutation puzzle, this frames both failure
+  directions: a scanner can miss a real virus, and it can accuse an
+  innocent file. Neither is a bug in the matching; both follow from
+  what pattern matching can and cannot know.

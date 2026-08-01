@@ -249,13 +249,29 @@ the hints, a shortened hint list clamps the counter, unknown rooms are inert.
 Only the id is stored, never the puzzle body, so a stale save cannot resurrect
 deleted content.
 
+**Feature B shipped: the false-positive security puzzle (2026-08-01).** One
+YAML file, no code, bound to the kernel beside the one-byte-mutation puzzle it
+references. The scanner is asked to scan its own quarantine log, which quotes
+the signature it is reporting on, so it reports boot_sector_virus on a
+completely harmless file.
+
+This closes the pair the security content was missing. `signature_near_miss`
+shows a scanner missing a real virus; this shows one accusing an innocent file.
+Neither is a matching bug; both follow from what pattern matching can know. The
+intuitive answer ("clean") is graded wrong, which is the point.
+
+Puzzle count 28 to 29. Two tests were coupled to the literal 28 and now assert
+behaviour instead: the bounds test checks that content validates at all, and the
+e2e checks the badge ticks 0 to 1 without pinning a total the golden fixture
+already owns.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 438/438 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 438/438 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

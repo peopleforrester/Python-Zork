@@ -137,7 +137,10 @@ class TestShippedContentUnaffected(unittest.TestCase):
         shipped setup through its simulator."""
         from computerquest.mechanics.puzzles import load_registry
 
-        self.assertEqual(len(load_registry().by_id), 28)
+        # load_registry runs every shipped setup through its simulator, so a
+        # bound that caught real content would raise here. The exact count is
+        # pinned by the golden-answer fixture, not duplicated in this test.
+        self.assertGreater(len(load_registry().by_id), 0)
 
 
 if __name__ == "__main__":

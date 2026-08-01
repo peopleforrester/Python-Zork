@@ -214,6 +214,13 @@
     "simulator": "seek",
     "subject_area": "storage"
   },
+  "signature_false_positive": {
+    "answer_kind": "choice",
+    "canonical_answer": "boot_sector_virus",
+    "difficulty": 2,
+    "simulator": "signature",
+    "subject_area": "security"
+  },
   "signature_first_match": {
     "answer_kind": "choice",
     "canonical_answer": "boot_sector_virus",
