@@ -135,11 +135,13 @@ class TestSchemaMigration(SaveLoadTestBase):
             {"l1_lru_basic", "pipeline_forwarding_intro"},
         )
 
-    def test_saves_write_schema_1_1(self) -> None:
+    def test_saves_write_the_current_schema(self) -> None:
+        """The literal is deliberate: a bump must be a conscious edit here, not
+        something that rides along with SAVE_SCHEMA_VERSION."""
         self.save_load.save_game("versioned")
         data = json.loads((self.save_root / "versioned.json").read_text())
         self.assertEqual(data["version"], SAVE_SCHEMA_VERSION)
-        self.assertEqual(data["version"], "1.1")
+        self.assertEqual(data["version"], "1.2")
 
     def test_schema_1_0_save_still_loads_with_empty_puzzle_sets(self) -> None:
         """A pre-microquiz save has no puzzle fields; loading must succeed

@@ -155,3 +155,31 @@ never implemented, structural hazards not modelled, and an SSD remap counter
 that does not exist, while omitting the first-match rule signature_first_match
 depends on. Reconciled to the module docstrings verbatim. No simulator behaviour
 changed; new sha256:65767d1a411e.
+
+## 2026-08-01T00:00:00Z · 1.3 · amendment · decision 8, in-flight puzzle persistence
+
+Approved as part of PRD 1, scoped by Michael to puzzle state only. Minigame
+state stays out of scope, so `design-minigames.md` is untouched and its
+"do not re-litigate" note stands.
+
+A save now records the active puzzle's id, hints spent, and the rooms that have
+already auto-prompted. The body is never serialized; only the id, so a stale
+save cannot resurrect deleted or rewritten content. Restore tolerates drift the
+way the loader already tolerates unknown component ids: an unresolvable id
+clears the puzzle and zeroes the hint count, a shortened hint list clamps the
+counter, unknown prompted rooms are inert.
+
+The original exclusion justified itself only by mirroring the minigame decision,
+whose rationale was that active sessions are not long-running state worth
+persisting. That reasoning survives for minigames and does not for puzzles:
+`prompted_rooms` is what stops a room re-offering a puzzle the player set aside,
+and losing the hint counter while keeping its durable consequence meant a
+reloaded game handed out two more free hints on an already-attempted puzzle.
+
+Schema 1.1 to 1.2; 1.0 and 1.1 saves still load with an empty session. Knowledge
+untouched. New contract sha256:73cd234c9b75.
+
+Prose note: the antithesis count in the contract rose by one during Phase 0's
+fidelity reconciliation, from quoting tlb.py's docstring verbatim ("an unmapped
+VPN is an authoring error, not a simulated fault"). Rewording it would restore
+the doc/code drift that reconciliation removed, so it stays.

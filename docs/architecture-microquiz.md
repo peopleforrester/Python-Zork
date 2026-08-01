@@ -35,6 +35,10 @@ The six open questions in the original draft are resolved as follows. Rationale 
 
 7. **Adaptive difficulty reorders a room's offer, and nothing else.** (Amendment 2026-07-31; this was previously out of scope.) Each subject area gets a standing derived from the two signals already tracked: puzzles solved, and puzzles attempted but still unsolved. A player is `struggling` when unsolved attempts at least match solves, `strong` after two clean solves with no unsolved attempts, and `neutral` otherwise. When a room offers more than one puzzle, a struggling player meets the easiest first and a strong player the hardest; neutral keeps the authored order. Sorting is stable, so equal-difficulty puzzles never move. The adaptation is silent, and it changes only presentation order: decision 2's gate still decides what is visible at all, and decision 5's knowledge formula is untouched. Because it cannot open a gate or grant knowledge, a misjudged standing only changes which puzzle is offered first.
 
+8. **In-flight puzzle state persists across save/load.** (Amendment 2026-08-01; this was previously out of scope.) A save records the active puzzle's **id**, the hints spent on it, and the rooms that have already auto-prompted. The puzzle body is never serialized: it is content that must come from disk, so a stale save cannot resurrect a deleted or rewritten puzzle. Restore is tolerant of content drift, matching the loader's existing treatment of unknown component ids: an id that no longer resolves clears the active puzzle and zeroes the hint count, a shortened hint list clamps the counter, and unknown prompted rooms are inert. Schema goes 1.1 to 1.2; 1.0 and 1.1 saves still load and restore an empty session. Knowledge is untouched: restoring an in-flight puzzle records no solve, and PuzzleSession remains knowledge's single writer.
+
+    The original exclusion said only that this mirrored the minigame decision, whose stated rationale was that active sessions are "not long-running state worth persisting." That holds for minigames, which restart in one command and feed nothing else, and they remain out of scope. It does not hold for puzzles: `prompted_rooms` is what stops a room re-offering a puzzle the player already set aside, and losing the hint counter while keeping its consequence left a reloaded game granting two more free hints on an already-attempted puzzle.
+
 The Lifecycle, Snapshot, Save/Load, Tests, and Migration plan sections that follow are written against these decisions.
 
 ---
@@ -432,9 +436,9 @@ Snapshot adds two fields:
 },
 ```
 
-Current `current_puzzle` is **not** persisted, mirroring the existing
-minigame decision. A loaded game starts with no active puzzle. Walking back
-into the room presents it again.
+Superseded by decision 8 (2026-08-01): `current_puzzle`, `hints_used`, and
+`prompted_rooms` are persisted under a `puzzle_session` key. Minigame state is
+still not persisted.
 
 Schema version bumps from `1.0` to `1.1`. The loader treats a `1.0` save as
 valid but initializes the new fields to empty sets; old saves still load.
@@ -599,8 +603,9 @@ branch.
   offer is reordered by the player's standing in the subject area. The gate and
   the knowledge formula are unchanged, so this stays presentation-only.
 - **Multiplayer / leaderboards.** Single-player tool.
-- **Persistence of in-flight puzzles.** A loaded game starts fresh; the room
-  re-offers the puzzle.
+- ~~**Persistence of in-flight puzzles.**~~ Implemented 2026-08-01 as decision
+  8. Active puzzle, hint count, and prompted rooms now survive a save. Minigame
+  state remains out of scope (see `design-minigames.md`).
 - **Networking and security simulators at production fidelity.** First-pass
   simulators are educationally honest but not full-fidelity (e.g. the network
   simulator routes through PCH, NIC, and an abstracted wire; it does not

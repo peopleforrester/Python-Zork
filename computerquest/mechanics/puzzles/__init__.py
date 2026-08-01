@@ -1,5 +1,5 @@
 # ABOUTME: Micro-puzzle infrastructure — types, parsers, YAML registry.
-# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:65767d1a411e).
+# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:73cd234c9b75).
 
 from computerquest.mechanics.puzzles.parsers import AnswerParseError, parse_answer
 from computerquest.mechanics.puzzles.registry import (

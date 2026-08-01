@@ -1,5 +1,5 @@
 # ABOUTME: MicroPuzzle dataclass — the data shape every puzzle YAML deserializes to.
-# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:65767d1a411e).
+# ABOUTME: Contract: docs/architecture-microquiz.md (sha256:73cd234c9b75).
 
 from __future__ import annotations
 

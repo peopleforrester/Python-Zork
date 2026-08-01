@@ -14,8 +14,10 @@ from computerquest.config import SAVE_DIR
 # Bump when the on-disk schema changes in a way old saves can't be read.
 # 1.1 adds player.solved_puzzles / attempted_puzzles; 1.0 saves still load
 # (the new fields default to empty).
-SAVE_SCHEMA_VERSION = "1.1"
-_COMPATIBLE_VERSIONS = frozenset({"1.0", SAVE_SCHEMA_VERSION})
+# 1.2 adds puzzle_session (active puzzle id, hints used, prompted rooms);
+# 1.0 and 1.1 saves still load, restoring an empty session.
+SAVE_SCHEMA_VERSION = "1.2"
+_COMPATIBLE_VERSIONS = frozenset({"1.0", "1.1", SAVE_SCHEMA_VERSION})
 
 
 def _default_save_root() -> Path:
@@ -47,6 +49,7 @@ class SaveLoadSystem:
 
     def _serialize(self, save_name: str) -> dict[str, Any]:
         player = self.game.player
+        puzzles = self.game.puzzles
         state: dict[str, Any] = {
             "version": SAVE_SCHEMA_VERSION,
             "timestamp": time.time(),
@@ -76,6 +79,14 @@ class SaveLoadSystem:
                 "game_over": self.game.game_over,
                 "victory": self.game.victory,
                 "all_viruses_found": self.game.all_viruses_found,
+            },
+            # Schema 1.2. Only the active puzzle's *id* is stored: the body is
+            # content that must come from disk, or a stale save could resurrect
+            # a puzzle that has since been deleted or rewritten.
+            "puzzle_session": {
+                "current": puzzles.current.id if puzzles.current else None,
+                "hints_used": puzzles.hints_used,
+                "prompted_rooms": sorted(puzzles.prompted_rooms),
             },
         }
         return state
@@ -150,6 +161,11 @@ class SaveLoadSystem:
         # from the solved set rather than trusting what the file stored.
         self.game._recompute_knowledge()
 
+        # Schema 1.2. Restored after the location above, because the session
+        # reads player.location. Absent in 1.0 and 1.1 saves, which restore an
+        # empty session exactly as before.
+        self._apply_puzzle_session(state.get("puzzle_session", {}))
+
         for room_id, room_state in state["components"].items():
             room = rooms_by_id.get(room_id)
             if room is None:
@@ -166,6 +182,32 @@ class SaveLoadSystem:
 
         if hasattr(game, "progress"):
             game.progress.update()
+
+    def _apply_puzzle_session(self, blob: dict[str, Any]) -> None:
+        """Restore in-flight puzzle state, tolerating content drift.
+
+        Puzzles are YAML on disk and change far more often than code, so a save
+        can name a puzzle that no longer exists. That is not a reason to refuse
+        the whole save: this follows the loader's existing precedent of skipping
+        unknown component ids rather than raising. Unknown prompted rooms are
+        inert for the same reason, being just keys that no longer match.
+        """
+        session = self.game.puzzles
+        registry = self.game.puzzle_registry
+
+        puzzle_id = blob.get("current")
+        puzzle = registry.by_id.get(puzzle_id) if puzzle_id else None
+        session.current = puzzle
+
+        if puzzle is None:
+            # A hint counter without its puzzle would index another puzzle's
+            # hint tuple, so it goes back to zero with the puzzle.
+            session.hints_used = 0
+        else:
+            # The hint list may have been shortened since the save.
+            session.hints_used = max(0, min(int(blob.get("hints_used", 0)), len(puzzle.hints)))
+
+        session.prompted_rooms = set(blob.get("prompted_rooms", []))
 
     def list_saves(self) -> str:
         """Format a human-readable listing of all save files."""

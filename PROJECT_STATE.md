@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation 2026-08-01 sha256:65767d1a411e)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decision 8 puzzle persistence 2026-08-01 sha256:73cd234c9b75)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -232,13 +232,30 @@ Also reconciled the contract's per-simulator fidelity statements, which were
 drafted before the simulators existed and had drifted in four places. No
 simulator behaviour changed.
 
+**Feature A shipped: in-flight puzzle state persists (2026-08-01, decision 8).**
+Save schema 1.1 to 1.2. A save records the active puzzle's id, hints spent, and
+prompted rooms; 1.0 and 1.1 saves still load with an empty session.
+
+`prompted_rooms` is the field that actually fixes "the room re-offers its
+puzzle": restoring the active puzzle alone does not, because auto-prompt only
+bails while a puzzle is active and resumes the moment one is answered or
+skipped. Persisting `hints_used` also closed an existing inconsistency, where a
+reload kept the durable "attempted" mark but lost the counter, granting two more
+free hints on the same puzzle.
+
+Restore is deliberately tolerant, following the loader's existing treatment of
+unknown component ids: an unresolvable puzzle id clears the puzzle and zeroes
+the hints, a shortened hint list clamps the counter, unknown rooms are inert.
+Only the id is stored, never the puzzle body, so a stale save cannot resurrect
+deleted content.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 425/425 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 438/438 via `uv run pytest` (coverage 91%); ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 
