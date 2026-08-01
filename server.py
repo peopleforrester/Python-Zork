@@ -104,6 +104,22 @@ _sessions: dict[str, Game] = {}
 # whole line into Game.feed.
 _input_buffers: dict[str, str] = {}
 
+# Commands whose output is reference material the player asked for, long by
+# nature, and safe to read a page at a time. Narrative output (look, move,
+# puzzle text) is deliberately excluded: paging it breaks the flow of play,
+# which the end-to-end tests caught immediately when this paged everything.
+_PAGED_VERBS = frozenset({
+    "help", "?", "map", "motherboard", "achievements", "stats", "knowledge",
+})
+
+# Reported terminal height per session, used to page long output. Absent until
+# the client reports it, in which case output is emitted whole as before.
+_terminal_rows: dict[str, int] = {}
+
+# Unsent pages per session. While this holds anything, the next line of input
+# advances the pager instead of running a command.
+_pending_pages: dict[str, list[str]] = {}
+
 # Verbs the server intercepts before they reach Game.feed(), because the
 # CLI implementations block on input(). The web UI handles its own session
 # lifecycle (disconnect/refresh) so we never need the synchronous prompt.
@@ -173,6 +189,8 @@ def handle_disconnect():
     if sid:
         _sessions.pop(sid, None)
         _input_buffers.pop(sid, None)
+        _terminal_rows.pop(sid, None)
+        _pending_pages.pop(sid, None)
     logger.info("Client disconnected: %s", sid)
 
 
@@ -191,6 +209,67 @@ def start_game():
     emit("terminal_output", {"output": game.welcome_text()})
     emit("terminal_output", {"output": "\n\r> "})
     emit("game_state", game.snapshot())
+
+
+def paginate(text: str, rows: int | None) -> list[str]:
+    """Split `text` into pages that fit a terminal `rows` tall.
+
+    Returns a single page when the height is unknown or too small to page
+    usefully. Falling back to today's behaviour is always safe; stranding a
+    player mid-page with no way forward is not.
+    """
+    if not rows or rows < 6:
+        return [text]
+    # Leave room for the prompt and the --more-- line.
+    per_page = max(1, rows - 2)
+    lines = text.split("\n")
+    if len(lines) <= per_page:
+        return [text]
+    return [
+        "\n".join(lines[i:i + per_page]) for i in range(0, len(lines), per_page)
+    ]
+
+
+def _emit_paged(sid: str, text: str, verb: str = "") -> None:
+    """Emit `text`, holding the remainder when it does not fit the viewport.
+
+    Only reference output pages; everything else is emitted whole.
+    """
+    rows = _terminal_rows.get(sid) if verb in _PAGED_VERBS else None
+    pages = paginate(text, rows)
+    emit("terminal_output", {"output": f"\n\r{pages[0]}\n\r"})
+    rest = pages[1:]
+    if rest:
+        _pending_pages[sid] = rest
+        emit("terminal_output", {"output": "--more-- (press Enter)"})
+
+
+def _advance_pager(sid: str) -> bool:
+    """Show the next held page. True when the pager consumed this input."""
+    pages = _pending_pages.get(sid)
+    if not pages:
+        return False
+    emit("terminal_output", {"output": f"\n\r{pages[0]}\n\r"})
+    remaining = pages[1:]
+    if remaining:
+        _pending_pages[sid] = remaining
+        emit("terminal_output", {"output": "--more-- (press Enter)"})
+    else:
+        _pending_pages.pop(sid, None)
+        emit("terminal_output", {"output": "\n\r> "})
+    return True
+
+
+@socketio.on("terminal_size")
+def handle_terminal_size(data):
+    """Record the client's terminal height so long output can be paged."""
+    sid = _session_id()
+    if sid is None or not isinstance(data, dict):
+        return
+    rows = data.get("rows")
+    if isinstance(rows, bool) or not isinstance(rows, int) or rows <= 0:
+        return
+    _terminal_rows[sid] = rows
 
 
 def _resolve_verb(game: Game, line: str) -> str:
@@ -227,14 +306,15 @@ def _handle_line(sid: str, game: Game, line: str) -> None:
         )
         return
     if response:
-        emit("terminal_output", {"output": f"\n\r{response}\n\r"})
+        _emit_paged(sid, response, verb)
 
     logger.info("line handled for %s: %r -> turn=%d", sid, line, game.turns)
     emit("game_state", game.snapshot())
 
     if game.game_over:
         emit("game_ended", {"victory": game.victory})
-    else:
+    elif not _pending_pages.get(sid):
+        # While pages are held the pager owns the prompt.
         emit("terminal_output", {"output": "\n\r> "})
 
 
@@ -273,6 +353,8 @@ def handle_input(data):
             flush_echo()
             line, buf = buf, ""
             _input_buffers[sid] = buf
+            if _advance_pager(sid):
+                continue
             _handle_line(sid, game, line)
             game = _get_game(sid)
             if game is None:

@@ -280,13 +280,28 @@ three.
 The schema bump PRD 2 hoped to share with Feature A was no longer available,
 since A had already shipped at 1.2. Both bumps are additive and tolerant.
 
+**PRD 5 shipped: help auto-pagination (2026-08-01).** The client reports its
+xterm height on start and on resize; the server pages long output to it and
+holds the rest behind `--more--`, which Enter advances without running a
+command. No reported height means everything is emitted whole, as before.
+
+Scope was corrected during implementation. The first version paged *every*
+command's output, which split room descriptions across pages and failed all
+three end-to-end tests. That was a real design error, not a test problem: paging
+narrative output ruins the flow of play. Pagination now applies only to
+reference output the player explicitly asked for (help, map, motherboard,
+achievements, stats, knowledge). A test pins that narrative output never pages.
+
+No contract amendment: this is presentation, and the content functions still
+return whole strings, so the byte-exact golden fixtures stay valid.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 455/455 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 469/469 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

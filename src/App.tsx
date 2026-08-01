@@ -109,10 +109,15 @@ function App() {
       }
     });
 
-    // Handle window resize. The old 'resize' socket event is gone — the
-    // server no longer runs a PTY, so there is nothing to resize remotely.
+    // Handle window resize. The old 'resize' socket event is gone (the server
+    // no longer runs a PTY), but the server does need the height so it can page
+    // long output rather than dumping past the top of the viewport.
     const handleResize = () => {
       fitAddon.current?.fit();
+      const rows = terminalInstance.current?.rows;
+      if (rows && socketRef.current) {
+        socketRef.current.emit('terminal_size', { rows });
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -149,6 +154,11 @@ function App() {
     if (socket && isConnected) {
       if (terminalInstance.current) {
         terminalInstance.current.clear();
+      }
+      // Report the viewport height up front so the first long output pages.
+      const rows = terminalInstance.current?.rows;
+      if (rows) {
+        socket.emit('terminal_size', { rows });
       }
       socket.emit('start_game');
     }
