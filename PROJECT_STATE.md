@@ -313,13 +313,33 @@ simultaneously telling the player to quarantine one they had just found. The
 panel now uses rules with wrapping, and the count reports viruses still
 *unlocated*. Both are pinned.
 
+**PRD 4 shipped: web tab completion and per-command help (2026-08-01).** Tab in
+the browser now completes commands, directions, room items, inventory items,
+puzzle ids, about-topics and virus names. Candidates are generated server-side
+by `Game.completions()`, so the browser holds no copy of the command table or a
+room's contents and cannot drift from either. The CLI readline completer and the
+socket both call the same method.
+
+Argument pools stay per-verb, preserving the special case the readline completer
+already had: `take` offers only room items, `drop` only inventory, `solve` only
+puzzles bound to this room.
+
+`help <command>` returns one entry instead of all 70+ lines, reading its
+descriptions out of the full help screen rather than introducing a second table
+that could drift from it. An unrecognised topic falls back through prefix, then
+substring, then difflib, so `help scn` finds `scan`.
+
+Tab never reaches the game: the client intercepts it and asks for completions,
+so the input caps and the line buffer are untouched. E2E confirms the keystroke
+path still works.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 484/484 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 500/500 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

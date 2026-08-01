@@ -25,6 +25,27 @@ function App() {
   useEffect(() => {
     socketRef.current = socket;
   }, [socket]);
+
+  // Completion results arrive out of band; a single match completes the word,
+  // several are listed the way a shell does.
+  useEffect(() => {
+    if (!socket) return;
+    const onCompletions = (payload: { matches?: string[] }) => {
+      const term = terminalInstance.current;
+      const matches = payload?.matches ?? [];
+      if (!term || matches.length === 0) return;
+      if (matches.length === 1) {
+        term.write(matches[0]);
+        socketRef.current?.emit('terminal_input', { input: matches[0] });
+      } else {
+        term.write('\r\n' + matches.join('  ') + '\r\n> ');
+      }
+    };
+    socket.on('completions', onCompletions);
+    return () => {
+      socket.off('completions', onCompletions);
+    };
+  }, [socket]);
   useEffect(() => {
     isGameRunningRef.current = isGameRunning;
   }, [isGameRunning]);
@@ -102,7 +123,24 @@ function App() {
     fitAddon.current.fit();
 
     // Handle user input
+    // Mirror of the line being typed, so Tab can ask the server for
+    // completions. The server owns the authoritative buffer; this is only
+    // what we need to form the request.
+    let pending = '';
+
     term.onData((data) => {
+      if (data === '\t') {
+        // Tab never reaches the game: it asks for completions instead.
+        socketRef.current?.emit('complete', { line: pending });
+        return;
+      }
+      if (data === '\r' || data === '\n') {
+        pending = '';
+      } else if (data === '\x7f' || data === '\b') {
+        pending = pending.slice(0, -1);
+      } else if (data >= ' ') {
+        pending += data;
+      }
       const activeSocket = socketRef.current;
       if (activeSocket && isGameRunningRef.current) {
         activeSocket.emit('terminal_input', { input: data });

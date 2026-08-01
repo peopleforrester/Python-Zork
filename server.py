@@ -379,6 +379,23 @@ def handle_input(data):
     _input_buffers[sid] = buf
 
 
+@socketio.on("complete")
+def handle_complete(data):
+    """Answer a completion request for a partial input line.
+
+    Candidates are generated server-side so the browser never holds a copy of
+    the command table or the room's contents.
+    """
+    sid = _session_id()
+    game = _get_game(sid) if sid else None
+    if game is None or not isinstance(data, dict):
+        return
+    line = data.get("line")
+    if not isinstance(line, str):
+        return
+    emit("completions", {"matches": game.completions(_clamp_input(line, MAX_LINE))})
+
+
 @socketio.on("query_state")
 def handle_query_state():
     """Re-send the current snapshot. Used when the React map first mounts."""

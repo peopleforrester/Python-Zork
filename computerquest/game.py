@@ -679,6 +679,51 @@ Thank you for playing KodeKloud Computer Quest!
             knowledge_level=sum(self.player.knowledge.values()),
         )
 
+    def completions(self, line: str) -> list[str]:
+        """Candidate completions for a partial input line.
+
+        One source of truth for both surfaces: the CLI readline completer and
+        the web terminal both ask here, so the browser cannot drift from the
+        real command table or the room's actual contents.
+        """
+        parts = line.split()
+        trailing_space = line.endswith(" ")
+        processor = self.command_processor
+
+        # Completing the verb itself.
+        if not parts or (len(parts) == 1 and not trailing_space):
+            prefix = parts[0].lower() if parts else ""
+            pool = list(processor.commands) + list(processor.direction_words)
+            return sorted({c for c in pool if c.startswith(prefix)})
+
+        verb = processor._resolve(parts[0].lower()) if hasattr(processor, "_resolve") else parts[0].lower()
+        verb = self._match_command_prefix(verb)
+        prefix = "" if trailing_space else parts[-1].lower()
+
+        # Argument pools are per-verb, mirroring the readline completer's
+        # special case: you can only take what is in the room, drop what you
+        # carry, and solve what is bound here.
+        if verb in {"take", "get", "t"}:
+            pool = list(self.player.location.items)
+        elif verb in {"drop"}:
+            pool = list(self.player.items)
+        elif verb in {"solve"}:
+            pool = list(self.player.location.puzzles)
+        elif verb in {"quarantine"}:
+            pool = list(self.player.found_viruses)
+        elif verb in {"about"}:
+            from computerquest.content import COMPONENT_TOPICS
+
+            pool = list(COMPONENT_TOPICS)
+        elif verb in {"help", "h"}:
+            pool = list(processor.commands)
+        elif verb in {"go", "move"}:
+            pool = list(processor.direction_words)
+        else:
+            pool = list(self.player.location.items) + list(self.player.items)
+
+        return sorted({c for c in pool if c.startswith(prefix)})
+
     def _match_prefix(self, prefix: str, candidates: Iterable[str]) -> str:
         """Resolve a prefix against candidates, returning the unique full match.
 

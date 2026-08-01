@@ -189,9 +189,14 @@ class ObjectivesCommand(Command):
 
 
 class HelpCommand(Command):
-    """Command to show help message"""
+    """Full help, or one command's entry when given an argument."""
+
     def execute(self) -> str:
-        return self.game.show_help()
+        if not self.args:
+            return self.game.show_help()
+        from computerquest.content import command_help
+
+        return command_help(self.args[0], list(self.game.command_processor.commands))
 
 class QuitCommand(Command):
     """Command to quit the game"""

@@ -6,6 +6,44 @@ from __future__ import annotations
 from computerquest.utils.helpers import Colors
 
 
+def command_help(name: str, known: list[str] | None = None) -> str:
+    """One command's entry, pulled from the full help screen.
+
+    The full screen already carries a one-line description per command, so this
+    reads from there rather than introducing a second table that could drift
+    from it.
+    """
+    import difflib
+    import re
+
+    wanted = name.strip().lower()
+    plain = re.sub(r"\x1b\[[0-9;]*m", "", help_text())
+
+    matches = []
+    for line in plain.splitlines():
+        body = line.strip("│ ").strip()
+        if not body or " - " not in body:
+            continue
+        left = body.split(" - ", 1)[0]
+        names = [n.strip().strip("[]") for n in left.replace("[", " [").split(",")]
+        heads = {n.split()[0].lower() for n in names if n.split()}
+        if wanted in heads:
+            matches.append(body)
+
+    if matches:
+        return "\n".join(matches)
+
+    # Prefix and substring first, then a fuzzy pass, so a typo like "scn" still
+    # finds "scan" the way the command matcher already does for real input.
+    pool = list(known or [])
+    near = sorted(c for c in pool if c.startswith(wanted) or wanted in c)
+    if not near:
+        near = difflib.get_close_matches(wanted, pool, n=5, cutoff=0.5)
+    if near:
+        return f"No help for {name!r}. Did you mean: {', '.join(near[:5])}?"
+    return f"No help for {name!r}. Type 'help' for the full list."
+
+
 def help_text() -> str:
     """Render the full command reference.
 
