@@ -37,7 +37,7 @@ Reproduced independently:
 |---|---|---|
 | `cache.size_lines: 10**9` | 283-byte file | MemoryError after 5.1s; without an rlimit this is OOM |
 | SSTF `requests` | n=2000 → 0.15s, n=8000 → 2.97s | quadratic; a 269 KB file does not finish |
-| YAML alias expansion | 343-byte file | exhausts 1 GB during `safe_load`, *before* any validation |
+| ~~YAML alias expansion~~ | ~~343-byte file~~ | **RETRACTED 2026-08-02: does not reproduce.** PyYAML aliases are shared references, not copies; a 508-byte bomb with 9^11 nominal elements loads in 0.00s. This came from the research agent and was recorded without independent verification, unlike S1 and S3 which were reproduced first. |
 
 `registry._validate_playable` validates by **executing** `simulator.run(setup)`.
 That is elegant for trusted content and dangerous for untrusted content. Its

@@ -203,3 +203,20 @@ not move for any of the three modes.
 Schema 1.2 to 1.3 for the preference. PRD 2 had asked to share a bump with
 Feature A, which was no longer possible because A shipped first; both bumps are
 additive and older saves restore `standard`. New sha256:3a650b2e76b6.
+
+## 2026-08-02T00:00:00Z · correction · the YAML alias-bomb finding was wrong
+
+PRD 1 recorded three DoS vectors for author-supplied puzzle content. Two were
+reproduced independently before being written down: the cache `size_lines`
+memory blowup and the quadratic SSTF loop, both closed in Phase 0.
+
+The third, YAML alias expansion exhausting memory during `safe_load` before any
+validation runs, does not reproduce. PyYAML resolves aliases to shared
+references rather than copies, so a 508-byte bomb with 9^11 nominal elements
+loads in 0.00s and allocates almost nothing.
+
+That claim came from the research subagent and went into the PRD and
+PROJECT_STATE without the independent check the other two got. Retracted in both
+places. The practical effect is that the security picture for author-extensible
+puzzles is better than recorded: Phase 0 already closed the vectors that were
+real, and there is no known pre-validation parser vector.
