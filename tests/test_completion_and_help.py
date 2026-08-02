@@ -48,12 +48,12 @@ class TestCompletionCandidates(unittest.TestCase):
         self.assertIn("widget_held", out)
         self.assertNotIn("widget_here", out)
 
-    def test_solve_offers_puzzle_ids_for_this_room(self):
-        self.game.feed("n")  # Core 1 has a puzzle
+    def test_solve_offers_the_puzzles_the_gate_shows(self):
+        self.game.feed("n")
+        self.game.feed("n")  # Core 1 Control Unit binds a difficulty-1 puzzle
         out = self._complete("solve ")
         self.assertTrue(out)
-        for pid in out:
-            self.assertIn(pid, self.game.player.location.puzzles)
+        self.assertEqual(set(out), {p.id for p in self.game._gated_room_puzzles()})
 
     def test_unknown_prefix_returns_nothing_rather_than_everything(self):
         self.assertEqual(self._complete("zzzz"), [])

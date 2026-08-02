@@ -89,11 +89,12 @@ class TestAnswer(MicroquizCommandBase):
         self.assertNotIn("l1_lru_basic", self.game.player.attempted_puzzles)
         self.assertIsNotNone(self.game.current_puzzle)  # still active
 
-    def test_answer_dirties_save_state_but_solve_does_not(self) -> None:
+    def test_answer_and_solve_both_dirty_save_state(self) -> None:
         # Movement in setUp already dirtied the flag; reset to isolate.
         self.game.changes_since_save = False
-        self.game.feed("solve")  # re-presenting is read-only
-        self.assertFalse(self.game.changes_since_save)
+        # solve writes puzzle-session state that schema 1.2 persists.
+        self.game.feed("solve")
+        self.assertTrue(self.game.changes_since_save)
         self.game.feed("answer M M M M H M H")
         self.assertTrue(self.game.changes_since_save)
 
@@ -129,10 +130,14 @@ class TestHintAndSkip(MicroquizCommandBase):
 
 class TestAutoPromptAndLook(MicroquizCommandBase):
     def test_first_entry_auto_presents_the_primary_puzzle(self) -> None:
-        result = self.game.feed("n")  # into core1, which binds the pipeline intro
-        self.assertIn("Pipeline", result)
+        # core1's puzzle is difficulty 2 and the gate hides it from a fresh
+        # player, so the auto-prompt must stay silent there. core1_cu binds a
+        # difficulty-1 puzzle, which is what a new player should meet first.
+        self.assertNotIn("PUZZLE:", self.game.feed("n"))
+        result = self.game.feed("n")  # into core1_cu
+        self.assertIn("PUZZLE:", result)
         self.assertIn("skip", result.lower())
-        self.assertEqual(self.game.current_puzzle.id, "pipeline_forwarding_intro")
+        self.assertEqual(self.game.current_puzzle.id, "pipeline_no_hazards")
 
     def test_second_entry_does_not_re_prompt(self) -> None:
         self.game.feed("n")

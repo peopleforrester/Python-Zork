@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import textwrap
+from collections import Counter
 from typing import Any
 
-from computerquest.config import VIRUS_TYPES, is_virus_name
+from computerquest.config import MAX_KNOWLEDGE, VIRUS_TYPES, is_virus_name
 
 #: How many objectives to surface at once. The failure mode being avoided is a
 #: wall of everything; the opposite failure is an empty screen, so a finished
@@ -73,14 +74,27 @@ def build_objectives(game: Any) -> list[str]:
 
     # 3. Point at unsearched territory by region, never by room. Naming the room
     #    would hand over the search that scanning is supposed to be.
+    # Viruses are ordinary items and `take` accepts them without a scan, so the
+    # player's own pack is a hiding place the room sweep never checked.
+    carried = [
+        i for i in player.items
+        if is_virus_name(i) and i not in player.found_viruses
+    ]
+    for virus in carried[:2]:
+        out.append(f"You are carrying {virus}. Scan your inventory and contain it.")
+
     unlocated = len(VIRUS_TYPES) - len(set(player.found_viruses))
     if unlocated > 0:
         unvisited = [rid for rid, room in rooms.items() if not room.visited]
         if unvisited:
-            regions = sorted({_region_of(game, rid) for rid in unvisited})
+            # Ranked by unexplored rooms, not alphabetically: sorting by name
+            # meant three uppercase region names always won the slice, so the
+            # region with the most ground left could never be mentioned.
+            ranked = Counter(_region_of(game, rid) for rid in unvisited)
+            regions = [name for name, _ in ranked.most_common(3)]
             out.append(
                 f"{unlocated} of {len(VIRUS_TYPES)} viruses are still unlocated. "
-                f"Unexplored: {', '.join(regions[:3])}. Use 'scan' as you go."
+                f"Unexplored: {', '.join(regions)}. Use 'scan' as you go."
             )
         else:
             hidden = [
@@ -97,10 +111,19 @@ def build_objectives(game: Any) -> list[str]:
     unsolved = _unsolved_by_area(game)
     if unsolved:
         area = min(unsolved, key=lambda a: (player.knowledge.get(a, 0), a))
-        out.append(
-            f"Your weakest area is {area} ({player.knowledge.get(area, 0)}/5); "
-            f"{unsolved[area]} {area} puzzles remain."
-        )
+        level = player.knowledge.get(area, 0)
+        # Every area maxes out well before its puzzles run out, so "weakest"
+        # would otherwise be printed next to a full meter.
+        if level >= MAX_KNOWLEDGE:
+            out.append(
+                f"Every meter is full; {sum(unsolved.values())} puzzles remain "
+                "for their own sake."
+            )
+        else:
+            out.append(
+                f"Your weakest area is {area} ({level}/{MAX_KNOWLEDGE}); "
+                f"{unsolved[area]} {area} puzzles remain."
+            )
 
     return out[:MAX_SHOWN]
 
@@ -119,7 +142,14 @@ def render_objectives(game: Any) -> str:
     footer = "━" * _WIDTH
 
     if not items:
-        body = "  The system is clean and every puzzle is solved. Nothing left to do."
+        # Emptiness alone is not completion: a virus in the pack produced no
+        # objectives while the game was still unwinnable.
+        won = len(game.player.quarantined_viruses) == len(VIRUS_TYPES)
+        body = (
+            "  The system is clean and every puzzle is solved. Nothing left to do."
+            if won
+            else "  No suggestions right now. Try 'scan' here, or 'status' for progress."
+        )
         return f"{header}\n{body}\n{footer}"
 
     lines = []

@@ -61,6 +61,12 @@ class PuzzleSession:
         self.prompted_rooms: set[str] = set()
         # What a hint costs (decision 9). Player-set, persisted with the save.
         self.hint_mode: HintMode = HintMode.STANDARD
+        # Puzzles the player asked for help on or gave up on, in any mode.
+        # Kept separate from attempted_puzzles, which is the *knowledge* cost
+        # and is written only in STANDARD (decision 3). Standing has to read a
+        # mode-independent signal, or the beginner mode reads as "strong" and
+        # gets served the hardest puzzle first.
+        self.struggled: set[str] = set()
 
     # --- room helpers -------------------------------------------------------
 
@@ -95,8 +101,9 @@ class PuzzleSession:
             1 for p in self.player.solved_puzzles
             if p in by_id and by_id[p].subject_area == area
         )
+        struggled_with = self.player.attempted_puzzles | self.struggled
         unresolved = sum(
-            1 for p in self.player.attempted_puzzles
+            1 for p in struggled_with
             if p in by_id and by_id[p].subject_area == area
             and p not in self.player.solved_puzzles
         )
@@ -179,11 +186,11 @@ class PuzzleSession:
             return ""
         if room_id in self.prompted_rooms:
             return ""
-        # Which puzzle leads is the player's standing to decide (decision 7);
-        # the once-per-room and already-seen guards below are unchanged.
-        candidates = self._adaptive_order(
-            [self.registry.by_id[p] for p in room.puzzles if p in self.registry.by_id]
-        )
+        # Which puzzle leads is the player's standing to decide (decision 7).
+        # Built from the gated list so this path cannot present a puzzle that
+        # `solve` refuses to show: the two disagreed, and every single-puzzle
+        # room made decision 2's gate decorative here.
+        candidates = self.gated_room_puzzles()
         if not candidates:
             return ""
         primary = candidates[0].id
@@ -276,6 +283,8 @@ class PuzzleSession:
             return "No more hints for this puzzle."
         text = puzzle.hints[self.hints_used]
         self.hints_used += 1
+        # Recorded in every mode, so standing does not depend on hint cost.
+        self.struggled.add(puzzle.id)
 
         suffix = ""
         if self.hints_used >= 2 and self.hint_mode is HintMode.STANDARD:
@@ -289,6 +298,10 @@ class PuzzleSession:
     def skip(self) -> str:
         if self.current is None:
             return "No active puzzle to skip."
+        # Setting a puzzle aside unsolved is a struggle signal too, and unlike
+        # a hint it is available in strict mode. Without it, strict recorded
+        # nothing and a stuck player still read as "strong".
+        self.struggled.add(self.current.id)
         title = self.current.title
         self.current = None
         self.hints_used = 0

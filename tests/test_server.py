@@ -231,7 +231,15 @@ class TestFeedCrashSafety(unittest.TestCase):
 
         emitted = []
 
+        class _Processor:
+            commands: dict = {}
+
+            def preprocess_command(self, line):
+                return line
+
         class ExplodingGame:
+            command_processor = _Processor()
+
             def _match_command_prefix(self, token):
                 return token
 

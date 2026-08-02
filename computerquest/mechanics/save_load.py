@@ -92,6 +92,7 @@ class SaveLoadSystem:
                 # Schema 1.3 (decision 9). A player preference, so an older
                 # save simply restores the standard bargain.
                 "hint_mode": puzzles.hint_mode.value,
+                "struggled": sorted(puzzles.struggled),
             },
         }
         return state
@@ -213,6 +214,7 @@ class SaveLoadSystem:
             session.hints_used = max(0, min(int(blob.get("hints_used", 0)), len(puzzle.hints)))
 
         session.prompted_rooms = set(blob.get("prompted_rooms", []))
+        session.struggled = set(blob.get("struggled", []))
 
         # Unknown or absent mode falls back to the default rather than failing:
         # a hint preference is never worth refusing a save over.

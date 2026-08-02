@@ -196,7 +196,8 @@ class HelpCommand(Command):
             return self.game.show_help()
         from computerquest.content import command_help
 
-        return command_help(self.args[0], list(self.game.command_processor.commands))
+        commands = self.game.command_processor.commands
+        return command_help(self.args[0], list(commands), commands)
 
 class QuitCommand(Command):
     """Command to quit the game"""

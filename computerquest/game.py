@@ -30,7 +30,10 @@ _READ_ONLY_VERBS = frozenset({
     "look", "l", "examine", "ex", "map", "m", "motherboard", "mb",
     "status", "progress", "knowledge", "achievements", "stats",
     "inventory", "i", "about", "visualize", "viz",
-    "solve", "hint", "skip", "objectives", "next", "difficulty", "mode",
+    # solve/hint/skip/difficulty write puzzle-session state that schemas 1.2
+    # and 1.3 persist, so they are NOT read-only: leaving them here meant
+    # quitting after them skipped the save prompt and lost the work.
+    "objectives", "next",
 })
 
 
@@ -696,8 +699,7 @@ Thank you for playing KodeKloud Computer Quest!
             pool = list(processor.commands) + list(processor.direction_words)
             return sorted({c for c in pool if c.startswith(prefix)})
 
-        verb = processor._resolve(parts[0].lower()) if hasattr(processor, "_resolve") else parts[0].lower()
-        verb = self._match_command_prefix(verb)
+        verb = self._match_command_prefix(parts[0].lower())
         prefix = "" if trailing_space else parts[-1].lower()
 
         # Argument pools are per-verb, mirroring the readline completer's
@@ -708,7 +710,10 @@ Thank you for playing KodeKloud Computer Quest!
         elif verb in {"drop"}:
             pool = list(self.player.items)
         elif verb in {"solve"}:
-            pool = list(self.player.location.puzzles)
+            # The gated list, not the raw room list: `solve <id>` deliberately
+            # bypasses the difficulty gate, so offering a locked id as a
+            # completion handed over progression for one keypress.
+            pool = [p.id for p in self._gated_room_puzzles()]
         elif verb in {"quarantine"}:
             pool = list(self.player.found_viruses)
         elif verb in {"about"}:

@@ -117,7 +117,8 @@ class TestActivePuzzleRoundtrips(_SaveDir):
         self.assertNotIn(puzzle.prompt[:30], serialized)
         self.assertNotIn(puzzle.explanation[:30], serialized)
         self.assertEqual(
-            set(blob), {"current", "hints_used", "prompted_rooms", "hint_mode"}
+            set(blob),
+            {"current", "hints_used", "prompted_rooms", "hint_mode", "struggled"},
         )
 
 
@@ -136,11 +137,12 @@ class TestPromptedRoomsRoundtrips(_SaveDir):
     def test_a_skipped_room_does_not_re_prompt_after_loading(self):
         """Skip records no attempt, so before this change the room auto-prompted
         again on every load. That is the exact complaint being fixed."""
-        # Entering core1 auto-prompts its puzzle. (core1_l1 does not prompt on
-        # arrival because auto-prompt bails while a puzzle is already active.)
+        # core1's puzzle is gated for a fresh player, so walk to core1_cu,
+        # which binds a difficulty-1 puzzle and does auto-prompt.
         self.game.feed("n")
-        self.game.feed("skip")         # skip records no attempt
-        self.assertIn("core1", self.game.prompted_rooms)
+        self.game.feed("n")
+        self.game.feed("skip")
+        self.assertIn("core1_cu", self.game.prompted_rooms)
 
         fresh = self._roundtrip()
         # Walk out and back in; the room must stay quiet.

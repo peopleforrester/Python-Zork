@@ -132,6 +132,11 @@ _terminal_rows: dict[str, int] = {}
 # advances the pager instead of running a command.
 _pending_pages: dict[str, list[str]] = {}
 
+# Escape-sequence state per session, since xterm may deliver one byte per
+# event. 0 = normal, 1 = saw ESC, 2 = inside a CSI sequence.
+_ESC_NONE, _ESC_SEEN, _ESC_CSI = 0, 1, 2
+_in_escape: dict[str, int] = {}
+
 # Verbs the server intercepts before they reach Game.feed(), because the
 # CLI implementations block on input(). The web UI handles its own session
 # lifecycle (disconnect/refresh) so we never need the synchronous prompt.
@@ -203,6 +208,7 @@ def handle_disconnect():
         _input_buffers.pop(sid, None)
         _terminal_rows.pop(sid, None)
         _pending_pages.pop(sid, None)
+        _in_escape.pop(sid, None)
     logger.info("Client disconnected: %s", sid)
 
 
@@ -216,6 +222,7 @@ def start_game():
     game = Game()
     _sessions[sid] = game
     _input_buffers[sid] = ""
+    _pending_pages.pop(sid, None)
 
     emit("game_started")
     emit("terminal_output", {"output": game.welcome_text()})
@@ -251,15 +258,22 @@ def _emit_paged(sid: str, text: str, paged: bool = False) -> None:
     pages = paginate(text, rows)
     emit("terminal_output", {"output": f"\n\r{pages[0]}\n\r"})
     rest = pages[1:]
-    if rest:
+    if rest and sid in _sessions:
         _pending_pages[sid] = rest
         emit("terminal_output", {"output": "--more-- (press Enter)"})
 
 
-def _advance_pager(sid: str) -> bool:
-    """Show the next held page. True when the pager consumed this input."""
+def _advance_pager(sid: str, line: str) -> bool:
+    """Show the next held page. True when the pager consumed this input.
+
+    A non-empty line is a real command: it abandons paging and runs, rather
+    than being echoed and thrown away. Only a bare Enter turns the page.
+    """
     pages = _pending_pages.get(sid)
     if not pages:
+        return False
+    if line.strip():
+        _pending_pages.pop(sid, None)
         return False
     emit("terminal_output", {"output": f"\n\r{pages[0]}\n\r"})
     remaining = pages[1:]
@@ -279,7 +293,9 @@ def handle_terminal_size(data):
     if sid is None or not isinstance(data, dict):
         return
     rows = data.get("rows")
-    if isinstance(rows, bool) or not isinstance(rows, int) or rows <= 0:
+    # Every other input on this socket is capped; this one was not. An absurd
+    # height silently disables paging rather than crashing.
+    if isinstance(rows, bool) or not isinstance(rows, int) or not 0 < rows <= 300:
         return
     _terminal_rows[sid] = rows
 
@@ -292,7 +308,11 @@ def _resolve_verb(game: Game, line: str) -> str:
     otherwise an abbreviated ``quit`` slips through to QuitCommand, which blocks
     on input() with no client stdin.
     """
-    token = line.strip().split(" ", 1)[0].lower() if line.strip() else ""
+    # Game.feed runs preprocess_command first, which maps typos like "hlp" to
+    # "help". Resolving differently here meant a corrected verb produced
+    # reference output that was never paged.
+    processed = game.command_processor.preprocess_command(line)
+    token = processed.strip().split(" ", 1)[0].lower() if processed.strip() else ""
     if not token:
         return ""
     return game._match_command_prefix(token)
@@ -349,6 +369,9 @@ def handle_input(data):
     raw = _clamp_input(raw, MAX_INPUT_EVENT)
 
     buf = _input_buffers.get(sid, "")
+    # True while walking an escape sequence. The ESC byte alone was dropped
+    # before, so an arrow key typed its CSI tail ("[A") into the command line.
+    in_escape = _in_escape.get(sid, _ESC_NONE)
     # Coalesce echoes into one emit per event instead of one per character, so a
     # multi-character (pasted) event cannot amplify into a flood of socket sends.
     echo: list[str] = []
@@ -359,13 +382,27 @@ def handle_input(data):
             echo.clear()
 
     for char in raw:
+        if in_escape == _ESC_SEEN:
+            # "ESC [" introduces a CSI sequence; anything else is a two-byte
+            # escape that ends here. Note "[" is itself inside the @-~ final
+            # range, so it cannot be treated as a terminator.
+            in_escape = _ESC_CSI if char == "[" else _ESC_NONE
+            continue
+        if in_escape == _ESC_CSI:
+            # CSI ends on a final byte in the @-~ range.
+            if "@" <= char <= "~":
+                in_escape = _ESC_NONE
+            continue
+        if char == "\x1b":
+            in_escape = _ESC_SEEN
+            continue
         if char in ("\r", "\n"):
             # Echo a newline so the terminal advances, then flush the line.
             echo.append("\n\r")
             flush_echo()
             line, buf = buf, ""
             _input_buffers[sid] = buf
-            if _advance_pager(sid):
+            if _advance_pager(sid, line):
                 continue
             _handle_line(sid, game, line)
             game = _get_game(sid)
@@ -377,8 +414,11 @@ def handle_input(data):
                 buf = buf[:-1]
                 echo.append("\b \b")
         elif char == "\x03":
-            # Ctrl-C: abandon the current line.
+            # Ctrl-C: abandon the current line, and any held pages with it.
+            # Drawing a fresh prompt while the pager stayed armed made the UI
+            # lie about its own state.
             buf = ""
+            _pending_pages.pop(sid, None)
             echo.append("^C\n\r> ")
         elif char >= " " and char != "\x7f":
             # Printable. Append and echo, unless the line is already at the cap.
@@ -388,7 +428,11 @@ def handle_input(data):
         # Drop anything else (escape sequences, arrow keys, tab — out of scope).
 
     flush_echo()
-    _input_buffers[sid] = buf
+    # Guard the write-backs: a disconnect can land between the emit above and
+    # here, and re-inserting would orphan the entry for the process lifetime.
+    if sid in _sessions:
+        _input_buffers[sid] = buf
+        _in_escape[sid] = in_escape
 
 
 @socketio.on("complete")

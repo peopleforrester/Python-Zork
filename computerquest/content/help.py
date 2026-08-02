@@ -5,8 +5,25 @@ from __future__ import annotations
 
 from computerquest.utils.helpers import Colors
 
+#: Direction words are documented generically as "[direction]" on the help
+#: screen, so no direction can ever match a per-command lookup.
+_DIRECTIONS = frozenset({
+    "n", "s", "e", "w", "ne", "nw", "se", "sw", "u", "d",
+    "north", "south", "east", "west", "northeast", "northwest",
+    "southeast", "southwest", "up", "down", "go", "move",
+})
 
-def command_help(name: str, known: list[str] | None = None) -> str:
+_DIRECTION_ENTRY = (
+    "go [direction] / [direction] - Move between components.\n"
+    "  n s e w ne nw se sw  and  u (up) / d (down), or their full names."
+)
+
+
+def command_help(
+    name: str,
+    known: list[str] | None = None,
+    registry: dict[str, type] | None = None,
+) -> str:
     """One command's entry, pulled from the full help screen.
 
     The full screen already carries a one-line description per command, so this
@@ -18,6 +35,9 @@ def command_help(name: str, known: list[str] | None = None) -> str:
 
     wanted = name.strip().lower()
     plain = re.sub(r"\x1b\[[0-9;]*m", "", help_text())
+
+    if wanted in _DIRECTIONS:
+        return _DIRECTION_ENTRY
 
     matches = []
     for line in plain.splitlines():
@@ -32,6 +52,17 @@ def command_help(name: str, known: list[str] | None = None) -> str:
 
     if matches:
         return "\n".join(matches)
+
+    # An alias absent from the screen still shares a command class with one
+    # that is present ("get" and "take" are both TakeCommand), so resolve
+    # through the registry rather than adding every alias to the box art.
+    if registry and wanted in registry:
+        cls = registry[wanted]
+        for sibling in registry:
+            if sibling != wanted and registry[sibling] is cls:
+                entry = command_help(sibling, known, None)
+                if not entry.startswith("No help for"):
+                    return entry
 
     # Prefix and substring first, then a fuzzy pass, so a typo like "scn" still
     # finds "scan" the way the command matcher already does for real input.
