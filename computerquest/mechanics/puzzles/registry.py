@@ -14,6 +14,7 @@ from computerquest.mechanics.puzzles.types import MicroPuzzle
 from computerquest.mechanics.simulators.base import AnswerKind, Verdict, verify_sequence
 from computerquest.mechanics.simulators.cache import CacheSimulator
 from computerquest.mechanics.simulators.flash import FlashWriteSimulator
+from computerquest.mechanics.simulators.interleave import ChannelInterleaveSimulator
 from computerquest.mechanics.simulators.link import LinkCostSimulator
 from computerquest.mechanics.simulators.packet import PacketRouteSimulator
 from computerquest.mechanics.simulators.pipeline import PipelineSimulator
@@ -50,6 +51,9 @@ SIMULATORS: dict[str, Any] = {
     # The GPU room described thousands of parallel cores and taught nothing;
     # no simulator modelled parallelism at all.
     "simd": WarpDivergenceSimulator(),
+    # The memory controller room taught nothing, while three duplicate DIMM
+    # rooms silently raised the question this answers.
+    "interleave": ChannelInterleaveSimulator(),
 }
 
 

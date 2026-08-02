@@ -1,4 +1,18 @@
 {
+  "channel_block_mapping": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 1,
+    "simulator": "interleave",
+    "subject_area": "memory"
+  },
+  "channel_interleaved_mapping": {
+    "answer_kind": "number",
+    "canonical_answer": 2,
+    "difficulty": 2,
+    "simulator": "interleave",
+    "subject_area": "memory"
+  },
   "flash_rewrite_amplification": {
     "answer_kind": "number",
     "canonical_answer": 8,

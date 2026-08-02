@@ -1,0 +1,54 @@
+# Canonical answer per the interleave simulator: block_lines 8 means channel 0
+# owns lines 0-7, so all 8 requests land on it and it serves them one per
+# cycle: 8 cycles. The other three channels do nothing.
+id: channel_block_mapping
+component_category: memory
+subject_area: memory
+difficulty: 1
+title: "Memory channels: one DIMM does all the work"
+simulator: interleave
+prompt: |
+  You are in the memory controller. Four DIMMs hang off it on four
+  independent channels, and channels work at the same time as each
+  other. Each can deliver one cache line per cycle.
+
+  How physical addresses map onto those channels is the controller's
+  choice, and this controller uses a BLOCK mapping: channel 0 owns the
+  first 8 lines, channel 1 the next 8, and so on.
+
+  A program walks straight through an array, asking for 8 consecutive
+  cache lines:
+
+    lines 0, 1, 2, 3, 4, 5, 6, 7
+
+  Channels run in parallel, so the burst finishes when the busiest
+  channel does.
+
+  How many cycles does the burst take?
+setup:
+  channels: 4
+  lines_per_channel_cycle: 1
+  mapping: block
+  block_lines: 8
+  lines: [0, 1, 2, 3, 4, 5, 6, 7]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "Work out which channel owns each of the 8 lines before counting cycles."
+  - "Channel 0 owns lines 0 through 7. All of them."
+explanation: |
+  Every one of the 8 lines falls inside channel 0's block, so channel 0
+  serves all 8 at one per cycle: 8 cycles. Channels 1, 2 and 3 sit idle
+  through the whole burst.
+
+  Four DIMMs are installed. One of them did the work.
+
+  This is the case for buying memory in matched pairs and kits, and it
+  is also why "I added more RAM and nothing got faster" is such a common
+  complaint. Capacity and bandwidth are different purchases. A block
+  mapping gives you all the capacity of four modules and the bandwidth
+  of one, for any program that walks memory in order, which is most of
+  them.
+
+  The controller can do better without changing a single stick of RAM.
+  The next puzzle changes only the mapping.

@@ -1,0 +1,54 @@
+# Canonical answer per the interleave simulator: consecutive lines round-robin
+# across 4 channels, so the 8 lines split 2 per channel and the channels run at
+# once: 2 cycles. Setup is identical to channel_block_mapping except mapping.
+id: channel_interleaved_mapping
+component_category: memory
+subject_area: memory
+difficulty: 2
+title: "Memory channels: spreading the same burst"
+simulator: interleave
+prompt: |
+  The same four channels, the same eight lines, the same program:
+
+    lines 0, 1, 2, 3, 4, 5, 6, 7
+
+  Nothing about the hardware or the request stream has changed. The
+  controller now uses an INTERLEAVED mapping instead of a block one:
+  consecutive cache lines go to consecutive channels, wrapping around.
+  Line 0 to channel 0, line 1 to channel 1, line 2 to channel 2, line 3
+  to channel 3, line 4 back to channel 0, and so on.
+
+  Channels still run in parallel and still deliver one line per cycle,
+  so the burst still finishes when the busiest channel does.
+
+  How many cycles now?
+setup:
+  channels: 4
+  lines_per_channel_cycle: 1
+  mapping: interleaved
+  lines: [0, 1, 2, 3, 4, 5, 6, 7]
+answer_kind: number
+answer_grammar: "a single whole number of cycles"
+hints:
+  - "Deal the 8 lines out across the 4 channels like cards. How many does each get?"
+  - "Two lines each, and all four channels work at the same time."
+explanation: |
+  The 8 lines deal out two per channel, and all four channels serve
+  their pair at the same time, so the burst takes 2 cycles instead of 8.
+
+  Four times the bandwidth from four modules that were already installed
+  and already powered. The only thing that changed was which address
+  bits pick the channel.
+
+  Now the catch, because this is not free speed for every program. The
+  mapping helps a walk with a stride of one. Give it a stride of four
+  instead, so the program asks for lines 0, 4, 8, 12, and every one of
+  those lands on channel 0 again: back to 4 cycles, with three channels
+  idle, exactly as though the interleaving were not there.
+
+  That is not a contrived case. It is what walking a matrix down its
+  columns does, and it is why the same loop nest with its two loops
+  swapped can run several times slower while executing an identical
+  number of instructions. The cache rooms measured this from the cache's
+  side. This is the same access pattern hurting you one level further
+  out, at the controller.
