@@ -66,6 +66,7 @@ class ComputerArchitecture:
         self.rooms["storage_controller"].puzzles = ["hdd_seek_zigzag"]
         self.rooms["sata_ports"].puzzles = ["hdd_seek_sstf_zigzag"]
         self.rooms["ssd"].puzzles = ["flash_rewrite_amplification"]
+        self.rooms["gpu"].puzzles = ["warp_divergence_cost", "warp_sorted_vs_interleaved"]
         self.rooms["usb_ports"].puzzles = ["scan_wildcard_mutation"]
         self.rooms["ethernet"].puzzles = ["link_store_and_forward", "link_cut_through"]
         self.rooms["pcie_controller"].puzzles = ["packet_route_dma_gpu"]

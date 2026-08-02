@@ -22,6 +22,7 @@ from computerquest.mechanics.simulators.scanner import (
     WildcardScanSimulator,
 )
 from computerquest.mechanics.simulators.signature import SignatureMatchSimulator
+from computerquest.mechanics.simulators.simd import WarpDivergenceSimulator
 from computerquest.mechanics.simulators.storage import SeekDistanceSimulator
 from computerquest.mechanics.simulators.tlb import TLBSimulator, TLBTranslateSimulator
 
@@ -46,6 +47,9 @@ SIMULATORS: dict[str, Any] = {
     # Storage taught one lesson (head travel) five times, including in the SSD
     # room, which has no head. storage.py is untouched; this sits beside it.
     "flash": FlashWriteSimulator(),
+    # The GPU room described thousands of parallel cores and taught nothing;
+    # no simulator modelled parallelism at all.
+    "simd": WarpDivergenceSimulator(),
 }
 
 

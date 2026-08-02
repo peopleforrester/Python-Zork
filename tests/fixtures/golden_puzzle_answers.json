@@ -306,5 +306,19 @@
     "difficulty": 1,
     "simulator": "signature",
     "subject_area": "security"
+  },
+  "warp_divergence_cost": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 1,
+    "simulator": "simd",
+    "subject_area": "cpu"
+  },
+  "warp_sorted_vs_interleaved": {
+    "answer_kind": "number",
+    "canonical_answer": 16,
+    "difficulty": 2,
+    "simulator": "simd",
+    "subject_area": "cpu"
   }
 }

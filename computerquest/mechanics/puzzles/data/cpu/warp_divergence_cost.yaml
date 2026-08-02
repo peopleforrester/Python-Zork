@@ -1,0 +1,55 @@
+# Canonical answer per the simd simulator: the warp's lanes disagree, so both
+# sides run: 6 + 2 = 8 slots. A uniform warp would have paid 6.
+id: warp_divergence_cost
+component_category: cpu
+subject_area: cpu
+difficulty: 1
+title: "GPU: the cost of one disagreeing lane"
+simulator: simd
+prompt: |
+  You are inside the GPU, where thousands of lanes run at once. They do
+  not run independently.
+
+  Lanes execute in lockstep groups called warps. One instruction pointer
+  serves the whole group, so when a branch sends some lanes one way and
+  some the other, the hardware cannot run both directions at once. It
+  runs one side with the disagreeing lanes switched off, then the other
+  side with the rest switched off.
+
+  A warp of 4 lanes hits this branch:
+
+    if (condition) { ... }   costs 6 slots
+    else           { ... }   costs 2 slots
+
+  Three lanes take the "if". One lane takes the "else".
+
+  How many instruction slots does the warp spend?
+setup:
+  lanes: 4
+  then_cost: 6
+  else_cost: 2
+  taken: [true, true, true, false]
+answer_kind: number
+answer_grammar: "a single whole number of slots"
+hints:
+  - "The warp cannot be in two places at once, so ask which sides have to run at all."
+  - "Both sides run. The lanes that are switched off still wait through the side they are not taking."
+explanation: |
+  Both sides run: 6 slots for the "if" while the fourth lane sits idle,
+  then 2 slots for the "else" while the other three sit idle. 8 slots
+  total.
+
+  Had all four lanes agreed, the warp would have run one side and paid
+  6, or 2. The single dissenting lane cost the entire other branch.
+
+  Two things follow that are easy to get wrong. The first is that the
+  split does not matter: three-to-one and two-to-two cost exactly the
+  same, because the question is not how many lanes disagree but whether
+  any do. The second is that the idle lanes are not doing other work.
+  They are switched off, holding their place in a group that has one
+  instruction pointer between it.
+
+  This is why GPU code is written to avoid data-dependent branches, and
+  why a kernel with an innocent-looking `if` can run at a fraction of
+  the throughput its lane count suggests. The hardware is wide, but only
+  when the work agrees with itself.

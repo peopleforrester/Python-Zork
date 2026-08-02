@@ -1,0 +1,57 @@
+# Canonical answer per the simd simulator: 8 lanes in warps of 4, interleaved
+# true/false, so BOTH warps diverge and each pays 6 + 2 = 8. Total 16.
+# Sorted into [T,T,T,T,F,F,F,F] the same work costs 6 + 2 = 8.
+id: warp_sorted_vs_interleaved
+component_category: cpu
+subject_area: cpu
+difficulty: 2
+title: "GPU: the same work, rearranged"
+simulator: simd
+prompt: |
+  Eight lanes of work, still in warps of 4, still the same branch:
+
+    if (condition) { ... }   costs 6 slots
+    else           { ... }   costs 2 slots
+
+  Four lanes take the "if" and four take the "else", exactly as before.
+  What has changed is the order they were handed out in. The scheduler
+  fills warps in lane order, and the work arrived alternating:
+
+    if, else, if, else, if, else, if, else
+
+  So warp 0 gets lanes 1 to 4 and warp 1 gets lanes 5 to 8.
+
+  How many instruction slots do the two warps spend in total?
+setup:
+  lanes: 4
+  then_cost: 6
+  else_cost: 2
+  taken: [true, false, true, false, true, false, true, false]
+answer_kind: number
+answer_grammar: "a single whole number of slots"
+hints:
+  - "Work out each warp separately. Does either one agree with itself?"
+  - "Both warps are split, so both pay both sides."
+explanation: |
+  Alternating means every warp is split, so each pays both sides: 8
+  slots each, 16 total.
+
+  Now sort the same work so the four "if" lanes land in warp 0 and the
+  four "else" lanes in warp 1. Nothing else changes: same eight lanes,
+  same branch, same four-and-four split, same costs. Warp 0 is uniform
+  and pays 6, warp 1 is uniform and pays 2. Total 8.
+
+  Half the cost, for reordering. No lane did less work and no branch got
+  cheaper; the work was merely arranged so that each group agreed with
+  itself.
+
+  This is the whole of GPU performance tuning in one number, and it is
+  why sorting or bucketing data by branch outcome before launching a
+  kernel is worth real effort. It also explains a result that looks
+  absurd from the outside: adding a sort can make the total job faster
+  than not sorting at all.
+
+  The pipeline rooms measured how far a CPU falls short of one
+  instruction per cycle. This is the same shape one level out. The
+  hardware is as wide as advertised. Reaching that width is a property
+  of the work, not of the chip.
