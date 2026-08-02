@@ -119,11 +119,18 @@ def head_commit() -> str:
 
 
 def fetch_health(url: str = HEALTH_URL, timeout: int = 15) -> dict:
+    """The live /api/health payload, or {} if it cannot be read or parsed.
+
+    A response that parses to something other than an object is treated the
+    same as no response: the caller reads `commit` off it, and json.loads is
+    just as happy to return a list or a bare string.
+    """
     try:
         with urllib.request.urlopen(url, timeout=timeout) as response:
-            return json.loads(response.read().decode())
+            payload = json.loads(response.read().decode())
     except (urllib.error.URLError, ValueError, TimeoutError, OSError):
         return {}
+    return payload if isinstance(payload, dict) else {}
 
 
 def newest_deployment(retries: int = 4) -> tuple[str, str] | None:

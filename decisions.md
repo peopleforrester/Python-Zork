@@ -388,3 +388,41 @@ both fixed, removing one binding names exactly that puzzle.
 That is the second vacuous test in two days, after the concurrency one. Same
 lesson, worth stating once: a guard that has not been run against a build it is
 supposed to reject has not been shown to guard anything.
+
+## 2026-08-02T20:45:00Z · 2.3 · Housekeeping sweep
+
+Four findings from an audit that turned up no live defects. Recorded because
+three of them are about test coverage rather than behaviour, and coverage gaps
+are what the last several real bugs hid in.
+
+`PuzzleRegistry.by_category` removed. It was built on every load and read
+nowhere outside the registry: rooms bind puzzles by id in `architecture.py`,
+and `component_category` is descriptive, so nothing ever looked a puzzle up by
+it. The one test covering it asserted that the loader could count its own
+output; replaced with one asserting every puzzle declares a known category.
+
+All 79 registered verbs are now exercised. Six (`?`, `c`, `clear`, `cls`,
+`next`, `r`) were reachable by players and appeared in no test at all. Each was
+run by hand first and all six were correct, so this pins working behaviour
+rather than fixing a bug. The sweep asserts no verb crashes bare or with a
+nonsense argument, none answers "not recognized", and none returns nothing;
+plus the inverse, that an unregistered verb still is rejected, so the three
+cannot pass by the resolver becoming permissive. `quit`/`exit`/`q` are excluded
+because they call `input()` in the CLI build.
+
+`App.tsx` now has unit tests. Previously only the three Playwright specs drove
+it. xterm and socket.io are mocked: jsdom has no layout so a real Terminal
+cannot fit or render, and the subject is which bytes App forwards and when,
+which is App's own logic. Mutation-checked against reverted Ctrl-C and paste
+handling in `completion.ts`; both mutants fail at the App level, not only in
+the module's own tests.
+
+`fetch_health` in `scripts/deploy.py` returned `Any` from `json.loads`, which
+mypy flagged and CI never saw because it checks `computerquest` only. It now
+returns `{}` for a payload that parses to something other than an object, which
+is what the caller already assumed when it read `commit` off the result.
+
+Left open deliberately: 11 of 35 rooms hold no puzzle and storage has 5 against
+7 in every other area. That is an authoring decision, not a defect, and the
+question worth answering is whether `gpu` and `memory_controller` deserve
+puzzles rather than whether every room needs one.

@@ -51,8 +51,11 @@ class PuzzleDataError(ValueError):
 
 @dataclass(frozen=True)
 class PuzzleRegistry:
+    # Indexed by id only. A by_category index was built on every load and read
+    # nowhere: rooms bind puzzles by id in architecture.py, and
+    # component_category is descriptive, so nothing ever looked a puzzle up by
+    # it.
     by_id: dict[str, MicroPuzzle] = field(default_factory=dict)
-    by_category: dict[str, list[MicroPuzzle]] = field(default_factory=dict)
 
     @classmethod
     def from_directory(cls, root: Path) -> PuzzleRegistry:
@@ -65,7 +68,6 @@ class PuzzleRegistry:
         puzzle can never reach a player.
         """
         by_id: dict[str, MicroPuzzle] = {}
-        by_category: dict[str, list[MicroPuzzle]] = {}
 
         for path in sorted(root.rglob("*.yaml")):
             puzzle = _parse_file(path)
@@ -73,9 +75,8 @@ class PuzzleRegistry:
                 raise PuzzleDataError(f"{path}: duplicate puzzle id {puzzle.id!r}")
             _validate_playable(puzzle, path)
             by_id[puzzle.id] = puzzle
-            by_category.setdefault(puzzle.component_category, []).append(puzzle)
 
-        return cls(by_id=by_id, by_category=by_category)
+        return cls(by_id=by_id)
 
     def canonical_answer(self, puzzle_id: str) -> Any:
         puzzle = self.by_id[puzzle_id]

@@ -9,6 +9,7 @@ import unittest
 from pathlib import Path
 
 from computerquest.mechanics.puzzles.registry import (
+    VALID_CATEGORIES,
     PuzzleDataError,
     PuzzleRegistry,
     load_registry,
@@ -29,9 +30,13 @@ class TestShippedRegistry(unittest.TestCase):
         self.assertEqual(puzzle.simulator, "cache")
         self.assertTrue(puzzle.hints)  # decision 3: hints ship as an ordered list
 
-    def test_category_index_covers_all_puzzles(self) -> None:
-        total = sum(len(v) for v in self.registry.by_category.values())
-        self.assertEqual(total, len(self.registry.by_id))
+    def test_every_puzzle_declares_a_known_category(self) -> None:
+        """Replaces a test over a by_category index that no longer exists: it
+        was built on every load and read nowhere, so it only ever asserted that
+        the loader could count its own output."""
+        for puzzle_id, puzzle in self.registry.by_id.items():
+            with self.subTest(puzzle=puzzle_id):
+                self.assertIn(puzzle.component_category, VALID_CATEGORIES)
 
     def test_evaluate_correct_answer(self) -> None:
         verdict = self.registry.evaluate("l1_lru_basic", "M M M M H M H")
