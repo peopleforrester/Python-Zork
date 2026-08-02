@@ -316,6 +316,49 @@ class TestConcurrentKeystrokesAreNotLost(unittest.TestCase):
         self.assertIn(buffered, ("aaabbb", "bbbaaa"))
 
 
+class TestLookBannerRespectsTheGate(unittest.TestCase):
+    """The fourth place to walk room.puzzles raw instead of the gated list,
+    after maybe_auto_prompt and the two completion paths. `look` advertised
+    puzzles that `solve` then refused to show."""
+
+    def _banner(self, game):
+        return [
+            line for line in game.feed("look").splitlines()
+            if "puzzle available" in line
+        ]
+
+    def test_a_locked_puzzle_is_not_advertised(self):
+        game = build_real_game()
+        game.player.location = game.game_map.rooms["core1_registers"]  # difficulty 3
+        self.assertEqual(game._gated_room_puzzles(), [])
+        self.assertEqual(self._banner(game), [])
+
+    def test_an_unlocked_puzzle_is_still_advertised(self):
+        game = build_real_game()
+        game.player.location = game.game_map.rooms["core1_l1"]
+        self.assertTrue(self._banner(game))
+
+    def test_the_banner_matches_the_gate_in_every_room(self):
+        game = build_real_game()
+        for room_id, room in game.game_map.rooms.items():
+            if not (getattr(room, "puzzles", []) or []):
+                continue
+            game.player.location = room
+            with self.subTest(room=room_id):
+                self.assertEqual(
+                    len(self._banner(game)), len(game._gated_room_puzzles())
+                )
+
+    def test_a_room_reveals_its_next_puzzle_once_the_first_is_solved(self):
+        """The ethernet pair is the ramp this gate exists to create."""
+        game = build_real_game()
+        game.player.location = game.game_map.rooms["ethernet"]
+        self.assertEqual(len(self._banner(game)), 1)
+        game.player.solved_puzzles.add("link_store_and_forward")
+        game._recompute_knowledge()
+        self.assertIn("cut through", " ".join(self._banner(game)))
+
+
 class TestPerCommandHelpCoversTheRegistry(unittest.TestCase):
     """The old assertion only checked the output was non-empty, so 33 of 79
     commands answered 'No help for X. Did you mean: X?' and it stayed green."""

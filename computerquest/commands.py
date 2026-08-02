@@ -61,13 +61,11 @@ class LookCommand(Command):
             # Mark component as visited to reveal more technical details
             self.game.player.location.mark_visited()
             result = self.game.player.look()
-            room = self.game.player.location
-            for puzzle_id in room.puzzles:
-                if puzzle_id in self.game.player.solved_puzzles:
-                    continue
-                puzzle = self.game.puzzle_registry.by_id.get(puzzle_id)
-                if puzzle is not None:
-                    result += f"\n[ puzzle available: {puzzle.title} ]"
+            # The gated list, not room.puzzles: walking the raw list advertised
+            # puzzles the difficulty gate then refused to start, which is the
+            # same mismatch auto-prompt and completion each had.
+            for puzzle in self.game._gated_room_puzzles():
+                result += f"\n[ puzzle available: {puzzle.title} ]"
             return result
         else:
             item_name = self._resolve_item(self.args[0].lower())
