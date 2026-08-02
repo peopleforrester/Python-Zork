@@ -1,0 +1,55 @@
+# Canonical answer per the link_cost simulator: a single hop, so the mode does
+# not matter: 16384 units / 1024 per tick = 16 ticks of transmission, plus 2
+# ticks of latency = 18. The x16 slot next door moves it in 1 + 2 = 3.
+id: pcie_lane_width
+component_category: networking
+subject_area: networking
+difficulty: 1
+title: "PCIe: what one lane costs you"
+simulator: link_cost
+prompt: |
+  You are standing in a PCIe x1 slot. The "x1" is the lane count: this
+  slot has exactly one, where the long slot the graphics card sits in
+  has sixteen. Lanes are the whole difference between the two; the
+  protocol, the clock and the wire are the same.
+
+  One lane carries 1024 units per tick. The link's latency is 2 ticks.
+
+  A device in this slot uploads a 16384-unit texture across the single
+  hop to the controller.
+
+  How many ticks until the last unit arrives?
+setup:
+  size: 16384
+  mode: cut_through
+  links:
+    - {latency: 2, bandwidth: 1024}
+answer_kind: number
+answer_grammar: "a single whole number of ticks"
+hints:
+  - "How many ticks does one lane need to push 16384 units at 1024 per tick?"
+  - "Add the link's latency to the transmission time."
+explanation: |
+  One lane moves 1024 units per tick, so 16384 units take 16 ticks of
+  transmission, plus 2 ticks of latency: 18 ticks.
+
+  The x16 slot next door has sixteen lanes striped side by side, so the
+  same texture takes 1 tick of transmission and 2 of latency: 3 ticks.
+  Six times faster for the identical transfer, and the only difference
+  is how many lanes the slot was wired with.
+
+  Notice which part of the total did NOT shrink. Latency stayed at 2
+  either way, because latency is a property of the wire and the
+  controller, not of how wide the road is. Lanes buy bandwidth and
+  nothing else. On a big transfer, where transmission dominates, that is
+  nearly the whole cost. On a stream of tiny requests, where latency
+  dominates, sixteen lanes buy almost nothing.
+
+  That is why a graphics card wants x16 and a sound card genuinely does
+  not care, and why a device that sits in a shorter slot than it asked
+  for still works and merely runs slower: the lanes it does have carry
+  the same protocol.
+
+  This is the store-and-forward lesson from the Ethernet port turned
+  sideways. There the question was how many times you pay the
+  transmission cost. Here it is how fast you pay it once.

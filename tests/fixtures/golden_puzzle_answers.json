@@ -193,6 +193,13 @@
     "simulator": "tlb_translate",
     "subject_area": "memory"
   },
+  "pcie_lane_width": {
+    "answer_kind": "number",
+    "canonical_answer": 18,
+    "difficulty": 1,
+    "simulator": "link_cost",
+    "subject_area": "networking"
+  },
   "pipeline_alu_chain": {
     "answer_kind": "number",
     "canonical_answer": 8,

@@ -75,6 +75,7 @@ class ComputerArchitecture:
         self.rooms["pcie_controller"].puzzles = ["packet_route_dma_gpu"]
         self.rooms["pch"].puzzles = ["packet_route_reply"]
         self.rooms["pcie_x16"].puzzles = ["packet_route_dma_to_ram"]
+        self.rooms["pcie_x1_1"].puzzles = ["pcie_lane_width"]
         self.rooms["kernel"].puzzles = [
             "signature_near_miss",
             "signature_rootkit_hunt",
