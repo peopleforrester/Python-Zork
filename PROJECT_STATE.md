@@ -406,15 +406,61 @@ is the easier of the two. It also creates a real ramp, since solving it now
 unlocks its own difficulty-2 pair. cpu keeps 10.0 total weight against a cap of
 5, and a full playthrough still maxes every meter.
 
+**Deferred findings closed (0eb4d75, 2026-08-02).** Six findings had been held
+back from ba6b181 pending independent reproduction. All six were reproduced by
+running the code, then fixed:
+
+1. `commit_matches` compared on the shorter of the two SHA widths, so a
+   one-character stamp matched almost any HEAD and reported a green deploy.
+   Now floored at seven, git's own short-sha width.
+2. `parse_deployments` accepted any pipe-separated row whose first column had
+   no spaces, so a column header parsed as a deployment id the watcher would
+   poll until the build timeout. Now requires a UUID.
+3. `_run` raised `FileNotFoundError` when the `railway` binary was absent.
+4. The client's line mirror diverged from the server's buffer three ways:
+   Ctrl-C never cleared it (so Tab completed against text the server had
+   discarded), a pasted chunk was appended whole rather than walked per
+   character, and two copies of the mirror were written in different places.
+   The mirror moved to `src/completion.ts`, where it is tested against
+   server.py's rules instead of against a copy of them.
+5. `save_load._apply` read and wrote in one pass, so a save valid down to its
+   last key left the player moved and re-inventoried by the half that had
+   already run. It now validates everything before writing anything, and no
+   longer reads `knowledge` from the file at all, that being derived state.
+6. `recompute_knowledge` seeded its tally from the dict it was replacing, so a
+   hand-edited save could add areas that survived, and one missing an area
+   raised `KeyError` on the first puzzle scored into it.
+
+Plus one found while verifying: flask-socketio runs with `async_handlers` on,
+so every event is dispatched in its own thread and two keystrokes from one
+client raced on the line buffer, the later write dropping the other's
+characters. Input is now serialized per session. The regression test was
+initially vacuous (it passed against a deliberately unserialized mutant); the
+delay had to be moved into the echo, which is the only point between the
+buffer read and the buffer write.
+
+Two reviewer claims did not survive checking and were dropped: `difficulty` is
+not ambiguous with any prefix (`d` is the deliberate alias for `down`, `di`
+resolves cleanly), and the `_apply` rollback concern was real but narrower
+than described.
+
+Verified live on production afterwards: Ctrl-C then Tab now lists all commands
+instead of inserting `ve` onto an empty line; a `look\rkno` paste runs `look`
+and leaves `kno` for Tab to complete to `knowledge`; and a solve/save/move/load
+roundtrip restores both the knowledge meter (1/25) and the room.
+
 ## Branch & Tests
 
 - Branch: `staging`
-- Working tree: clean (aside from this state reconciliation)
-- Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
-- `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 529/529 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Working tree: clean
+- Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75
+- `staging` and `main` are in sync at 0eb4d75 (all refs, local and origin).
+- Production verified serving 0eb4d75 via `/api/health`.
+- Tests: 547/547 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 34 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
+- Known, out of gate: `scripts/deploy.py` has one pre-existing mypy
+  `no-any-return` on `fetch_health`. CI checks `computerquest` only.
 
 ## Phase History
 
@@ -449,3 +495,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-31T00:00:00Z deploy verification added (cc6d54f, 642ffc6); prose check on the contract doc reviewed and dismissed as false positives; 404 tests
 - 2026-08-01T00:00:00Z PRD backlog added and PRD 1 approved/scoped; Phase 0 hardening shipped; 425 tests
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
+- 2026-08-02T00:00:00Z 2.3 deferred review findings closed (0eb4d75): deploy hardening, client line mirror extracted and tested, save loader validates before writing, per-session input lock; 547 tests; promoted and deployed

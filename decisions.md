@@ -246,3 +246,39 @@ up), recorded in every hint mode and persisted with the session, rather than
 `attempted_puzzles`, which decision 3 writes only in STANDARD. Without the split
 the two features silently coupled and the beginner mode was the one classified
 "strong".
+
+## 2026-08-02T16:20:00Z · 2.3 · Deferred review findings closed (0eb4d75)
+
+Six findings held back from ba6b181 pending independent reproduction were each
+reproduced by running the code, then fixed: three in `scripts/deploy.py` (a
+SHA comparison with no minimum width, a deployment parser that accepted column
+headers, an uncaught `FileNotFoundError`), the client's line mirror diverging
+from the server buffer on Ctrl-C and on pasted chunks, a save loader that
+mutated the game before it finished validating, and a knowledge tally seeded
+from the dict it was replacing.
+
+The mirror moved out of the App.tsx closure into `src/completion.ts`. The old
+`completion.test.ts` defined and tested its own copy of the logic, so the
+shipped path had no coverage at all and the Ctrl-C and paste defects lived in
+the untested half.
+
+Two claims from the review did not survive checking and were dropped rather
+than "fixed": `difficulty` is not ambiguous with any prefix, since `d` is the
+deliberate alias for `down` and `di` resolves cleanly; and the `_apply`
+rollback concern was real but narrower than the reviewer described. This is the
+same discipline adopted after the YAML alias-bomb retraction on 2026-08-01.
+
+One new defect surfaced while verifying: flask-socketio runs with
+`async_handlers` on, so each event is dispatched in its own thread and two
+keystrokes from one client raced on the line buffer. Input is now serialized
+per session with a per-sid lock, chosen over turning `async_handlers` off
+because that would serialize every client against every other. Keystrokes from
+one terminal are ordered by nature, so the lock costs nothing real.
+
+The regression test for that race was vacuous on first writing: it passed
+against a mutant that handed out a fresh lock per call. The injected delay sat
+before the buffer read rather than between the read and the write, leaving the
+window microseconds wide. Moving the delay into the echo, which is the only
+call between them, made the mutant lose exactly the three characters described.
+Worth recording as the general rule: a concurrency test that has not been run
+against an unsynchronized build has not been shown to test anything.
