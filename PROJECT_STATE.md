@@ -364,13 +364,49 @@ The probe nearly hid it. Testing `m` straight after `map` appeared to pass,
 because sending `m` was advancing the pager left pending by `map` rather than
 paginating on its own.
 
+**Targeted review of the new surface (2026-08-02).** The last full review was
+2026-07-26; 1,773 insertions had landed since across code that had never been
+reviewed (objectives.py, the pagination and completion paths, HintMode,
+content/, scripts/deploy.py). Four reviewers swept it; every finding below was
+independently reproduced before being acted on, after the YAML retraction
+earlier the same day.
+
+Eight defects fixed in ba6b181, all verified live afterwards:
+
+1. `objectives` declared victory with a virus in the player's pack. Viruses are
+   ordinary items and `take` accepts them without a scan, so the pack was a
+   hiding place the room sweep never checked.
+2. The pager swallowed a command typed at `--more--`, discarding the line.
+3. Ctrl-C drew a fresh prompt while leaving the pager armed, so the UI lied
+   about its own state.
+4. `maybe_auto_prompt` bypassed the difficulty gate, presenting puzzles `solve`
+   refuses to show and letting a fresh player bank knowledge from nothing.
+5. Difficulty modes inverted adaptive ordering: `area_standing` read
+   `attempted_puzzles`, which learning mode stops writing, so a struggling
+   beginner was classified strong and served the hardest puzzle first.
+6. `solve`/`hint`/`skip`/`difficulty` were declared read-only while writing
+   state schemas 1.2 and 1.3 persist, so quitting after them lost the work.
+7. Tab completion offered puzzle ids the gate hides; since `solve <id>`
+   deliberately bypasses the gate, one keypress defeated progression.
+8. Arrow keys typed `[A` into the command line. `[` is itself inside the `@`-`~`
+   terminator range, so a naive check ended the sequence a byte early.
+
+Three of these were in code written earlier the same session, and two were
+self-inflicted (adding `difficulty` to the read-only set, and building
+completion from the raw room list rather than the gated one).
+
+Two behaviour changes worth knowing: entering Core 1 no longer auto-prompts,
+because that puzzle is difficulty 2 and legitimately gated; four difficulty-1
+puzzles sit two hops from the start, so onboarding still works. And six existing
+tests were updated because they pinned the old buggy behaviour.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean (aside from this state reconciliation)
 - Last CI: green (Python matrix + frontend + e2e) @ 642ffc6
 - `staging` and `main` are in sync at 642ffc6 (all refs, local and origin).
-- Tests: 503/503 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
+- Tests: 529/529 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 15 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 

@@ -220,3 +220,29 @@ PROJECT_STATE without the independent check the other two got. Retracted in both
 places. The practical effect is that the security picture for author-extensible
 puzzles is better than recorded: Phase 0 already closed the vectors that were
 real, and there is no known pre-validation parser vector.
+
+## 2026-08-02T00:00:00Z · review · targeted review of the post-2026-07-26 surface
+
+Scoped to code added since the last full review rather than repeating it: the
+core had been reviewed and its findings closed, while ~1,773 new lines had never
+been looked at. Four reviewers, findings reproduced independently before action.
+
+Eight defects fixed. The two most serious were a false "nothing left to do" from
+`objectives` while the game was unwinnable, and a pager that silently ate typed
+commands. Three came from work done earlier the same session and two of those
+were self-inflicted.
+
+Two design points settled while fixing:
+
+Auto-prompt now honours decision 2's gate. This changes onboarding: Core 1, the
+first room north of the start, no longer presents a puzzle because that puzzle is
+difficulty 2. Checked that four difficulty-1 puzzles sit two hops from the start,
+so a new player still meets the mechanic quickly. The alternative, letting the
+auto path show what the command path refuses, is exactly the inconsistency that
+allowed knowledge to be banked from a standing start.
+
+Adaptive standing now reads a mode-independent struggle signal (helped or gave
+up), recorded in every hint mode and persisted with the session, rather than
+`attempted_puzzles`, which decision 3 writes only in STANDARD. Without the split
+the two features silently coupled and the beginner mode was the one classified
+"strong".
