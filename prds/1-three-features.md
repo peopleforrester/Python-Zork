@@ -178,11 +178,15 @@ not be built: no `~/.computerquest/puzzles/` loading, no id namespacing, no
 *more puzzles*, authored in-repo.
 
 What survives the answer is the validation CLI, which is repo tooling rather
-than player-facing extensibility, and the one real defect this section
-uncovered: `answer_kind` is never checked against the simulator's own
-`answer_kind`, so a mismatch loads cleanly and makes every possible answer
-wrong forever. That is worth closing whoever writes the puzzles. Neither is in
-flight.
+than player-facing extensibility. **Built 2026-08-02** as
+`scripts/validate_puzzles.py`.
+
+**Correction (2026-08-02).** The `answer_kind` claim below, that a mismatch
+against the simulator's own `answer_kind` loads cleanly with no error at any
+layer, was true when this PRD was written and was fixed hours later by Phase 0
+(`e5795bb`, "fix the validator"). The check lives at `registry.py:159` and
+raises `PuzzleDataError` naming both kinds. It was repeated as an open defect
+after that, from this document rather than from the code. Read the code.
 
 **Open question for Michael, and it changes the scope by an order of
 magnitude:** is the goal *player-authored* puzzles, or simply *more* puzzles?

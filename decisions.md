@@ -349,3 +349,42 @@ was going to catch is real. `answer_kind` is never checked against the
 simulator's own `answer_kind`, so a mismatch loads cleanly and makes every
 possible answer wrong forever, with no error at any layer. Worth closing
 whoever writes the puzzles. Not in flight.
+
+## 2026-08-02T20:15:00Z · 2.3 · Authoring validator built; a stale claim corrected
+
+The `answer_kind`-versus-simulator check was reported as an open defect. It is
+not: Phase 0 added it in `e5795bb` ("fix the validator") and it lives at
+`registry.py:159`, raising `PuzzleDataError` that names both kinds. Verified by
+loading a deliberately mismatched puzzle. The claim came from PRD 1's Feature C
+section, written before that fix landed, and was repeated from the document
+instead of checked against the code. Both PRD 1 and PROJECT_STATE now carry the
+correction.
+
+`scripts/validate_puzzles.py` built as the surviving piece of Feature C. It
+reports every problem in one pass rather than dying on the first file, prints
+each canonical answer, checks the header comment still states it, and names any
+puzzle bound to no room.
+
+The header check earns its place: every shipped file records its answer in a
+comment, that record was the author's claim, and nothing verified it. All 33
+were checked and all 33 are accurate. Two state theirs in hex (`0x1ABC` rather
+than 6844), which a first naive comparison reported as drift, so the comparison
+accepts both spellings and treats bool separately, since bool is an int
+subclass and `hex(True)` is `0x1`.
+
+Two defects in this work were found by mutation testing rather than by writing
+it carefully:
+
+The reachability assertion was vacuous. `check_tree` takes `check_binding` and
+the test omitted it, so `unbound` was always empty and the assertion passed
+against any tree. Removing a real binding did not fail it.
+
+`_bound_puzzle_ids` then turned out to be wrong in the opposite direction:
+`bind_puzzles()` runs inside `ComputerArchitecture.setup()`, not the
+constructor, so constructing the object and reading `rooms` saw nothing and
+every puzzle read as unbound. The vacuous assertion had been hiding it. With
+both fixed, removing one binding names exactly that puzzle.
+
+That is the second vacuous test in two days, after the concurrency one. Same
+lesson, worth stating once: a guard that has not been run against a build it is
+supposed to reject has not been shown to guard anything.

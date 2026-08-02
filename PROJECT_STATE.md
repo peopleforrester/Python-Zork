@@ -484,10 +484,19 @@ player their count was off. One slot per database entry fixes it.
 
 **Player-authored puzzles are closed (Michael, 2026-08-02).** PRD 1's Feature C
 open question is settled in favour of more in-repo puzzles. No user-directory
-loading, no id namespacing, no `room:` key, no `source` field. Still open and
-unrelated to who authors: `answer_kind` is never checked against the
-simulator's own `answer_kind`, so a mismatch loads cleanly and makes every
-answer wrong forever.
+loading, no id namespacing, no `room:` key, no `source` field.
+
+**Authoring validator built (2026-08-02).** `scripts/validate_puzzles.py` is
+the surviving piece of Feature C. It walks the tree reporting every problem at
+once instead of dying on the first, prints each puzzle's canonical answer
+(which is computed at runtime and stored nowhere, so an author otherwise has no
+way to check their prompt matches their setup), verifies each file's header
+comment still states that answer, and names any puzzle bound to no room.
+
+Correction recorded with it: the `answer_kind`-versus-simulator mismatch was
+described here as an open defect. It was fixed by Phase 0 in `e5795bb` and
+lives at `registry.py:159`. The claim was carried forward from PRD 1's text,
+written before that fix, rather than checked against the code.
 
 ## Branch & Tests
 
@@ -496,7 +505,7 @@ answer wrong forever.
 - Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75 (Feature B commit pending)
 - `staging` and `main` are in sync at 0eb4d75 (all refs, local and origin).
 - Production verified serving 0eb4d75 via `/api/health`.
-- Tests: 577/577 via `uv run pytest` (coverage 91%); 33 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 34 vitest + 3 Playwright e2e green.
+- Tests: 596/596 via `uv run pytest` (coverage 91%); 33 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 34 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 - Known, out of gate: `scripts/deploy.py` has one pre-existing mypy
@@ -537,3 +546,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
 - 2026-08-02T00:00:00Z 2.3 deferred review findings closed (0eb4d75): deploy hardening, client line mirror extracted and tested, save loader validates before writing, per-session input lock; 547 tests; promoted and deployed
 - 2026-08-02T00:00:00Z 1.3 -> 2.3 contract decision 10 (policy-knob simulators, sha256:f9d9a851b941); Feature B items 2-4 built: scan_all, scan_wildcard, link_cost + 4 puzzles; 33 puzzles, 577 tests
+- 2026-08-02T00:00:00Z 2.3 authoring validator built (scripts/validate_puzzles.py); answer_kind claim corrected (already fixed in e5795bb); two vacuous tests caught by mutation; 596 tests
