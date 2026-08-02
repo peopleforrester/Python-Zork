@@ -13,6 +13,7 @@ from computerquest.mechanics.puzzles.parsers import parse_answer
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 from computerquest.mechanics.simulators.base import AnswerKind, Verdict, verify_sequence
 from computerquest.mechanics.simulators.cache import CacheSimulator
+from computerquest.mechanics.simulators.flash import FlashWriteSimulator
 from computerquest.mechanics.simulators.link import LinkCostSimulator
 from computerquest.mechanics.simulators.packet import PacketRouteSimulator
 from computerquest.mechanics.simulators.pipeline import PipelineSimulator
@@ -42,6 +43,9 @@ SIMULATORS: dict[str, Any] = {
     "scan_all": MultiMatchScanSimulator(),
     "scan_wildcard": WildcardScanSimulator(),
     "link_cost": LinkCostSimulator(),
+    # Storage taught one lesson (head travel) five times, including in the SSD
+    # room, which has no head. storage.py is untouched; this sits beside it.
+    "flash": FlashWriteSimulator(),
 }
 
 

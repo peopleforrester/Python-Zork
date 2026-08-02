@@ -1,0 +1,59 @@
+# Canonical answer per the flash simulator: 4 clean pages cost 4, then the
+# rewrite of page 0 rewrites its whole 4-page block: 4 + 4 = 8 page-writes.
+id: flash_rewrite_amplification
+component_category: storage
+subject_area: storage
+# Difficulty 1 so the SSD room is never empty on arrival: every other storage
+# puzzle lives in a platter room, so a gated puzzle here would show nothing to
+# a player who reached the SSD first. It is also the foundational flash lesson.
+difficulty: 1
+title: "Flash: what a rewrite really costs"
+simulator: flash
+prompt: |
+  You are inside the SSD. There is no head here and nothing spins, so
+  the seek questions the platters ask do not apply. Flash has a
+  different problem.
+
+  A page can be written only if it is already clean. To make a used page
+  clean again the drive must erase it, and erase works on a whole
+  BLOCK, never a single page. So rewriting one page that already holds
+  data means rewriting its entire block.
+
+  This block holds 4 pages. The host issues 5 writes, in order:
+
+    page 0, page 1, page 2, page 3, page 0
+
+  The first four land on clean pages. The fifth does not.
+
+  How many page-writes does the drive actually perform?
+setup:
+  pages_per_block: 4
+  policy: erase_block
+  writes: [0, 1, 2, 3, 0]
+answer_kind: number
+answer_grammar: "a single whole number of page-writes"
+hints:
+  - "The first four writes go to clean pages and cost one each."
+  - "The fifth write targets a page that already holds data, so its whole block is rewritten. How many pages is that?"
+explanation: |
+  The first four writes find clean pages and cost one page-write each.
+  The fifth targets page 0, which is already written, so the drive
+  rewrites the whole 4-page block. Total 8 page-writes for 5 pages of
+  host data.
+
+  That ratio is write amplification, and it is why an SSD's advertised
+  endurance is quoted in host writes rather than flash writes. The host
+  sees 5. The flash wears as though it saw 8.
+
+  Notice which workload is expensive. Four sequential writes to clean
+  pages cost exactly four; no amplification at all. The cost arrived
+  with the REWRITE. Small random rewrites are what age a drive, and
+  sequential appends are nearly free, which is the opposite of the
+  intuition the platters teach, where what mattered was how far the head
+  had to travel and a re-visit to a nearby track was cheap.
+
+  A real drive does better than 8 by keeping a pool of already-erased
+  blocks and cleaning in the background, so the copy is usually off the
+  critical path. It does not do better than the arithmetic. The work
+  still happens, and when the pool runs dry the drive slows down exactly
+  here.

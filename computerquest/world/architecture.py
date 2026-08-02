@@ -46,7 +46,10 @@ class ComputerArchitecture:
         self.rooms["core1_l1"].puzzles = ["l1_lru_basic", "l1_associativity_2way"]
         self.rooms["core1"].puzzles = ["pipeline_forwarding_intro"]
         self.rooms["virtual_memory"].puzzles = ["tlb_hitmiss_lru", "tlb_walk_translate"]
-        self.rooms["hdd"].puzzles = ["hdd_seek_fcfs", "hdd_seek_sstf"]
+        # seek_order_matters moved here from the SSD, which has no head to move.
+        self.rooms["hdd"].puzzles = [
+            "hdd_seek_fcfs", "hdd_seek_sstf", "seek_order_matters",
+        ]
         self.rooms["network_interface"].puzzles = ["packet_route_kernel", "packet_route_ssd"]
         self.rooms["bios"].puzzles = [
             "virus_signature_match", "signature_first_match", "scan_report_all_matches",
@@ -62,7 +65,7 @@ class ComputerArchitecture:
         self.rooms["ram_dimm1"].puzzles = ["page_table_in_ram"]
         self.rooms["storage_controller"].puzzles = ["hdd_seek_zigzag"]
         self.rooms["sata_ports"].puzzles = ["hdd_seek_sstf_zigzag"]
-        self.rooms["ssd"].puzzles = ["seek_order_matters"]
+        self.rooms["ssd"].puzzles = ["flash_rewrite_amplification"]
         self.rooms["usb_ports"].puzzles = ["scan_wildcard_mutation"]
         self.rooms["ethernet"].puzzles = ["link_store_and_forward", "link_cut_through"]
         self.rooms["pcie_controller"].puzzles = ["packet_route_dma_gpu"]

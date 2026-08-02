@@ -1,4 +1,11 @@
 {
+  "flash_rewrite_amplification": {
+    "answer_kind": "number",
+    "canonical_answer": 8,
+    "difficulty": 1,
+    "simulator": "flash",
+    "subject_area": "storage"
+  },
   "hdd_seek_fcfs": {
     "answer_kind": "number",
     "canonical_answer": 60,
