@@ -282,3 +282,70 @@ window microseconds wide. Moving the delay into the echo, which is the only
 call between them, made the mutant lose exactly the three characters described.
 Worth recording as the general rule: a concurrency test that has not been run
 against an unsynchronized build has not been shown to test anything.
+
+## 2026-08-02T17:05:00Z · 1.3 · Contract amended: decision 10, policy-knob simulators
+
+Michael corrected the record: Feature B's larger simulator work was never
+deferred. PRD 1's decision 3 sequenced it as step 4 of a five-step build order,
+and a later summary described that as "deferred by user", which misread a
+sequencing call as a cut. Items 2 to 4 are now built.
+
+Contract amended with decision 10 and two new fidelity statements; new
+sha256:f9d9a851b941 recorded in PROJECT_STATE.md and in the ABOUTME headers of
+`puzzles/types.py` and `puzzles/__init__.py`.
+
+The reasoning the decision records: `packet` and `signature` are accurate but
+knobless, and every other simulator has a setting whose flip changes the answer
+on a byte-identical setup. Puzzles over a knobless simulator can only ask the
+player to read the setup back, so the fix for "low-fidelity networking and
+security" is a counterfactual rather than protocol depth. `scan_all`,
+`scan_wildcard` and `link_cost` land as new modules; `packet.py` and
+`signature.py` are untouched, so the nine puzzles built on their answers keep
+them.
+
+Four puzzles: `scan_report_all_matches` (bios) and `scan_wildcard_mutation`
+(usb_ports) reuse byte-identical setups from `signature_first_match` and
+`signature_near_miss`, so each is a literal counterfactual on the file the
+player has already scanned. `link_store_and_forward` and `link_cut_through`
+(ethernet) are the same pair device as `hdd_seek_fcfs`/`hdd_seek_sstf`:
+identical setup, one key different.
+
+## 2026-08-02T17:10:00Z · 2.2 · Multi-match report is per-entry, not a match list
+
+Caught while playing the new content rather than by a test. The first design
+had `scan_all` return just the matching names, which made the answer's *length*
+part of the answer. `PuzzleSession.answer` treats a sequence length mismatch as
+a wrong *shape*: ungraded, no attempt recorded, free retry. On every shipped
+sequence puzzle that is right, because the count is fixed by the prompt. Here it
+told a player who answered one name that their count was wrong, which on a
+two-entry database is most of the answer.
+
+Fixed by reporting one verdict per database entry, naming the signature where it
+matched and `clean` where it did not. The length is now fixed by the database
+the prompt displays, so a short answer is genuinely malformed and a wrong
+verdict is genuinely wrong and graded per position.
+
+`MAPPING` was the other candidate and was rejected: no shipped puzzle uses it,
+and its grader compares with plain `==` while SEQUENCE and CHOICE both fold
+case, so this puzzle would have been the first user of a path where a correct
+answer in the wrong case is marked wrong.
+
+## 2026-08-02T17:12:00Z · 1.3 · Player-authored puzzles closed
+
+Michael: no more player-authored content. PRD 1's Feature C open question is
+settled in favour of more in-repo puzzles. The user-directory layer is closed:
+no `~/.computerquest/puzzles/` loading, no id namespacing, no `room:` key, no
+`source` field.
+
+This also retires the room-binding concern that was being raised as a blocker.
+Binding is a literal list in `architecture.py::bind_puzzles`, and the YAML's
+`component_category` is descriptive only, so a puzzle file with no entry in that
+list is unreachable. That only ever mattered for content arriving from outside
+the repo; for puzzles authored here, adding the file and one line to that list
+is the whole job, and a test already asserts nothing is left unbound.
+
+Not closed by the answer: the validation CLI is repo tooling, and the defect it
+was going to catch is real. `answer_kind` is never checked against the
+simulator's own `answer_kind`, so a mismatch loads cleanly and makes every
+possible answer wrong forever, with no error at any layer. Worth closing
+whoever writes the puzzles. Not in flight.

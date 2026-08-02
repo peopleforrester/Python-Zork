@@ -23,6 +23,9 @@ MAX_CACHE_LINES = 65536
 MAX_LINE_SIZE_BYTES = 1 << 20
 MAX_TLB_ENTRIES = 65536
 MAX_PAGE_SIZE = 1 << 30
+MAX_SIGNATURES = 1024
+MAX_FILE_CONTENT_BYTES = 1 << 20
+MAX_LINKS = 1024             # hops in a link-cost path
 
 
 def require_within(name: str, value: int, limit: int) -> int:

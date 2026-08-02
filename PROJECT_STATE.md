@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decisions 8 and 9 2026-08-01 sha256:3a650b2e76b6)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decisions 8 and 9 2026-08-01 sha256:3a650b2e76b6; decision 10 policy-knob simulators 2026-08-02 sha256:f9d9a851b941)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -44,7 +44,7 @@ Step 1 note: cache (LRU/FIFO, direct-mapped→fully-associative) and pipeline (s
 
 **Save/load status (not a contradiction):** the Step 1.2 decision (2026-05-02) removed the *placeholder* save/load that silently lost data (99be8ed) and filed a follow-up to reimplement it properly. That follow-up (tk-24fa9f) shipped a real implementation (510ae26). The currently-wired `SaveLoadSystem` plus save/load/deletesave commands are the intended end state. The design docs' "in-flight puzzle/minigame state is not persisted" note is a scoping choice for that feature, not a conflict.
 
-**Deferred features (design-doc "Out of scope"), available if picked up:** author-extensible puzzles, adaptive difficulty (reorder by solve history), higher-fidelity network/security simulators, persistence of in-flight puzzle/minigame state.
+**Former "Out of scope" list, current status:** adaptive difficulty DONE (decision 7); in-flight puzzle persistence DONE (decision 8, minigame state still out); network/security simulators DONE on the policy-knob axis (decision 10, protocol fidelity and TCP still rejected); author-extensible puzzles CLOSED (Michael, 2026-08-02: no player-authored content).
 
 **Code-review remediation (2026-07-26) COMPLETE and promoted.** A five-lens
 senior/architecture/refactor review ran; Michael approved fixing bugs + cleanup
@@ -449,14 +449,54 @@ instead of inserting `ve` onto an empty line; a `look\rkno` paste runs `look`
 and leaves `kno` for Tab to complete to `knowledge`; and a solve/save/move/load
 roundtrip restores both the knowledge meter (1/25) and the room.
 
+**Feature B completed (2026-08-02).** PRD 1's decision 3 sequenced items 2 to 4
+as step 4 of a five-step build order; a later summary called that "deferred",
+which misread it. Built as contract decision 10 (new sha256:f9d9a851b941).
+
+The reasoning is the policy knob, not protocol depth. `packet` and `signature`
+are accurate but have no setting whose flip changes the answer on a
+byte-identical setup, which every other simulator does have, so puzzles over
+them can only ask the player to read the setup back. Three new modules, with
+`packet.py` and `signature.py` untouched so their nine puzzles keep their
+answers:
+
+- `scan_all` reports one verdict per database entry instead of stopping at the
+  first hit. Puzzle `scan_report_all_matches` (bios) reuses
+  `signature_first_match`'s bytes exactly.
+- `scan_wildcard` carries an exact/wildcard knob. Puzzle
+  `scan_wildcard_mutation` (usb_ports) reuses `signature_near_miss`'s file, so
+  the same bytes that were clean under exact matching are a hit under a
+  widened pattern.
+- `link_cost` carries a store-and-forward/cut-through knob. Puzzles
+  `link_store_and_forward` and `link_cut_through` (ethernet) are the same pair
+  device as `hdd_seek_fcfs`/`hdd_seek_sstf`: identical setup, one key changed,
+  36 ticks against 16.
+
+Puzzle count 29 to 33. Every subject area now holds 7 puzzles except storage
+(5), and all five still saturate on a full solve. Both touched areas were
+already past the cap (networking 7.5, security 6.0), so this is content value
+rather than progression value, as flagged before authoring.
+
+`scan_all`'s report shape was redesigned mid-build after playing it: returning
+only the matches made the answer's length part of the answer, and a length
+mismatch is treated as a wrong shape (ungraded, free retry), which told the
+player their count was off. One slot per database entry fixes it.
+
+**Player-authored puzzles are closed (Michael, 2026-08-02).** PRD 1's Feature C
+open question is settled in favour of more in-repo puzzles. No user-directory
+loading, no id namespacing, no `room:` key, no `source` field. Still open and
+unrelated to who authors: `answer_kind` is never checked against the
+simulator's own `answer_kind`, so a mismatch loads cleanly and makes every
+answer wrong forever.
+
 ## Branch & Tests
 
 - Branch: `staging`
 - Working tree: clean
-- Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75
+- Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75 (Feature B commit pending)
 - `staging` and `main` are in sync at 0eb4d75 (all refs, local and origin).
 - Production verified serving 0eb4d75 via `/api/health`.
-- Tests: 547/547 via `uv run pytest` (coverage 91%); 29 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 34 vitest + 3 Playwright e2e green.
+- Tests: 577/577 via `uv run pytest` (coverage 91%); 33 puzzles; ruff clean; mypy clean (required in CI, Python 3.11+3.12 matrix). Frontend: 34 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 - Known, out of gate: `scripts/deploy.py` has one pre-existing mypy
@@ -496,3 +536,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-08-01T00:00:00Z PRD backlog added and PRD 1 approved/scoped; Phase 0 hardening shipped; 425 tests
 - 2026-07-26T00:00:00Z code-review remediation shipped: bugs B1-B8, dead-code removal, DRY, deploy hardening (a43897d..efede42); 297 tests; promoted to main
 - 2026-08-02T00:00:00Z 2.3 deferred review findings closed (0eb4d75): deploy hardening, client line mirror extracted and tested, save loader validates before writing, per-session input lock; 547 tests; promoted and deployed
+- 2026-08-02T00:00:00Z 1.3 -> 2.3 contract decision 10 (policy-knob simulators, sha256:f9d9a851b941); Feature B items 2-4 built: scan_all, scan_wildcard, link_cost + 4 puzzles; 33 puzzles, 577 tests

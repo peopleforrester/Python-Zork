@@ -1,0 +1,43 @@
+# Canonical answer per the link_cost simulator: 3 hops * (1000/100) transmission
+# + 3 * 2 latency = 30 + 6 = 36 ticks.
+id: link_store_and_forward
+component_category: networking
+subject_area: networking
+difficulty: 1
+title: "Transfer cost: store and forward"
+simulator: link_cost
+prompt: |
+  A 1000-unit frame leaves the Ethernet port for the kernel, crossing
+  three links. Every link is the same:
+
+    bandwidth 100 units per tick, latency 2 ticks
+
+  These are store-and-forward switches. Each one receives the entire
+  frame into a buffer, checks it, and only then begins sending it on.
+
+  How many ticks until the last unit arrives?
+setup:
+  size: 1000
+  mode: store_and_forward
+  links:
+    - {latency: 2, bandwidth: 100}
+    - {latency: 2, bandwidth: 100}
+    - {latency: 2, bandwidth: 100}
+answer_kind: number
+answer_grammar: "a single whole number of ticks"
+hints:
+  - "Work out one hop first: how long to push 1000 units through a 100-unit-per-tick link, plus its latency?"
+  - "Nothing overlaps. Three hops cost three times one hop."
+explanation: |
+  Pushing 1000 units through a 100-unit-per-tick link takes 10 ticks,
+  and each link adds 2 ticks of latency, so one hop is 12. Because each
+  switch waits for the whole frame before forwarding, nothing overlaps
+  and three hops cost 3 * 10 + 3 * 2 = 36 ticks.
+
+  The transmission cost is paid once per hop. That is the expensive part
+  of the total, and it scales with the number of switches between the
+  endpoints rather than with the distance.
+
+  If that sounds familiar, it should. This is the un-pipelined case: a
+  stage that will not start until the previous one has completely
+  finished. The CPU rooms measure the same waste in cycles.

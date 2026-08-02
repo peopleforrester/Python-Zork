@@ -1,0 +1,52 @@
+# Canonical answer per the scan_wildcard simulator: boot_sector_virus.
+# Byte-identical file to signature_near_miss, which reports clean. The only
+# difference is the trailing ? in the pattern and mode: wildcard.
+id: scan_wildcard_mutation
+component_category: security
+subject_area: security
+difficulty: 2
+title: "Scan policy: widening the pattern"
+simulator: scan_wildcard
+prompt: |
+  The recompiled sample that walked past the kernel scanner is back, byte
+  for byte:
+
+    "init_sector(); XJMP:0x7C0F; load_mbr()"
+
+  Exact matching called it clean, because the stored signature ended
+  0x7C00 and the sample ends 0x7C0F. So the database was widened. In
+  these patterns '?' stands for exactly one character and '*' for any
+  run of them:
+
+    boot_sector_virus: "XJMP:0x7C0?"
+    rootkit_virus:     "hide_*("
+
+  The scanner is now running in wildcard mode. What does it report?
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C0?"
+    rootkit_virus: "hide_*("
+  file_contents: "init_sector(); XJMP:0x7C0F; load_mbr()"
+  mode: wildcard
+answer_kind: choice
+answer_grammar: "one virus name, or clean"
+hints:
+  - "The file is unchanged. Ask what the pattern now covers that it did not before."
+  - "XJMP:0x7C0? matches XJMP:0x7C0 followed by any single character. The sample has an F there."
+explanation: |
+  XJMP:0x7C0? matches XJMP:0x7C0F, so the scan reports
+  boot_sector_virus. The identical file was clean under exact matching.
+  One character of pattern, and a variant that was invisible is caught.
+
+  It also now catches XJMP:0x7C0A, XJMP:0x7C0Z, and XJMP:0x7C0 followed
+  by a space. That is the trade. A wider pattern converts false
+  negatives into false positives, and there is no width that has
+  neither. Every real engine is a stack of these decisions, which is why
+  two scanners disagree about the same file and both are working
+  correctly.
+
+  Note what this does not do. It catches a mutation in the bytes the
+  signature happens to cover. An author who moves the jump somewhere
+  else, or encrypts it and decrypts at runtime, walks past this pattern
+  as easily as the exact one. Widening buys a generation of variants,
+  not immunity, and that is the ceiling signature matching never clears.

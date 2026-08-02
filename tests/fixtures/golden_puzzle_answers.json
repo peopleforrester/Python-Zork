@@ -89,6 +89,20 @@
     "simulator": "cache",
     "subject_area": "memory"
   },
+  "link_cut_through": {
+    "answer_kind": "number",
+    "canonical_answer": 16,
+    "difficulty": 2,
+    "simulator": "link_cost",
+    "subject_area": "networking"
+  },
+  "link_store_and_forward": {
+    "answer_kind": "number",
+    "canonical_answer": 36,
+    "difficulty": 1,
+    "simulator": "link_cost",
+    "subject_area": "networking"
+  },
   "packet_route_dma_gpu": {
     "answer_kind": "sequence",
     "canonical_answer": [
@@ -206,6 +220,23 @@
     "difficulty": 2,
     "simulator": "pipeline",
     "subject_area": "cpu"
+  },
+  "scan_report_all_matches": {
+    "answer_kind": "sequence",
+    "canonical_answer": [
+      "boot_sector_virus",
+      "rootkit_virus"
+    ],
+    "difficulty": 2,
+    "simulator": "scan_all",
+    "subject_area": "security"
+  },
+  "scan_wildcard_mutation": {
+    "answer_kind": "choice",
+    "canonical_answer": "boot_sector_virus",
+    "difficulty": 2,
+    "simulator": "scan_wildcard",
+    "subject_area": "security"
   },
   "seek_order_matters": {
     "answer_kind": "number",

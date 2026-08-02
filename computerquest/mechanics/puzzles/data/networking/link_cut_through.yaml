@@ -1,0 +1,51 @@
+# Canonical answer per the link_cost simulator: 3 * 2 latency + max transmission
+# (1000/100 = 10) = 6 + 10 = 16 ticks. Setup is byte-identical to
+# link_store_and_forward except for mode.
+id: link_cut_through
+component_category: networking
+subject_area: networking
+difficulty: 2
+title: "Transfer cost: cut through"
+simulator: link_cost
+prompt: |
+  The same 1000-unit frame, the same three links, the same numbers:
+
+    bandwidth 100 units per tick, latency 2 ticks
+
+  The switches are replaced with cut-through switches. Each reads only
+  far enough to find the destination address, then starts sending the
+  rest onward while it is still arriving. The hops overlap.
+
+  How many ticks until the last unit arrives?
+setup:
+  size: 1000
+  mode: cut_through
+  links:
+    - {latency: 2, bandwidth: 100}
+    - {latency: 2, bandwidth: 100}
+    - {latency: 2, bandwidth: 100}
+answer_kind: number
+answer_grammar: "a single whole number of ticks"
+hints:
+  - "The first unit still pays every latency. Ask what the last unit pays after that."
+  - "The transmission is paid once now, not once per hop, because the hops run at the same time."
+explanation: |
+  The leading edge of the frame crosses all three links paying only
+  their latencies, 6 ticks. Behind it the frame streams through all
+  three links at once, so the 10 ticks of transmission are paid once
+  rather than three times. Total 16 ticks, against 36 for the identical
+  frame through store-and-forward switches.
+
+  Notice which term collapsed. Latency did not: every hop still costs
+  its 2 ticks and always will, because that is the wire. Transmission
+  did, because transmission is the part that can be overlapped. Adding
+  hops to this path now costs 2 ticks each instead of 12.
+
+  When the links differ, the slowest one sets the pace, since a switch
+  cannot send faster than it receives. That is the bottleneck rule, and
+  it is why one cheap link in the middle of a fast path is worth finding.
+
+  This is pipelining, one layer down from the CPU. Same shape, same
+  payoff, same reason the ideal is never quite reached: cut-through
+  cannot check a frame it has already begun forwarding, so it passes on
+  corrupted frames that a store-and-forward switch would have dropped.

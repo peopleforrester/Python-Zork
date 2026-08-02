@@ -13,8 +13,13 @@ from computerquest.mechanics.puzzles.parsers import parse_answer
 from computerquest.mechanics.puzzles.types import MicroPuzzle
 from computerquest.mechanics.simulators.base import AnswerKind, Verdict, verify_sequence
 from computerquest.mechanics.simulators.cache import CacheSimulator
+from computerquest.mechanics.simulators.link import LinkCostSimulator
 from computerquest.mechanics.simulators.packet import PacketRouteSimulator
 from computerquest.mechanics.simulators.pipeline import PipelineSimulator
+from computerquest.mechanics.simulators.scanner import (
+    MultiMatchScanSimulator,
+    WildcardScanSimulator,
+)
 from computerquest.mechanics.simulators.signature import SignatureMatchSimulator
 from computerquest.mechanics.simulators.storage import SeekDistanceSimulator
 from computerquest.mechanics.simulators.tlb import TLBSimulator, TLBTranslateSimulator
@@ -32,6 +37,11 @@ SIMULATORS: dict[str, Any] = {
     "packet": PacketRouteSimulator(),
     "seek": SeekDistanceSimulator(),
     "signature": SignatureMatchSimulator(),
+    # Added by PRD 1 Feature B. New entries only: editing the two above in
+    # place would invalidate the nine puzzles built on their current answers.
+    "scan_all": MultiMatchScanSimulator(),
+    "scan_wildcard": WildcardScanSimulator(),
+    "link_cost": LinkCostSimulator(),
 }
 
 

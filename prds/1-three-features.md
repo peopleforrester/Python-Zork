@@ -171,6 +171,19 @@ progression value.
 
 ## Feature C: author-extensible puzzles
 
+**ANSWERED 2026-08-02 (Michael): no player-authored content.** The
+user-directory layer described at the end of this section is closed and will
+not be built: no `~/.computerquest/puzzles/` loading, no id namespacing, no
+`room:` key, no `source` field. The open question below is settled in favour of
+*more puzzles*, authored in-repo.
+
+What survives the answer is the validation CLI, which is repo tooling rather
+than player-facing extensibility, and the one real defect this section
+uncovered: `answer_kind` is never checked against the simulator's own
+`answer_kind`, so a mismatch loads cleanly and makes every possible answer
+wrong forever. That is worth closing whoever writes the puzzles. Neither is in
+flight.
+
 **Open question for Michael, and it changes the scope by an order of
 magnitude:** is the goal *player-authored* puzzles, or simply *more* puzzles?
 
@@ -252,5 +265,10 @@ Each step lands green and is separately shippable.
 3. **Feature B: the free win only.** The false-positive security puzzle, one YAML
    file, no code. The new scanners and the link-cost simulator are not being
    authored now.
+
+   **Amended 2026-08-02 (Michael):** this was a sequencing call, not a cut, and
+   describing it later as "deferred" misread it. Items 2 to 4 are now built:
+   `scan_all`, `scan_wildcard`, and `link_cost`, with four puzzles. Contract
+   decision 10 records the reasoning. Feature B is complete.
 4. **Build order: Phase 0 first**, as its own shippable unit.
 5. **Sister repo `kodequest` stays untouched.** Read-only reference only.

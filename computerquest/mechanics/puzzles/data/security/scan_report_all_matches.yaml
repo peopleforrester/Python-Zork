@@ -1,0 +1,52 @@
+# Canonical answer per the scan_all simulator: boot_sector_virus rootkit_virus
+# (both patterns present; this scanner reports every match, in database order).
+# Byte-identical setup to signature_first_match, which reports only the first.
+id: scan_report_all_matches
+component_category: security
+subject_area: security
+difficulty: 2
+title: "Scan policy: report every match"
+simulator: scan_all
+prompt: |
+  The same doubly-infected sample the single-verdict scanner just looked
+  at, and the same database:
+
+    boot_sector_virus: "XJMP:0x7C00"   (first entry)
+    rootkit_virus:     "hide_proc("    (second entry)
+
+  Contents:
+
+    "hide_proc(pid); XJMP:0x7C00; done()"
+
+  This scanner does not stop at the first hit. It walks the whole
+  database and prints a verdict for every entry, in database order.
+
+  Give both verdicts, in order: the virus name where that signature
+  matched, or "clean" where it did not.
+setup:
+  signatures:
+    boot_sector_virus: "XJMP:0x7C00"
+    rootkit_virus: "hide_proc("
+  file_contents: "hide_proc(pid); XJMP:0x7C00; done()"
+answer_kind: sequence
+answer_grammar: "one verdict per database entry, in order: a virus name or clean"
+hints:
+  - "Nothing about the file changed. Only the stopping rule did."
+  - "Two entries in the database means two verdicts. Check each pattern against the text in turn."
+explanation: |
+  Both signatures match, so both are reported: boot_sector_virus first
+  because it is the first database entry, then rootkit_virus. The file
+  is identical to the one the single-verdict scanner called
+  boot_sector_virus, and so is the database. The only thing that changed
+  is when the scan stops.
+
+  That is worth sitting with, because it is the shape of most real
+  security tuning. The detection logic was already good enough to find
+  both infections; the reporting policy threw one away. A cleanup driven
+  by the first verdict removes the boot sector infection, declares
+  success, and leaves the rootkit running with the machine now trusted.
+
+  The cost is not free. Reporting everything means reporting every
+  marginal hit too, which is the base-rate problem the false-positive
+  sample teaches. Scanners choose where to sit on that line; there is no
+  setting that is right for every file.

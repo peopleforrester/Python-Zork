@@ -48,7 +48,9 @@ class ComputerArchitecture:
         self.rooms["virtual_memory"].puzzles = ["tlb_hitmiss_lru", "tlb_walk_translate"]
         self.rooms["hdd"].puzzles = ["hdd_seek_fcfs", "hdd_seek_sstf"]
         self.rooms["network_interface"].puzzles = ["packet_route_kernel", "packet_route_ssd"]
-        self.rooms["bios"].puzzles = ["virus_signature_match", "signature_first_match"]
+        self.rooms["bios"].puzzles = [
+            "virus_signature_match", "signature_first_match", "scan_report_all_matches",
+        ]
         self.rooms["core1_cu"].puzzles = ["pipeline_no_hazards"]
         self.rooms["core1_alu"].puzzles = ["pipeline_stall_no_forwarding"]
         self.rooms["core2_cu"].puzzles = ["pipeline_alu_chain"]
@@ -61,6 +63,8 @@ class ComputerArchitecture:
         self.rooms["storage_controller"].puzzles = ["hdd_seek_zigzag"]
         self.rooms["sata_ports"].puzzles = ["hdd_seek_sstf_zigzag"]
         self.rooms["ssd"].puzzles = ["seek_order_matters"]
+        self.rooms["usb_ports"].puzzles = ["scan_wildcard_mutation"]
+        self.rooms["ethernet"].puzzles = ["link_store_and_forward", "link_cut_through"]
         self.rooms["pcie_controller"].puzzles = ["packet_route_dma_gpu"]
         self.rooms["pch"].puzzles = ["packet_route_reply"]
         self.rooms["pcie_x16"].puzzles = ["packet_route_dma_to_ram"]
