@@ -1,7 +1,7 @@
 # Project State: Python-Zork
 
 Phase: 3.3 Promote (complete) — no unit in flight
-Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decisions 8 and 9 2026-08-01 sha256:3a650b2e76b6; decision 10 policy-knob simulators 2026-08-02 sha256:f9d9a851b941)
+Approved: 2026-07-04T00:00:00Z by Michael (sha256:cde83dbaa90b; prose-style amendment 2026-07-06 sha256:8abdc57a3d45; decision 7 adaptive difficulty 2026-07-31 sha256:2949c0833fdf; fidelity-statement reconciliation + decisions 8 and 9 2026-08-01 sha256:3a650b2e76b6; decision 10 policy-knob simulators 2026-08-02 sha256:f9d9a851b941; decision 11 simulator diversity + deliberate empty rooms 2026-08-02 sha256:591ed2838167)
 
 ABOUTME: Durable state record for /continue. Updated at every transition.
 ABOUTME: Lifecycle header per state-persistence schema; narrative body below.
@@ -505,7 +505,7 @@ written before that fix, rather than checked against the code.
 - Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75 (Feature B commit pending)
 - `staging` and `main` are in sync at 0eb4d75 (all refs, local and origin).
 - Production verified serving 0eb4d75 via `/api/health`.
-- Tests: 602/602 via `uv run pytest` (coverage 92%); 33 puzzles; ruff clean; mypy clean across `computerquest` and `scripts/`. Frontend: 61 vitest + 3 Playwright e2e green.
+- Tests: 654/654 via `uv run pytest`; 39 puzzles; ruff clean; mypy clean across `computerquest` and `scripts/`. Frontend: 61 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 - No known unfixed defects. The `scripts/deploy.py` mypy `no-any-return` is
@@ -549,3 +549,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-08-02T00:00:00Z 1.3 -> 2.3 contract decision 10 (policy-knob simulators, sha256:f9d9a851b941); Feature B items 2-4 built: scan_all, scan_wildcard, link_cost + 4 puzzles; 33 puzzles, 577 tests
 - 2026-08-02T00:00:00Z 2.3 authoring validator built (scripts/validate_puzzles.py); answer_kind claim corrected (already fixed in e5795bb); two vacuous tests caught by mutation; 596 tests
 - 2026-08-02T00:00:00Z 2.3 housekeeping sweep: dead by_category index removed, all 79 verbs exercised, App.tsx unit-tested, deploy.py mypy closed; 602 pytest + 61 vitest
+- 2026-08-02T00:00:00Z 1.3 -> 2.3 decision 11 (simulator diversity per area + deliberate empty rooms, sha256:591ed2838167); content-gap sweep closed issues #1-#5: flash/simd/interleave simulators, 6 puzzles, SSD seek defect fixed; 39 puzzles, 654 tests

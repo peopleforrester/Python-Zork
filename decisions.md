@@ -426,3 +426,59 @@ Left open deliberately: 11 of 35 rooms hold no puzzle and storage has 5 against
 7 in every other area. That is an authoring decision, not a defect, and the
 question worth answering is whether `gpu` and `memory_controller` deserve
 puzzles rather than whether every room needs one.
+
+## 2026-08-02T22:30:00Z · 1.3 · Contract amended: decision 11, and the content-gap sweep
+
+Michael asked for the content gaps evaluated before being fixed, so the
+evaluation gated the work rather than following it. Eleven rooms held no
+puzzle. Three had a genuinely untaught lesson; eight should stay empty. Filed
+as issues #1 to #5 on the repo, which needed issues enabling first.
+
+**One of the eleven was not a gap at all.** It was a defect. `ssd` bound
+`seek_order_matters`, which asks how many tracks the head travels. An SSD has no head. The puzzle was correct
+for the simulator it named and wrong for the room it stood in, so a player
+came away with an intuition about flash that is the reverse of true. It moved
+to `hdd`, whose two puzzles it already comments on, making that room a clean
+difficulty 1 to 3 ramp.
+
+The root cause is worth more than the fix: storage rested entirely on the
+`seek` simulator, five puzzles asking one question in four costumes, and
+nothing could catch a puzzle landing in a room its simulator does not
+describe. Decision 11 now requires every area to span at least two simulators
+and a test enforces it.
+
+**Three rooms earned puzzles**, each with the policy knob decision 10 requires:
+
+- `ssd` gets `flash` (in-place versus erase-block). Five host writes cost eight
+  page-writes, and the workload is chosen so the cost arrives entirely with the
+  rewrite: four sequential writes amplify not at all. That inverts what the
+  platters teach, where a revisit to a nearby track was the cheap case.
+- `gpu` gets `simd`. Nothing in the game modelled parallelism, in the most
+  parallel component in the machine. The knob is the arrangement of identical
+  work: eight lanes sorted cost 8 slots, the same eight interleaved cost 16.
+- `memory_controller` gets `interleave`. Nothing explained why a system ships
+  four DIMMs, which the three duplicate DIMM rooms silently asked. Eight lines
+  across four channels: 8 cycles block-mapped, 2 interleaved.
+
+`pcie_x1_1` got a puzzle and no simulator, since `link_cost` already models
+bandwidth. `packet.py`, `signature.py` and `storage.py` are all untouched.
+
+**Eight rooms stay empty and that is now recorded with a test.** Seven are
+duplicates by their own in-game descriptions; padding them would repeat the
+room they duplicate or invent an unrelated lesson somewhere arbitrary.
+`cpu_package` is a lobby whose description is a directory of its children, each
+one step away and already teaching, and onboarding is handled by Core 1's
+difficulty-1 auto-prompt. The test fails in both directions.
+
+Two process notes. A first version of the coverage test asserted that every
+room with puzzles has a difficulty-1 entry point; fifteen rooms failed it,
+because the gate is deliberately cross-room and most rooms legitimately hold
+only gated puzzles. The invariant belongs to the subject area. I had
+written it per room, which was a rule the game does not have, caught by
+running it.
+
+Both new guards were mutation-checked, by padding an empty room and by binding
+one puzzle to two rooms. That is now routine after three vacuous tests in as
+many days.
+
+Contract sha256:591ed2838167.
