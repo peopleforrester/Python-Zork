@@ -175,7 +175,7 @@
   "pipeline_forwarding_intro": {
     "answer_kind": "number",
     "canonical_answer": 8,
-    "difficulty": 2,
+    "difficulty": 1,
     "simulator": "pipeline",
     "subject_area": "cpu"
   },

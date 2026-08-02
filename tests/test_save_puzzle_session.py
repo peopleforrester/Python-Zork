@@ -137,12 +137,10 @@ class TestPromptedRoomsRoundtrips(_SaveDir):
     def test_a_skipped_room_does_not_re_prompt_after_loading(self):
         """Skip records no attempt, so before this change the room auto-prompted
         again on every load. That is the exact complaint being fixed."""
-        # core1's puzzle is gated for a fresh player, so walk to core1_cu,
-        # which binds a difficulty-1 puzzle and does auto-prompt.
-        self.game.feed("n")
+        # Entering core1 auto-prompts its difficulty-1 puzzle.
         self.game.feed("n")
         self.game.feed("skip")
-        self.assertIn("core1_cu", self.game.prompted_rooms)
+        self.assertIn("core1", self.game.prompted_rooms)
 
         fresh = self._roundtrip()
         # Walk out and back in; the room must stay quiet.

@@ -4,7 +4,7 @@
 id: pipeline_forwarding_intro
 component_category: cpu
 subject_area: cpu
-difficulty: 2
+difficulty: 1
 title: "Pipeline: count the cycles with forwarding on"
 simulator: pipeline
 prompt: |

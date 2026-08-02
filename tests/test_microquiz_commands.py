@@ -130,14 +130,10 @@ class TestHintAndSkip(MicroquizCommandBase):
 
 class TestAutoPromptAndLook(MicroquizCommandBase):
     def test_first_entry_auto_presents_the_primary_puzzle(self) -> None:
-        # core1's puzzle is difficulty 2 and the gate hides it from a fresh
-        # player, so the auto-prompt must stay silent there. core1_cu binds a
-        # difficulty-1 puzzle, which is what a new player should meet first.
-        self.assertNotIn("PUZZLE:", self.game.feed("n"))
-        result = self.game.feed("n")  # into core1_cu
-        self.assertIn("PUZZLE:", result)
+        result = self.game.feed("n")  # into core1, which binds the pipeline intro
+        self.assertIn("Pipeline", result)
         self.assertIn("skip", result.lower())
-        self.assertEqual(self.game.current_puzzle.id, "pipeline_no_hazards")
+        self.assertEqual(self.game.current_puzzle.id, "pipeline_forwarding_intro")
 
     def test_second_entry_does_not_re_prompt(self) -> None:
         self.game.feed("n")

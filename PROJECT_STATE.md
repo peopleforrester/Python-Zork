@@ -395,10 +395,16 @@ Three of these were in code written earlier the same session, and two were
 self-inflicted (adding `difficulty` to the read-only set, and building
 completion from the raw room list rather than the gated one).
 
-Two behaviour changes worth knowing: entering Core 1 no longer auto-prompts,
-because that puzzle is difficulty 2 and legitimately gated; four difficulty-1
-puzzles sit two hops from the start, so onboarding still works. And six existing
-tests were updated because they pinned the old buggy behaviour.
+Six existing tests were updated because they pinned the old buggy behaviour.
+
+Gating the auto-prompt initially silenced Core 1, the first room north of the
+start, because its puzzle was difficulty 2. Rather than weaken the gate,
+`pipeline_forwarding_intro` was retuned to difficulty 1 (Michael's call). That
+is the better reading of the content anyway: it is literally the intro, its pair
+is "the same chain with forwarding off", and counting cycles *with* forwarding
+is the easier of the two. It also creates a real ramp, since solving it now
+unlocks its own difficulty-2 pair. cpu keeps 10.0 total weight against a cap of
+5, and a full playthrough still maxes every meter.
 
 ## Branch & Tests
 

@@ -97,12 +97,27 @@ class TestKnowledgeReportRendering(unittest.TestCase):
         self.game = build_real_game()
 
     def test_fractional_level_renders_without_crashing(self) -> None:
-        self.game.player.location = self.game.game_map.rooms["core1"]
-        self.game.feed("solve pipeline_forwarding_intro")
-        self.game.feed("answer 8")   # cpu -> 1.5
+        """Any difficulty-2 solve yields 1.5 (difficulty * 0.5 + 0.5). Pick one
+        from the registry rather than naming a puzzle, so re-tuning a puzzle's
+        difficulty cannot silently stop exercising the fractional path."""
+        registry = self.game.puzzle_registry
+        puzzle = next(p for p in registry.by_id.values() if p.difficulty == 2)
+        room = next(
+            r for r in self.game.game_map.rooms.values() if puzzle.id in r.puzzles
+        )
+        self.game.player.location = room
+        self.game.feed(f"solve {puzzle.id}")
+        canonical = registry.canonical_answer(puzzle.id)
+        answer = (
+            " ".join(str(c) for c in canonical)
+            if isinstance(canonical, (list, tuple))
+            else str(canonical)
+        )
+        self.game.feed(f"answer {answer}")
+        self.assertEqual(self.game.player.knowledge[puzzle.subject_area], 1.5)
         report = self.game.feed("knowledge")
         self.assertIn("1.5", report)
-        self.assertIn("CPU", report.upper())
+        self.assertIn(puzzle.subject_area.upper(), report.upper())
 
     def test_k_alias_resolves(self) -> None:
         report = self.game.feed("k")

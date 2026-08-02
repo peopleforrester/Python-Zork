@@ -49,8 +49,7 @@ class TestCompletionCandidates(unittest.TestCase):
         self.assertNotIn("widget_here", out)
 
     def test_solve_offers_the_puzzles_the_gate_shows(self):
-        self.game.feed("n")
-        self.game.feed("n")  # Core 1 Control Unit binds a difficulty-1 puzzle
+        self.game.feed("n")  # Core 1 binds a difficulty-1 puzzle
         out = self._complete("solve ")
         self.assertTrue(out)
         self.assertEqual(set(out), {p.id for p in self.game._gated_room_puzzles()})
