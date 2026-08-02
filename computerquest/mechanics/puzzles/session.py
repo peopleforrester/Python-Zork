@@ -6,6 +6,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
+from computerquest.config import KNOWLEDGE_AREAS
 from computerquest.mechanics.puzzles.parsers import AnswerParseError
 from computerquest.mechanics.puzzles.registry import PuzzleRegistry
 from computerquest.mechanics.puzzles.types import MicroPuzzle
@@ -316,8 +317,13 @@ class PuzzleSession:
 
         This is the single writer of player.knowledge; see the knowledge
         note in docs/architecture-microquiz.md.
+
+        The tally is seeded from the canonical area list rather than from the
+        dict being replaced. Seeding from the old dict made the result whatever
+        that dict happened to hold: a save file with an extra area kept it, and
+        one missing an area raised KeyError on the first puzzle scored into it.
         """
-        totals: dict[str, float] = {area: 0.0 for area in self.player.knowledge}
+        totals: dict[str, float] = {area: 0.0 for area in KNOWLEDGE_AREAS}
         for puzzle_id in self.player.solved_puzzles:
             puzzle = self.registry.by_id.get(puzzle_id)
             if puzzle is not None:

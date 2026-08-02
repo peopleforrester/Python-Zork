@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -32,19 +33,39 @@ HEALTH_URL = "https://python-zork-production.up.railway.app/api/health"
 TERMINAL_OK = {"SUCCESS"}
 TERMINAL_BAD = {"FAILED", "CRASHED", "REMOVED"}
 
+_DEPLOY_ID = re.compile(r"[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}", re.IGNORECASE)
+
+# git's own short-sha width. Anything narrower is not evidence of a match.
+MIN_SHA_WIDTH = 7
+
 
 # --- pure helpers (unit-tested) ---------------------------------------------
 
 def parse_deployments(text: str) -> list[tuple[str, str]]:
-    """Parse `railway deployment list` into [(id, state), ...], newest first."""
+    """Parse `railway deployment list` into [(id, state), ...], newest first.
+
+    Requires a UUID-shaped first column. A bare "no spaces" test let a column
+    header through, and the caller would then poll a deployment named ID until
+    the build timeout expired.
+    """
     rows = []
     for line in text.splitlines():
         if "|" not in line:
             continue
         parts = [p.strip() for p in line.split("|")]
-        if len(parts) >= 2 and parts[0] and " " not in parts[0]:
+        if len(parts) >= 2 and _DEPLOY_ID.fullmatch(parts[0]):
             rows.append((parts[0], parts[1]))
     return rows
+
+
+def parse_variable(text: str, key: str) -> str:
+    """Read one value out of `railway variable list --kv` (KEY=value lines)."""
+    prefix = f"{key}="
+    for line in text.splitlines():
+        line = line.strip()
+        if line.startswith(prefix):
+            return line[len(prefix):]
+    return ""
 
 
 def classify(state: str) -> str:
@@ -61,12 +82,16 @@ def commit_matches(payload: dict, expected: str) -> bool:
     """True when the live service reports the commit we uploaded.
 
     Compares on the shorter of the two lengths so a short SHA still matches a
-    full one; an 'unknown' or missing commit never matches.
+    full one; an 'unknown' or missing commit never matches. The comparison has
+    a floor, because on the shorter-of-the-two rule alone a truncated or
+    single-character stamp matched almost any HEAD and read as a green deploy.
     """
     live = str(payload.get("commit", "")).strip()
     if not live or live == "unknown" or not expected:
         return False
     width = min(len(live), len(expected))
+    if width < MIN_SHA_WIDTH:
+        return False
     return live[:width].lower() == expected[:width].lower()
 
 
@@ -79,6 +104,10 @@ def _run(args: list[str], timeout: int = 180) -> tuple[int, str]:
         )
     except subprocess.TimeoutExpired:
         return 124, "timed out"
+    except FileNotFoundError:
+        # `railway` not installed is the likeliest local failure; a traceback
+        # here is far less useful than the name of the missing command.
+        return 127, f"command not found: {args[0]}"
     return proc.returncode, (proc.stdout or "") + (proc.stderr or "")
 
 
@@ -162,6 +191,20 @@ def main() -> int:
         print("MISMATCH: production is NOT serving HEAD.")
         return 1
 
+    # Read the stamp before overwriting it. If this deploy fails, the variable
+    # has to go back: it takes effect on the *next* build, so a stale stamp
+    # would make some later unrelated deploy report a commit it never served,
+    # which is the exact lie this script exists to catch.
+    code, out = _run(["railway", "variable", "list", "--kv"], timeout=60)
+    previous_sha = parse_variable(out, "DEPLOY_SHA") if code == 0 else ""
+
+    def restore_stamp() -> None:
+        if not previous_sha or previous_sha == expected:
+            return
+        print(f"  restoring DEPLOY_SHA={previous_sha[:12]}")
+        _run(["railway", "variable", "set", f"DEPLOY_SHA={previous_sha}",
+              "--skip-deploys"], timeout=180)
+
     # Stamp the service before uploading. --skip-deploys so setting it does not
     # kick off a build of the *old* code that we would then have to wait out.
     print(f"stamping DEPLOY_SHA={expected[:12]}")
@@ -185,6 +228,7 @@ def main() -> int:
     newest = newest_deployment()
     if newest is None:
         print("FAILED: could not read the deployment list.")
+        restore_stamp()
         return 1
     deploy_id, state = newest
     print(f"watching deployment {deploy_id[:8]} (currently {state})")
@@ -192,14 +236,17 @@ def main() -> int:
     outcome = wait_for_build(deploy_id, args.build_timeout)
     if outcome == "bad":
         print("FAILED: the build did not succeed.")
+        restore_stamp()
         return 1
     if outcome == "pending":
         print("FAILED: the build did not finish in time.")
+        restore_stamp()
         return 1
 
     print("build succeeded; confirming the live commit")
     if not wait_for_commit(expected, args.verify_timeout):
         print("FAILED: build succeeded but production is not serving HEAD.")
+        restore_stamp()
         return 1
 
     print("DEPLOYED and VERIFIED.")

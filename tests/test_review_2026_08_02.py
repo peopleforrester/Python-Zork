@@ -4,7 +4,10 @@ ABOUTME: Regressions for the targeted review of 2026-08-02.
 ABOUTME: Each test pins one confirmed defect in code added since the last review.
 """
 
+import threading
+import time
 import unittest
+import unittest.mock
 
 import server
 from computerquest.config import is_virus_name
@@ -264,6 +267,53 @@ class TestStateWritingVerbsDirtyTheSave(unittest.TestCase):
         for command in ("look", "objectives", "knowledge", "status", "help"):
             with self.subTest(command=command):
                 self.assertFalse(self._dirty_after(command))
+
+
+class TestConcurrentKeystrokesAreNotLost(unittest.TestCase):
+    """flask-socketio runs with async_handlers on, so each event is dispatched
+    in its own thread. Reading the line buffer at entry and writing it at exit
+    let two overlapping keystrokes race, and the later write silently dropped
+    the other's characters."""
+
+    SID = "race-sid"
+
+    def setUp(self):
+        for store in (server._sessions, server._input_buffers, server._in_escape):
+            store.clear()
+        server._sessions[self.SID] = build_real_game()
+        server._input_buffers[self.SID] = ""
+
+    def tearDown(self):
+        for store in (server._sessions, server._input_buffers, server._in_escape):
+            store.clear()
+        server._session_locks.clear()
+
+    def _type_concurrently(self, first, second):
+        """Type two chunks at once. The echo is slowed because it lands between
+        the buffer read and the buffer write, which is precisely the window the
+        race lives in; a delay anywhere else leaves it too narrow to observe."""
+        def slow_emit(*_args, **_kwargs):
+            time.sleep(0.15)
+
+        with unittest.mock.patch.object(server, "_session_id", lambda: self.SID), \
+             unittest.mock.patch.object(server, "emit", slow_emit):
+            threads = [
+                threading.Thread(target=server.handle_input, args=({"input": chunk},))
+                for chunk in (first, second)
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join(timeout=10)
+        return server._input_buffers[self.SID]
+
+    def test_every_typed_character_reaches_the_buffer(self):
+        buffered = self._type_concurrently("aaa", "bbb")
+        self.assertEqual(len(buffered), 6, f"lost characters: {buffered!r}")
+
+    def test_each_chunk_stays_contiguous(self):
+        buffered = self._type_concurrently("aaa", "bbb")
+        self.assertIn(buffered, ("aaabbb", "bbbaaa"))
 
 
 class TestPerCommandHelpCoversTheRegistry(unittest.TestCase):

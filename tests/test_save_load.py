@@ -116,6 +116,74 @@ class TestLoadGame(SaveLoadTestBase):
         self.assertIn("missing required field", result)
 
 
+class TestRejectedLoadLeavesTheGameAlone(SaveLoadTestBase):
+    """A load that fails validation must not half-apply. The old order mutated
+    the player, then raised on a later key, leaving a game that was neither the
+    saved one nor the one being played."""
+
+    def _truncate_after_the_player(self) -> str:
+        self.save_load.save_game("good")
+        path = self.save_root / "good.json"
+        state = json.loads(path.read_text())
+        # A real room id (the save stores room.id, not the map key), so the
+        # load gets past validation and into the mutating half.
+        state["player"]["location"] = self.game.game_map.rooms["core1_l1"].id
+        state["player"]["health"] = 42
+        del state["components"]  # raises only after the player is applied
+        path.write_text(json.dumps(state))
+        return "good"
+
+    def test_the_message_names_the_problem(self) -> None:
+        result = self.save_load.load_game(self._truncate_after_the_player())
+        self.assertIn("missing required field", result)
+
+    def test_the_player_is_not_moved_by_a_rejected_save(self) -> None:
+        before = self.game.player.location.id
+        self.save_load.load_game(self._truncate_after_the_player())
+        self.assertEqual(self.game.player.location.id, before)
+
+    def test_the_player_keeps_their_health(self) -> None:
+        before = self.game.player.health
+        self.save_load.load_game(self._truncate_after_the_player())
+        self.assertEqual(self.game.player.health, before)
+
+
+class TestKnowledgeIsNotTakenFromTheFile(SaveLoadTestBase):
+    """Knowledge is derived from solved puzzles (decision 5), so the file's copy
+    is advisory at best and a hand-edited one used to reach the live dict."""
+
+    def _load_knowledge(self, knowledge: dict) -> dict:
+        self.save_load.save_game("edited")
+        path = self.save_root / "edited.json"
+        state = json.loads(path.read_text())
+        state["player"]["knowledge"] = knowledge
+        path.write_text(json.dumps(state))
+        self.save_load.load_game("edited")
+        return self.game.player.knowledge
+
+    def test_an_injected_area_does_not_reach_the_player(self) -> None:
+        restored = self._load_knowledge({"cpu": 0, "__injected__": 99})
+        self.assertNotIn("__injected__", restored)
+
+    def test_the_canonical_areas_are_always_present(self) -> None:
+        restored = self._load_knowledge({})
+        self.assertEqual(
+            set(restored), {"cpu", "memory", "storage", "networking", "security"}
+        )
+
+    def test_a_save_with_no_areas_still_scores_solved_puzzles(self) -> None:
+        """Seeding the tally from the file's keys raised KeyError here."""
+        puzzle = self.game.puzzle_registry.by_id["l1_lru_basic"]
+        self.game.player.solved_puzzles.add(puzzle.id)
+        restored = self._load_knowledge({})
+        self.assertGreater(restored[puzzle.subject_area], 0)
+
+    def test_an_inflated_value_is_recomputed_away(self) -> None:
+        restored = self._load_knowledge({"cpu": 5, "memory": 5, "storage": 5,
+                                         "networking": 5, "security": 5})
+        self.assertEqual(sum(restored.values()), 0)
+
+
 class TestSchemaMigration(SaveLoadTestBase):
     """Microquiz step 3: schema 1.1 adds puzzle progress; 1.0 saves still load."""
 

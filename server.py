@@ -3,6 +3,7 @@
 
 import logging
 import os
+import threading
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -137,6 +138,23 @@ _pending_pages: dict[str, list[str]] = {}
 _ESC_NONE, _ESC_SEEN, _ESC_CSI = 0, 1, 2
 _in_escape: dict[str, int] = {}
 
+# One lock per session. flask-socketio dispatches every event in its own thread
+# (async_handlers defaults on), so two keystrokes from one client can be handled
+# at the same time. Both read the line buffer and the later write wins, dropping
+# the other's characters. Keystrokes from one terminal are ordered by nature, so
+# serializing per session costs nothing; separate clients still run in parallel.
+_session_locks: dict[str, threading.Lock] = {}
+_session_locks_guard = threading.Lock()
+
+
+def _session_lock(sid: str) -> threading.Lock:
+    """The input lock for one session, created on first use."""
+    with _session_locks_guard:
+        lock = _session_locks.get(sid)
+        if lock is None:
+            lock = _session_locks[sid] = threading.Lock()
+        return lock
+
 # Verbs the server intercepts before they reach Game.feed(), because the
 # CLI implementations block on input(). The web UI handles its own session
 # lifecycle (disconnect/refresh) so we never need the synchronous prompt.
@@ -209,6 +227,8 @@ def handle_disconnect():
         _terminal_rows.pop(sid, None)
         _pending_pages.pop(sid, None)
         _in_escape.pop(sid, None)
+        with _session_locks_guard:
+            _session_locks.pop(sid, None)
     logger.info("Client disconnected: %s", sid)
 
 
@@ -223,6 +243,9 @@ def start_game():
     _sessions[sid] = game
     _input_buffers[sid] = ""
     _pending_pages.pop(sid, None)
+    # A half-read escape sequence would otherwise swallow the first bytes of
+    # the new game's input.
+    _in_escape.pop(sid, None)
 
     emit("game_started")
     emit("terminal_output", {"output": game.welcome_text()})
@@ -363,6 +386,13 @@ def handle_input(data):
         emit("terminal_output", {"output": "[server] no active game; click Start Game.\n\r"})
         return
 
+    # Held across the whole read-modify-write of this session's buffer.
+    with _session_lock(sid):
+        _consume_input(sid, game, data)
+
+
+def _consume_input(sid, game, data):
+    """Fold one input event into the session buffer. Caller holds the lock."""
     raw = data.get("input", "") if isinstance(data, dict) else ""
     if not raw:
         return

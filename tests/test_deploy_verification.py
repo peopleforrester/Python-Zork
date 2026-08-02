@@ -37,6 +37,16 @@ class TestDeploymentParsing(unittest.TestCase):
         self.assertEqual(deploy.parse_deployments("Unauthorized. Please run login"), [])
         self.assertEqual(deploy.parse_deployments(""), [])
 
+    def test_a_column_header_row_is_not_a_deployment(self):
+        """A pipe-separated header passes the 'no spaces in column 0' test, and
+        the caller would then poll a deployment named ID forever."""
+        text = "ID | STATUS | CREATED\n0c82da3b-6340-4aae-81ec-e3098e99ad0c | SUCCESS | x\n"
+        rows = deploy.parse_deployments(text)
+        self.assertEqual([r[0] for r in rows], ["0c82da3b-6340-4aae-81ec-e3098e99ad0c"])
+
+    def test_a_non_uuid_first_column_is_rejected(self):
+        self.assertEqual(deploy.parse_deployments("notauuid | SUCCESS | x"), [])
+
 
 class TestStateClassification(unittest.TestCase):
     def test_success_is_ok(self):
@@ -70,6 +80,51 @@ class TestCommitMatching(unittest.TestCase):
         self.assertFalse(deploy.commit_matches({}, "abc123"))
         self.assertFalse(deploy.commit_matches({"commit": ""}, "abc123"))
         self.assertFalse(deploy.commit_matches({"status": "ok"}, "abc123"))
+
+    def test_a_truncated_commit_never_matches(self):
+        """Comparing on the shorter of the two lengths meant a one-character
+        stamp matched any HEAD starting with that character."""
+        self.assertFalse(deploy.commit_matches({"commit": "a"}, "a1b2c3d4e5f6789"))
+        self.assertFalse(deploy.commit_matches({"commit": "abc123"}, "abc123def456789"))
+
+    def test_a_seven_character_sha_still_matches(self):
+        """Seven is git's own short-sha width, so it stays a real match."""
+        self.assertTrue(deploy.commit_matches({"commit": "abc123d"}, "abc123def456789"))
+
+
+class TestVariableParsing(unittest.TestCase):
+    """`railway variable list --kv` emits KEY=value lines (verified against the
+    live service, 2026-08-02)."""
+
+    KV = (
+        "CQ_HOST=0.0.0.0\n"
+        "DEPLOY_SHA=7dbcfdf799263e4df1685d49b82c252f9f709a51\n"
+        "RAILWAY_PROJECT_NAME=python-zork\n"
+    )
+
+    def test_reads_the_named_variable(self):
+        self.assertEqual(
+            deploy.parse_variable(self.KV, "DEPLOY_SHA"),
+            "7dbcfdf799263e4df1685d49b82c252f9f709a51",
+        )
+
+    def test_an_absent_variable_is_empty(self):
+        self.assertEqual(deploy.parse_variable(self.KV, "NOPE"), "")
+
+    def test_a_value_containing_an_equals_sign_is_kept_whole(self):
+        self.assertEqual(deploy.parse_variable("URL=a=b\n", "URL"), "a=b")
+
+    def test_a_prefix_of_another_key_does_not_match(self):
+        self.assertEqual(deploy.parse_variable("DEPLOY_SHA_OLD=x\n", "DEPLOY_SHA"), "")
+
+
+class TestRunnerSurvivesAMissingBinary(unittest.TestCase):
+    def test_a_missing_railway_cli_is_reported_not_raised(self):
+        """`railway` not being installed is the most likely local failure, and
+        it crashed the script with a traceback instead of a message."""
+        code, out = deploy._run(["definitely-not-a-real-binary-xyz"], timeout=5)
+        self.assertNotEqual(code, 0)
+        self.assertIn("not found", out.lower())
 
 
 class TestServerReportsItsCommit(unittest.TestCase):

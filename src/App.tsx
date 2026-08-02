@@ -4,6 +4,7 @@ import { FitAddon } from 'xterm-addon-fit';
 import { WebLinksAddon } from 'xterm-addon-web-links';
 import { io, Socket } from 'socket.io-client';
 import GameMap from './components/GameMap';
+import { LineMirror, remainderFor } from './completion';
 
 import 'xterm/css/xterm.css';
 
@@ -16,7 +17,9 @@ function App() {
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
   const fitAddon = useRef<FitAddon>(new FitAddon());
-  const pendingRef = useRef<string>('');
+  // The single mirror of the server's line buffer. It was previously a ref
+  // plus a closure variable updated in different places, and the two drifted.
+  const pending = useRef<LineMirror>(new LineMirror());
 
   // Refs mirror socket/isGameRunning so the terminal's onData handler (bound
   // once at terminal creation) always reads current values instead of a
@@ -39,21 +42,17 @@ function App() {
         // The player has already typed a prefix, and the server's buffer
         // holds it, so send only the remainder. Sending the whole match
         // produced 'solsolve'.
-        const typed = pendingRef.current;
-        const lastWord = typed.endsWith(' ') ? '' : (typed.split(' ').pop() ?? '');
-        const remainder = matches[0].startsWith(lastWord)
-          ? matches[0].slice(lastWord.length)
-          : matches[0];
+        const remainder = remainderFor(pending.current.value, matches[0]);
         if (remainder) {
           // Do not write locally: the server echoes printable input back, the
           // same as ordinary typing. Writing here too rendered 'solveve'.
           socketRef.current?.emit('terminal_input', { input: remainder });
-          pendingRef.current = typed + remainder;
+          pending.current.accept(remainder);
         }
       } else {
         // Several matches: list them the way a shell does. This is client-only
         // output, so writing directly is correct here.
-        term.write('\r\n' + matches.join('  ') + '\r\n> ' + pendingRef.current);
+        term.write('\r\n' + matches.join('  ') + '\r\n> ' + pending.current.value);
       }
     };
     socket.on('completions', onCompletions);
@@ -80,6 +79,8 @@ function App() {
       console.log('Socket disconnected');
       setIsConnected(false);
       setIsGameRunning(false);
+      // The server discards this session's buffer on disconnect.
+      pending.current.reset();
     });
     
     newSocket.on('game_started', () => {
@@ -137,30 +138,16 @@ function App() {
     term.open(terminalRef.current);
     fitAddon.current.fit();
 
-    // Handle user input
-    // Mirror of the line being typed, so Tab can ask the server for
-    // completions. The server owns the authoritative buffer; this is only
-    // what we need to form the request and to know how much of a match the
-    // player has already typed.
-    let pending = '';
-    const setPending = (next: string) => {
-      pending = next;
-      pendingRef.current = next;
-    };
-
+    // Handle user input. The mirror of the line being typed lives in
+    // completion.ts, where it is tested against server.py's own rules; a paste
+    // arrives as one multi-character event, so it must be walked per character.
     term.onData((data) => {
       if (data === '\t') {
         // Tab never reaches the game: it asks for completions instead.
-        socketRef.current?.emit('complete', { line: pending });
+        socketRef.current?.emit('complete', { line: pending.current.value });
         return;
       }
-      if (data === '\r' || data === '\n') {
-        setPending('');
-      } else if (data === '\x7f' || data === '\b') {
-        setPending(pending.slice(0, -1));
-      } else if (data >= ' ') {
-        setPending(pending + data);
-      }
+      pending.current.push(data);
       const activeSocket = socketRef.current;
       if (activeSocket && isGameRunningRef.current) {
         activeSocket.emit('terminal_input', { input: data });
@@ -213,6 +200,8 @@ function App() {
       if (terminalInstance.current) {
         terminalInstance.current.clear();
       }
+      // start_game resets the server's buffer, so the mirror follows.
+      pending.current.reset();
       // Report the viewport height up front so the first long output pages.
       const rows = terminalInstance.current?.rows;
       if (rows) {

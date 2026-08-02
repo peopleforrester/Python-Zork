@@ -135,36 +135,64 @@ class SaveLoadSystem:
         return f"Game loaded from {path.name}"
 
     def _apply(self, state: dict[str, Any]) -> None:
-        """Mutate self.game in place to match the deserialized state."""
-        game = self.game
-        game.turns = state["turns"]
-        game_state = state["game_state"]
-        game.game_over = game_state["game_over"]
-        game.victory = game_state["victory"]
-        # all_viruses_found is derived from player.found_viruses (restored
-        # below), so there is nothing to assign here. The key is still written
-        # on save for schema stability and simply ignored on load.
+        """Mutate self.game in place to match the deserialized state.
 
+        Every field is read up front, before anything is written. Reading and
+        writing in one pass meant a save that was valid down to its last key
+        left the player moved, healed, and re-inventoried by the half that had
+        already run, so a rejected load was more destructive than no load.
+        """
+        game = self.game
         rooms_by_id = {room.id: room for room in game.game_map.rooms.values()}
+
+        # --- read and validate, mutating nothing ---
+        turns = state["turns"]
+        game_state = state["game_state"]
+        game_over = game_state["game_over"]
+        victory = game_state["victory"]
+        # all_viruses_found is derived from player.found_viruses (restored
+        # below), so there is nothing to read here. The key is still written
+        # on save for schema stability and simply ignored on load.
 
         player_state = state["player"]
         location = rooms_by_id.get(player_state["location"])
         if location is None:
             raise KeyError(f"unknown location id {player_state['location']!r}")
+        items = player_state["items"]
+        health = player_state["health"]
+        name = player_state["name"]
+        found_viruses = player_state["found_viruses"]
+        quarantined_viruses = player_state["quarantined_viruses"]
+        # Absent in 1.0 saves; default to empty rather than failing.
+        solved_puzzles = set(player_state.get("solved_puzzles", []))
+        attempted_puzzles = set(player_state.get("attempted_puzzles", []))
+        # player.knowledge is deliberately not read: it is derived from the
+        # solved set (decision 5) and is rederived below. The file still
+        # carries it for readability and for older loaders.
+
+        rooms_to_apply = []
+        for room_id, room_state in state["components"].items():
+            room = rooms_by_id.get(room_id)
+            if room is None:
+                continue  # Saved component no longer exists in current world.
+            rooms_to_apply.append((room, room_state["items"], room_state["visited"],
+                                   room_state.get("error_state"),
+                                   room_state.get("power_state", "on")))
+
+        # --- write ---
+        game.turns = turns
+        game.game_over = game_over
+        game.victory = victory
 
         player = game.player
         player.location = location
-        player.items = player_state["items"]
-        player.health = player_state["health"]
-        player.name = player_state["name"]
-        player.found_viruses = player_state["found_viruses"]
-        player.quarantined_viruses = player_state["quarantined_viruses"]
-        player.knowledge = player_state["knowledge"]
-        # Absent in 1.0 saves; default to empty rather than failing.
-        player.solved_puzzles = set(player_state.get("solved_puzzles", []))
-        player.attempted_puzzles = set(player_state.get("attempted_puzzles", []))
-        # Knowledge is derived state since the microquiz cutover: rederive
-        # from the solved set rather than trusting what the file stored.
+        player.items = items
+        player.health = health
+        player.name = name
+        player.found_viruses = found_viruses
+        player.quarantined_viruses = quarantined_viruses
+        player.solved_puzzles = solved_puzzles
+        player.attempted_puzzles = attempted_puzzles
         self.game._recompute_knowledge()
 
         # Schema 1.2. Restored after the location above, because the session
@@ -172,16 +200,13 @@ class SaveLoadSystem:
         # empty session exactly as before.
         self._apply_puzzle_session(state.get("puzzle_session", {}))
 
-        for room_id, room_state in state["components"].items():
-            room = rooms_by_id.get(room_id)
-            if room is None:
-                continue  # Saved component no longer exists in current world.
-            room.items = room_state["items"]
-            room.visited = room_state["visited"]
+        for room, room_items, visited, error_state, power_state in rooms_to_apply:
+            room.items = room_items
+            room.visited = visited
             if hasattr(room, "error_state"):
-                room.error_state = room_state.get("error_state")
+                room.error_state = error_state
             if hasattr(room, "power_state"):
-                room.power_state = room_state.get("power_state", "on")
+                room.power_state = power_state
 
         # No map_grid sync needed: it is a derived view over room.visited,
         # which was just restored above.
