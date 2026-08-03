@@ -394,32 +394,12 @@ class Game:
                 result += f"  Moved from {prev_location.name} to {curr_location.name}.\n"
                 result += "┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n"
 
-                # Use the new formatted look output for the current location
-                from computerquest.utils.helpers import format_look_output
-
-                # Generate technical details if the component has been visited
-                technical_details = None
-                if curr_location.visited:
-                    technical_details = []
-                    if curr_location.security_level > 0:
-                        technical_details.append(f"Security Level: {curr_location.security_level}")
-                    if curr_location.data_types:
-                        technical_details.append(
-                            f"Data Types: {', '.join(curr_location.data_types)}"
-                        )
-                    if any(curr_location.performance.values()):
-                        technical_details.append("Performance Metrics:")
-                        for metric, value in curr_location.performance.items():
-                            if value > 0:
-                                technical_details.append(f"  * {metric.capitalize()}: {value}/10")
-
-                result += format_look_output(
-                    location=curr_location,
-                    connections=curr_location.doors,
-                    items=list(curr_location.items.keys()),
-                    technical_details=technical_details,
-                    player=self.player,
-                )
+                # The arriving description is the same thing `look` renders,
+                # so ask the player for it rather than rebuilding it. Both
+                # sides used to assemble the technical readout independently,
+                # which meant looking at a room and walking into it could drift
+                # apart and report different details about the same component.
+                result += self.player.look()
 
                 # Handle any NPCs or hostile entities
                 if curr_location.play:

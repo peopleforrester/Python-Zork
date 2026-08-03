@@ -521,3 +521,43 @@ the largest uncovered block is the CLI readline and tab-completion setup, which
 needs a TTY and which the web build never runs. And `prds/1-three-features.md`
 trips the prose checker, mostly in approved analysis text: an approved plan is
 read-only, so only the sentence added yesterday was rewritten.
+
+## 2026-08-03T01:00:00Z · 2.3 · CLI surface covered, and a duplicate readout collapsed
+
+`game.py` sat at 76% and had been left there once already on the grounds that
+the uncovered block was CLI-only. That was half right. The readline plumbing
+genuinely needs a TTY, but the completer it installs is real logic, the REPL's
+interrupt handling is a real path, and `completions` had five untested branches
+feeding a feature that had already shipped one bug.
+
+Covered with a scripted stdin. The stand-in echoes its prompt, because the real
+`input` writes the prompt to stdout and the assertions read stdout, and it
+routes by prompt text: a single queue let a scripted "y" be eaten by the command
+prompt and never reach the save question it was written for. Two tests failed on
+that before the harness was right, and both failures were the harness rather
+than the code.
+
+Chasing the last lines surfaced something better. `move()` built the technical
+readout (security level, data types, performance metrics) with a copy of the
+block `player.look()` already had, then called the same formatter. Two
+independent copies of the same rendering meant looking at a room and walking
+into it could drift and report different details about the same component.
+
+Collapsed to `self.player.look()`, guarded by a golden capture of every room and
+every exit in both the fresh and the visited state, 142 cases, taken before the
+change and byte-identical after. The fixture check has its own guard asserting
+the visited pass actually renders the readout, since a golden that never
+contained it would match a version that stopped emitting it.
+
+`game.py` is now 96% and 13 statements shorter. What remains is readline
+internals, the isatty screen clear, the replay recursion, a `pass` placeholder
+for future NPC handling, and one defensive branch.
+
+Prose: `prds/1-three-features.md` was rated critical by the checker. It is an
+approved plan and read-only by default, so it was left alone until Michael asked
+for it directly. Three fixes, semantics unchanged, on the precedent of the
+2026-07-06 prose pass over the contract. One flagged construction was judged
+legitimate and kept: PyYAML aliases being "shared references, not copies" is the
+technical fact that retracted the alias-bomb finding, and the contrast carries
+the information. Two em-dashes were also found and removed, in PRD 3's title and
+PROJECT_STATE's phase line. The repo now has zero em-dashes in prose.

@@ -164,8 +164,9 @@ with the Simulator purity contract, which the loader enforces by executing every
 setup).
 
 **Caveat to surface:** networking already sums to 7.5 knowledge against a cap of
-5, security to 6.0. New puzzles in these categories are pure content value, not
-progression value.
+5, security to 6.0. Both areas are past the cap, so new puzzles there add
+content without adding progression: a player who solves them sees the same
+meter afterwards.
 
 ---
 
@@ -198,7 +199,7 @@ about 8 have none, so the shipped tree has real room to grow.
 
 **Recommended v1 either way: the validation CLI.** `from_directory` already *is*
 the validator; the CLI is a thin wrapper that reports errors legibly instead of
-crashing the game. Crucially it should **print the canonical answer**, which is
+crashing the game. It should **print the canonical answer**, which is
 the single highest-value line of output: every shipped file hand-writes that in
 a comment today, and it is the only way an author can check their prompt matches
 their setup.
@@ -219,7 +220,7 @@ origin is visible.
 **Skip the in-game editor** (authoring is multi-paragraph prose; a real editor
 beats a terminal REPL). A `playtest <id>` preview is ~20 lines and worth more.
 
-**Web-based authoring is a project, not a feature**, and it is the one option
+**Web-based authoring is a project in its own right**, and it is the one option
 that turns F2's footguns into genuine remote vulnerabilities. Prerequisites
 would be non-negotiable: bounded YAML parsing, hard numeric limits, subprocess
 execution with a wall-clock timeout, per-session quotas.
