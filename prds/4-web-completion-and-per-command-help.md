@@ -1,6 +1,9 @@
 # PRD 4: Tab completion in the web terminal + per-command help
 
-Status: **backlog** (not started, not approved)
+Status: **SHIPPED** 2026-08-01. `content/help.py::command_help` covers every
+registered command, and web tab completion lives in `src/completion.ts`, which
+mirrors the server's line buffer. The mirror later gained Ctrl-C and paste
+handling after both diverged from the server in production.
 Adapted from KubeQuest PRD #52.
 
 ## Why

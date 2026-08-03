@@ -1,6 +1,9 @@
 # PRD 5: help auto-pagination
 
-Status: **backlog** (not started, not approved)
+Status: **SHIPPED** 2026-08-01. `server.py::paginate` pages reference output to
+the reported terminal height. Later fixes: a command typed at `--more--` runs
+instead of being swallowed, and Ctrl-C cancels the pager rather than leaving it
+armed behind a fresh prompt.
 Adapted from KubeQuest PRD #53.
 
 ## Why

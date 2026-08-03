@@ -482,3 +482,42 @@ one puzzle to two rooms. That is now routine after three vacuous tests in as
 many days.
 
 Contract sha256:591ed2838167.
+
+## 2026-08-03T00:10:00Z · 2.3 · Post-sweep audit: stale statuses and an unpinned property
+
+Asked whether the work was stable and complete. It is, and the audit found no
+code defects, but four records were wrong or missing.
+
+**PRDs 2 to 5 were marked "backlog (not started, not approved)" while all four
+were live in production.** Verified against the code before touching the docs:
+`HintMode` in session.py, `mechanics/objectives.py`, `content/help.py`'s
+`command_help` plus `src/completion.ts`, and `server.py::paginate`. Anyone
+reading `prds/` would have concluded four features were unbuilt. Each status
+line now records what shipped and the later fixes each one needed, and
+`prds/README.md` carries the instruction to update the status in the same
+commit that lands the work, since this drifted for a day unnoticed.
+
+`prds/README.md` also opened by explaining that the directory exists because
+GitHub issues are disabled. Enabling issues yesterday made that false, so it
+now describes the split: PRDs for work needing a written plan and an approval,
+issues for smaller self-contained work.
+
+**Gate reachability was never pinned.** Being bound to a room is not the same
+as being obtainable: the gate opens a difficulty-N puzzle only once one at N-1
+is solved in the same area, so a difficulty-3 puzzle in an area with no
+difficulty-2 would be bound, validated, walkable-to, and locked forever. The
+binding tests only ask whether a room names it. A greedy play-out now asserts
+all 39 can actually be unlocked and that a full run maxes every meter.
+
+The first mutation attempt on that test was invalid rather than the test being
+vacuous: demoting one difficulty-1 puzzle left another in the same area, so the
+chain still reached everything and nothing was stranded. Removing every
+difficulty-1 puzzle in storage stranded all six and both guards fired, naming
+them. Worth recording because a mutant that does not actually break the
+property proves nothing about the test.
+
+Two things examined and deliberately left. `game.py` sits at 76% coverage, but
+the largest uncovered block is the CLI readline and tab-completion setup, which
+needs a TTY and which the web build never runs. And `prds/1-three-features.md`
+trips the prose checker, mostly in approved analysis text: an approved plan is
+read-only, so only the sentence added yesterday was rewritten.

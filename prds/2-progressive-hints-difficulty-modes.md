@@ -1,6 +1,10 @@
 # PRD 2: Progressive hints + difficulty/tutorial modes
 
-Status: **backlog** (not started, not approved)
+Status: **SHIPPED** 2026-08-01. Decision 9 amended the contract; `HintMode`
+(learning/standard/strict) lives in `mechanics/puzzles/session.py` and persists
+in save schema 1.3. A later fix stopped the mode skewing adaptive difficulty:
+`area_standing` read `attempted_puzzles`, which learning mode stops writing, so
+a struggling beginner was classified strong and served the hardest puzzle first.
 Adapted from KubeQuest PRD #50.
 Contract affected: `docs/architecture-microquiz.md` decision 3 (tiered hints).
 

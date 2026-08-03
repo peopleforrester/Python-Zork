@@ -1,6 +1,9 @@
 # PRD 3: Objectives — progressive reveal, grouped by location
 
-Status: **backlog** (not started, not approved)
+Status: **SHIPPED** 2026-08-01. `mechanics/objectives.py` derives next steps
+from live state. Later fixes: carried viruses are detected (the pack was a
+hiding place the room sweep never checked), regions rank by unexplored ground
+rather than alphabetically, and completion is gated on real victory.
 Adapted from KubeQuest PRD #51 (inverted: that game shows too many objectives,
 this one shows none).
 

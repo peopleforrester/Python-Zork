@@ -270,8 +270,9 @@ Each step lands green and is separately shippable.
    file, no code. The new scanners and the link-cost simulator are not being
    authored now.
 
-   **Amended 2026-08-02 (Michael):** this was a sequencing call, not a cut, and
-   describing it later as "deferred" misread it. Items 2 to 4 are now built:
+   **Amended 2026-08-02 (Michael):** this deferred items 2 to 4 to step 4 of the
+   build order below. Describing that later as "deferred by the user" misread a
+   sequencing call as a cancellation. Items 2 to 4 are now built:
    `scan_all`, `scan_wildcard`, and `link_cost`, with four puzzles. Contract
    decision 10 records the reasoning. Feature B is complete.
 4. **Build order: Phase 0 first**, as its own shippable unit.

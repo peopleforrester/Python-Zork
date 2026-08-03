@@ -505,7 +505,7 @@ written before that fix, rather than checked against the code.
 - Last CI: green (Python matrix + frontend + e2e) @ 0eb4d75 (Feature B commit pending)
 - `staging` and `main` are in sync at 0eb4d75 (all refs, local and origin).
 - Production verified serving 0eb4d75 via `/api/health`.
-- Tests: 654/654 via `uv run pytest`; 39 puzzles; ruff clean; mypy clean across `computerquest` and `scripts/`. Frontend: 61 vitest + 3 Playwright e2e green.
+- Tests: 656/656 via `uv run pytest`; 39 puzzles; ruff clean; mypy clean across `computerquest` and `scripts/`. Frontend: 61 vitest + 3 Playwright e2e green.
 - npm audit: 0 vulnerabilities (was 20).
 - Canonical test fixture: `tests/_helpers.py::build_real_game`
 - No known unfixed defects. The `scripts/deploy.py` mypy `no-any-return` is
@@ -550,3 +550,4 @@ Strategy pivot 2026-06-22: research spike found the game's "knowledge rises with
 - 2026-08-02T00:00:00Z 2.3 authoring validator built (scripts/validate_puzzles.py); answer_kind claim corrected (already fixed in e5795bb); two vacuous tests caught by mutation; 596 tests
 - 2026-08-02T00:00:00Z 2.3 housekeeping sweep: dead by_category index removed, all 79 verbs exercised, App.tsx unit-tested, deploy.py mypy closed; 602 pytest + 61 vitest
 - 2026-08-02T00:00:00Z 1.3 -> 2.3 decision 11 (simulator diversity per area + deliberate empty rooms, sha256:591ed2838167); content-gap sweep closed issues #1-#5: flash/simd/interleave simulators, 6 puzzles, SSD seek defect fixed; 39 puzzles, 654 tests
+- 2026-08-03T00:00:00Z 2.3 audit: PRDs 2-5 status lines corrected (all four had shipped while marked backlog); prds/README premise updated now issues are enabled; gate-reachability test added and mutation-checked; 656 tests

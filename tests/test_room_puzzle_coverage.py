@@ -111,6 +111,46 @@ class TestBindingsAreWellFormed(unittest.TestCase):
                 )
 
 
+class TestEveryPuzzleCanActuallyBeUnlocked(unittest.TestCase):
+    """Being bound to a room is not the same as being obtainable.
+
+    The gate opens a difficulty-N puzzle only once the player has solved one at
+    N-1 or better in the same subject, so a difficulty-3 puzzle in an area with
+    no difficulty-2 is bound, validated, reachable by walking, and locked
+    forever. Nothing else here would catch that: the binding tests only ask
+    whether a room names it.
+    """
+
+    def _solve_everything_the_gate_offers(self):
+        """Play greedily: sweep every room solving whatever is on offer, and
+        repeat until a full pass finds nothing new."""
+        game = build_real_game()
+        solved: set[str] = set()
+        for _ in range(len(game.puzzle_registry.by_id) + 1):
+            progress = False
+            for room in game.game_map.rooms.values():
+                game.player.location = room
+                for puzzle in game._gated_room_puzzles():
+                    game.player.solved_puzzles.add(puzzle.id)
+                    solved.add(puzzle.id)
+                    progress = True
+                game._recompute_knowledge()
+            if not progress:
+                break
+        return game, solved
+
+    def test_every_shipped_puzzle_can_be_reached_through_the_gate(self):
+        game, solved = self._solve_everything_the_gate_offers()
+        stranded = set(game.puzzle_registry.by_id) - solved
+        self.assertEqual(stranded, set(), f"locked forever: {sorted(stranded)}")
+
+    def test_a_full_run_maxes_every_knowledge_meter(self):
+        game, _ = self._solve_everything_the_gate_offers()
+        self.assertEqual(
+            {area: 5 for area in VALID_CATEGORIES}, dict(game.player.knowledge)
+        )
+
+
 class TestSubjectBalance(unittest.TestCase):
     """Every area should be teachable to its cap, and none should rest on a
     single simulator: storage did, and one of its five puzzles ended up in the
