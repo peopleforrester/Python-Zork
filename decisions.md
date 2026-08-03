@@ -561,3 +561,39 @@ legitimate and kept: PyYAML aliases being "shared references, not copies" is the
 technical fact that retracted the alias-bomb finding, and the contrast carries
 the information. Two em-dashes were also found and removed, in PRD 3's title and
 PROJECT_STATE's phase line. The repo now has zero em-dashes in prose.
+
+## 2026-08-03T02:00:00Z · 2.3 · Full live playthrough at 39 puzzles
+
+The last end-to-end run was at 29 puzzles. Ten have landed since across four
+rooms that had never been played in a full run, and the gate-reachability test
+added earlier proves the logic without touching the socket, the snapshot, the
+map or the victory path. So the run was worth doing.
+
+Result on production: 39/39 solved, knowledge 25/25, all five viruses
+quarantined, victory at turn 81, 30 of 35 rooms visited, and the map header
+reading `39/39 puzzles` with 27 puzzle rooms green and none partial.
+
+**The first attempt was wrong, and the way it was wrong is the lesson.** The
+route quarantined viruses as it passed them, so victory fired partway through
+the last leg. `game_ended` makes the web client stop forwarding keystrokes, so
+the remaining 22 commands went nowhere. The detector missed it completely
+because it only matched error text, and a dropped command produces no text at
+all. The victory screen said `Knowledge gained: 24` and that single digit was
+the only evidence anything had been lost.
+
+Rebuilt with every quarantine deferred to the end, so victory lands on the final
+command. Also worth recording: two later detector attempts were themselves
+wrong. Counting terminal lines and counting `Correct!` lines both fail once
+xterm's scrollback wraps, and the second one reported the count going *down*
+mid-run. The authoritative readouts are the victory statistics and the map
+header, both of which the game computes from its own state.
+
+That is three flawed verifications of one property in a row. The general shape:
+a check that reads the surface a feature happens to print is not a check on the
+feature. Prefer whatever the system computes for itself.
+
+Filed issue #6 rather than fixing it. Ending on the fifth quarantine is correct
+and matches the contract's anti-goal that puzzles never gate movement, but it is
+unannounced and irreversible, and the five virus rooms hold only 8 of the 39
+puzzles, so a player can end well under half the content with no prompt. Which
+of the three options to take is a design call.
