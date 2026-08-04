@@ -1,7 +1,7 @@
 // ABOUTME: Live map of the game world driven by the backend `game_state` event.
 // ABOUTME: Replaces the previous hardcoded sample with a real snapshot subscription.
 
-import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -157,6 +157,20 @@ export function edgesFor(snapshot: GameSnapshot): Edge[] {
 
 function GameMap({ socket }: GameMapProps) {
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null);
+  // The panel was a fixed 300px box, which put 35 nodes in roughly 50px each
+  // and made the labels unreadable. Expanded fills most of the window, which is
+  // the mode that matters when this is on a projector.
+  const [expanded, setExpanded] = useState(false);
+  // ReactFlow fits the view once on init and does not re-fit when its container
+  // resizes, so expanding left the graph at the docked zoom, clustered in a
+  // corner of a much larger box.
+  const flowRef = useRef<{ fitView: (o?: object) => void } | null>(null);
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      flowRef.current?.fitView({ padding: 0.12 });
+    }, 180);   // after the width/height transition settles
+    return () => window.clearTimeout(id);
+  }, [expanded]);
 
   useEffect(() => {
     if (!socket) return;
@@ -193,8 +207,18 @@ function GameMap({ socket }: GameMapProps) {
   }, [snapshot]);
 
   return (
-    <div className="map-container">
+    <div className={`map-container${expanded ? ' map-expanded' : ''}`}>
       <div className="map-title">
+        <button
+          type="button"
+          className="map-expand"
+          onClick={() => setExpanded(e => !e)}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Shrink map' : 'Expand map'}
+          title={expanded ? 'Shrink map' : 'Expand map to fill the window'}
+        >
+          {expanded ? '⤡' : '⤢'}
+        </button>
         Computer Architecture Map
         {snapshot && (
           <span className="map-status">
@@ -216,6 +240,7 @@ function GameMap({ socket }: GameMapProps) {
             nodes={nodes}
             edges={edges}
             fitView
+            onInit={(instance) => { flowRef.current = instance; }}
             // The full ring needs ~0.23 zoom in a ~300px panel; the default
             // minZoom of 0.5 clamps fitView onto the empty middle of the ring.
             minZoom={0.05}

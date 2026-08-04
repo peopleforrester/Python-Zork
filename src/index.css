@@ -71,22 +71,68 @@ button:hover {
   position: absolute;
   bottom: 1rem;
   right: 1rem;
-  width: 300px;
-  height: 300px;
-  background-color: rgba(0, 0, 0, 0.8);
+  /* Scales with the window instead of sitting at a fixed 300px, which gave
+     each of 35 nodes about 50px and made the labels unreadable. The clamp
+     keeps it sane on a phone and lets it grow on a large display. */
+  width: clamp(280px, 34vw, 620px);
+  height: clamp(240px, 42vh, 640px);
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  background-color: rgba(0, 0, 0, 0.88);
   border-radius: 8px;
   z-index: 100;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   border: 1px solid #444;
+  transition: width 0.15s ease, height 0.15s ease;
+}
+
+/* Expanded fills the window bar a margin. This is the projector mode, so the
+   background goes fully opaque: at 0.88 the terminal text behind it showed
+   through the graph and both became hard to read. */
+.map-container.map-expanded {
+  width: calc(100vw - 2rem);
+  height: calc(100vh - 2rem);
+  top: 1rem;
+  left: 1rem;
+  background-color: #0d0d0d;
 }
 
 .map-title {
   padding: 0.5rem;
+  padding-left: 2.25rem;
   text-align: center;
   background-color: #333;
   border-bottom: 1px solid #444;
+  position: relative;
+}
+
+.map-expand {
+  position: absolute;
+  left: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.15rem 0.45rem;
+  font-size: 1rem;
+  line-height: 1;
+  background-color: #444;
+}
+
+.map-expand:hover {
+  background-color: #5555ff;
+}
+
+/* On a narrow screen the docked panel is nearly the whole width anyway, so
+   drop the side margins rather than leaving a sliver of terminal behind it. */
+@media (max-width: 640px) {
+  .map-container {
+    left: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: auto;
+    height: 45vh;
+  }
 }
 
 .map-content {

@@ -17,15 +17,20 @@ _USE_ANSI = sys.stdout.isatty()
 
 
 class Colors:
+    # Bright foregrounds (90-97), not the standard set (30-37). The terminal
+    # background is near-black, where standard blue in particular is close to
+    # unreadable; it was in use for the breadcrumb arrow. Brightness is carried
+    # by the colour rather than by BOLD, so BOLD stays free as an emphasis
+    # lever. BLACK is deliberately absent: there is no legible black on this
+    # background, so offering the constant only invites its use.
     RESET = "\033[0m" if _USE_ANSI else ""
-    BLACK = "\033[30m" if _USE_ANSI else ""
-    RED = "\033[31m" if _USE_ANSI else ""
-    GREEN = "\033[32m" if _USE_ANSI else ""
-    YELLOW = "\033[33m" if _USE_ANSI else ""
-    BLUE = "\033[34m" if _USE_ANSI else ""
-    MAGENTA = "\033[35m" if _USE_ANSI else ""
-    CYAN = "\033[36m" if _USE_ANSI else ""
-    WHITE = "\033[37m" if _USE_ANSI else ""
+    RED = "\033[91m" if _USE_ANSI else ""
+    GREEN = "\033[92m" if _USE_ANSI else ""
+    YELLOW = "\033[93m" if _USE_ANSI else ""
+    BLUE = "\033[94m" if _USE_ANSI else ""
+    MAGENTA = "\033[95m" if _USE_ANSI else ""
+    CYAN = "\033[96m" if _USE_ANSI else ""
+    WHITE = "\033[97m" if _USE_ANSI else ""
     BOLD = "\033[1m" if _USE_ANSI else ""
     UNDERLINE = "\033[4m" if _USE_ANSI else ""
     REVERSED = "\033[7m" if _USE_ANSI else ""
@@ -150,22 +155,34 @@ def format_look_output(
     output.extend(conn_lines)
     output.append("┗" + "━" * 60 + "┛\n")
 
-    # Create a mapping of direction codes to compass positions
-    direction_map = {
-        "n": (0, 2),  # North
-        "s": (4, 2),  # South
-        "e": (2, 4),  # East
-        "w": (2, 0),  # West
-        "ne": (1, 3),  # Northeast
-        "nw": (1, 1),  # Northwest
-        "se": (3, 3),  # Southeast
-        "sw": (3, 1),  # Southwest
-        "u": None,  # Up (will be handled separately)
-        "d": None,  # Down (will be handled separately)
-    }
+    # The rose. Each direction owns a marker cell immediately beside its own
+    # label, and direction_map addresses that cell.
+    #
+    # The coordinates and the template used to be maintained separately and had
+    # drifted apart: every marker was written several columns left of its label,
+    # so arrows landed on neighbouring labels and the whole rose read as noise
+    # ("W█ +" for a blocked east). Columns below are counted off the template
+    # directly, and a test asserts each marker ends up adjacent to its label.
+    #
+    #            0123456789012
+    compass = ["      N      ",
+               "   NW   NE   ",
+               " W    +    E ",
+               "   SW   SE   ",
+               "      S      "]
 
-    # Create the compass with arrows for available paths
-    compass = ["      N      ", "    NW NE    ", "   W  +  E   ", "    SW SE    ", "      S      "]
+    direction_map = {
+        "n": (0, 5),     # left of N at 6
+        "s": (4, 5),     # left of S at 6
+        "w": (2, 0),     # left of W at 1
+        "e": (2, 12),    # right of E at 11
+        "nw": (1, 2),    # left of NW at 3-4
+        "ne": (1, 10),   # right of NE at 8-9
+        "sw": (3, 2),    # left of SW at 3-4
+        "se": (3, 10),   # right of SE at 8-9
+        "u": None,       # Up is a labelled line below the rose, not a cell
+        "d": None,       # Down likewise
+    }
 
     # Convert to list of lists for easier manipulation
     compass_grid = [list(line) for line in compass]
