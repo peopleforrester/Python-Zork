@@ -24,6 +24,8 @@ export interface RoomSnapshot {
   name: string;
   visited: boolean;
   doors: Record<string, string>;
+  /** Canonical grid placement from the server, shared with the ASCII map. */
+  grid?: { row: number; col: number };
   item_count: number;
   puzzles: PuzzleState;
 }
@@ -68,26 +70,53 @@ interface GameMapProps {
   socket: Socket | null;
 }
 
+/** Grid cell to pixels. Wide enough that a full room name fits. */
+const COL_PX = 104;
+const ROW_PX = 52;
+
 /**
- * Lay rooms out on a circle, ordered alphabetically by id so the placement is
- * stable across renders. Good enough for a dev map; a real layout would use a
- * force-directed pass driven by the door graph.
+ * Place rooms at their architectural coordinates.
+ *
+ * The server ships a `grid` per room, the same hand-laid placement the ASCII
+ * map uses, so each core sits beside its own caches, the DIMMs stack, and the
+ * PCIe slots run in a column. Corridors then read as short local hops between
+ * neighbours, which is how the player actually moves.
+ *
+ * This replaced a circle ordered alphabetically by room id. That ordering had
+ * nothing to do with the topology, so unrelated rooms ended up adjacent and
+ * every corridor was drawn as a chord across the middle of the ring.
  */
 export function layoutRooms(rooms: RoomSnapshot[]): Map<string, { x: number; y: number }> {
-  const sorted = [...rooms].sort((a, b) => a.id.localeCompare(b.id));
-  const n = sorted.length;
-  const radius = Math.max(280, n * 16);
-  const center = { x: radius + 60, y: radius + 60 };
-  const positions = new Map<string, { x: number; y: number }>();
+  const placed = rooms.filter(r => r.grid);
+  if (placed.length === 0) return layoutRingFallback(rooms);
 
+  const minRow = Math.min(...placed.map(r => r.grid!.row));
+  const minCol = Math.min(...placed.map(r => r.grid!.col));
+
+  const positions = new Map<string, { x: number; y: number }>();
+  for (const room of rooms) {
+    positions.set(room.id, room.grid
+      ? { x: (room.grid.col - minCol) * COL_PX, y: (room.grid.row - minRow) * ROW_PX }
+      : { x: 0, y: 0 });
+  }
+  return positions;
+}
+
+/**
+ * The old ring, kept only for a snapshot with no `grid` (an older server).
+ * Never the default: it is unreadable at 35 nodes.
+ */
+export function layoutRingFallback(rooms: RoomSnapshot[]): Map<string, { x: number; y: number }> {
+  const sorted = [...rooms].sort((a, b) => a.id.localeCompare(b.id));
+  const radius = Math.max(280, sorted.length * 16);
+  const positions = new Map<string, { x: number; y: number }>();
   sorted.forEach((room, i) => {
-    const angle = (2 * Math.PI * i) / Math.max(n, 1);
+    const angle = (2 * Math.PI * i) / Math.max(sorted.length, 1);
     positions.set(room.id, {
-      x: center.x + radius * Math.cos(angle),
-      y: center.y + radius * Math.sin(angle),
+      x: radius + 60 + radius * Math.cos(angle),
+      y: radius + 60 + radius * Math.sin(angle),
     });
   });
-
   return positions;
 }
 
@@ -164,13 +193,27 @@ function GameMap({ socket }: GameMapProps) {
   // ReactFlow fits the view once on init and does not re-fit when its container
   // resizes, so expanding left the graph at the docked zoom, clustered in a
   // corner of a much larger box.
-  const flowRef = useRef<{ fitView: (o?: object) => void } | null>(null);
+  const flowRef = useRef<{
+    fitView: (o?: object) => void;
+    setCenter?: (x: number, y: number, o?: object) => void;
+  } | null>(null);
+  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   useEffect(() => {
     const id = window.setTimeout(() => {
-      flowRef.current?.fitView({ padding: 0.12 });
+      // Centre on the room the player is in, at a zoom where the labels are
+      // actually readable. Fitting all 35 nodes crushed the map to ~0.24 zoom
+      // and the names became illegible, which defeats the point of the map.
+      // The Controls' fit button still shows the whole architecture on demand.
+      const here = snapshot?.player.location_id;
+      const at = here ? positionsRef.current.get(here) : undefined;
+      if (at && flowRef.current?.setCenter) {
+        flowRef.current.setCenter(at.x + 66, at.y + 20, { zoom: 0.9, duration: 200 });
+      } else {
+        flowRef.current?.fitView({ padding: 0.12 });
+      }
     }, 180);   // after the width/height transition settles
     return () => window.clearTimeout(id);
-  }, [expanded]);
+  }, [expanded, snapshot?.player.location_id]);
 
   useEffect(() => {
     if (!socket) return;
@@ -191,6 +234,7 @@ function GameMap({ socket }: GameMapProps) {
 
   const { nodes, edges } = useMemo(() => {
     if (!snapshot) return { nodes: [] as Node[], edges: [] as Edge[] };
+    positionsRef.current = layoutRooms(snapshot.rooms);
     return { nodes: nodesFor(snapshot), edges: edgesFor(snapshot) };
   }, [snapshot]);
 

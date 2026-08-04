@@ -146,16 +146,23 @@ button:hover {
 }
 
 .node {
-  padding: 10px;
+  /* Sized to the architectural layout's cell pitch. Bigger type than the old
+     12px, which was set for a 300px panel and was unreadable on a projector. */
+  padding: 6px 8px;
   border-radius: 5px;
-  width: 150px;
-  color: white;
+  width: 132px;
+  color: #fff;
   text-align: center;
-  font-size: 12px;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 600;
+  /* Names are long ("Platform Controller Hub"); wrap rather than clip. */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .node.visited {
-  background-color: #1a7dff;
+  background-color: #2f8bff;
 }
 
 .node.current {

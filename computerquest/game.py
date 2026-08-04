@@ -17,6 +17,7 @@ from computerquest.mechanics.progress import ProgressSystem
 from computerquest.mechanics.puzzles import MicroPuzzle, PuzzleSession, load_registry
 from computerquest.mechanics.visualizer import ComponentVisualizer
 from computerquest.utils.helpers import prefix_match
+from computerquest.utils.map_renderer import MAP_POSITIONS
 from computerquest.world.architecture import ComputerArchitecture
 
 # Re-exported for backward compatibility with existing imports.
@@ -253,11 +254,17 @@ class Game:
                 for direction, dest in room.doors.items()
                 if getattr(dest, "key", None) is not None
             }
+            # Ship the canonical grid placement so the web map draws the same
+            # architecture the ASCII map does. Without it the frontend had to
+            # invent its own layout and chose an alphabetical circle, which put
+            # unrelated rooms adjacent and drew every corridor as a chord.
+            row, col = MAP_POSITIONS.get(room_id, (0, 0))
             rooms.append({
                 "id": room_id,
                 "name": room.name,
                 "visited": room.visited,
                 "doors": doors,
+                "grid": {"row": row, "col": col},
                 "item_count": len(room.items),
                 "puzzles": {
                     "available": list(room.puzzles),

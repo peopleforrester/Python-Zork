@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import GameMap, {
   classForRoom,
   edgesFor,
+  layoutRooms,
   puzzleLabel,
   puzzleStatus,
   type GameSnapshot,
@@ -218,5 +219,57 @@ describe('<GameMap />', () => {
     expect(container.querySelector('.react-flow__minimap')).toBeNull();
     // The zoom/fit controls are the navigation affordance that remains.
     expect(container.querySelector('.react-flow__controls')).not.toBeNull();
+  });
+});
+
+describe('layoutRooms', () => {
+  const at = (id: string, row: number, col: number): RoomSnapshot =>
+    makeRoom({ id, grid: { row, col } });
+
+  it('places rooms at their architectural grid coordinates', () => {
+    const pos = layoutRooms([at('a', 7, 8), at('b', 7, 12)]);
+    // Same row, so same y; four columns apart, so a fixed x gap.
+    expect(pos.get('a')!.y).toBe(pos.get('b')!.y);
+    expect(pos.get('b')!.x).toBeGreaterThan(pos.get('a')!.x);
+  });
+
+  it('stacks rooms that share a column, which is how the DIMMs read', () => {
+    const pos = layoutRooms([at('d1', 19, 8), at('d2', 23, 8), at('d3', 27, 8)]);
+    expect(pos.get('d1')!.x).toBe(pos.get('d2')!.x);
+    expect(pos.get('d2')!.x).toBe(pos.get('d3')!.x);
+    expect(pos.get('d2')!.y).toBeGreaterThan(pos.get('d1')!.y);
+    expect(pos.get('d3')!.y).toBeGreaterThan(pos.get('d2')!.y);
+  });
+
+  it('normalises to the top-left of the occupied grid', () => {
+    const pos = layoutRooms([at('a', 7, 8), at('b', 9, 10)]);
+    expect(pos.get('a')).toEqual({ x: 0, y: 0 });
+  });
+
+  it('preserves relative order, so the picture matches the architecture', () => {
+    // core1 (9,15) sits above and left of l3_cache (19,30) in the real map.
+    const pos = layoutRooms([at('core1', 9, 15), at('l3', 19, 30)]);
+    expect(pos.get('core1')!.x).toBeLessThan(pos.get('l3')!.x);
+    expect(pos.get('core1')!.y).toBeLessThan(pos.get('l3')!.y);
+  });
+
+  it('gives every room a distinct position', () => {
+    const rooms = [at('a', 7, 8), at('b', 7, 12), at('c', 9, 8), at('d', 9, 12)];
+    const seen = new Set([...layoutRooms(rooms).values()].map(p => `${p.x},${p.y}`));
+    expect(seen.size).toBe(rooms.length);
+  });
+
+  it('falls back to the ring only when the server sends no grid', () => {
+    // An older server. The ring is unreadable at scale but beats stacking
+    // every room at the origin.
+    const rooms = [makeRoom({ id: 'a' }), makeRoom({ id: 'b' }), makeRoom({ id: 'c' })];
+    const pos = layoutRooms(rooms);
+    const seen = new Set([...pos.values()].map(p => `${Math.round(p.x)},${Math.round(p.y)}`));
+    expect(seen.size).toBe(3);
+  });
+
+  it('does not put every room at the origin when grid is missing', () => {
+    const pos = layoutRooms([makeRoom({ id: 'a' }), makeRoom({ id: 'b' })]);
+    expect(pos.get('a')).not.toEqual(pos.get('b'));
   });
 });

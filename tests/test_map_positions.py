@@ -5,26 +5,28 @@ ABOUTME: A room with no position silently never renders, even when visited.
 """
 
 import os
-import re
 import subprocess
 import sys
 import unittest
 from collections import Counter
 from pathlib import Path
 
-from computerquest.utils.map_renderer import render_map
+from computerquest.utils.map_renderer import MAP_POSITIONS, render_map
 from tests._helpers import build_real_game
 
 _SOURCE = Path(__file__).parent.parent / "computerquest" / "utils" / "map_renderer.py"
 
 
 def _positions() -> dict[str, tuple[int, int]]:
-    """Parse the positions table out of render_map's local literal."""
-    block = _SOURCE.read_text().split("positions = {", 1)[1].split("}", 1)[0]
-    return {
-        name: (int(row), int(col))
-        for name, row, col in re.findall(r'"([a-z0-9_]+)":\s*\((\d+),\s*(\d+)\)', block)
-    }
+    """The canonical placement table.
+
+    This used to regex the literal out of render_map's source, because the
+    table was a local inside that function and there was no other way to reach
+    it. It is now a module constant, shared with the web map's snapshot, so the
+    test reads the real object instead of parsing text that formatting could
+    silently break.
+    """
+    return dict(MAP_POSITIONS)
 
 
 class TestMapPositionTable(unittest.TestCase):
@@ -95,6 +97,34 @@ class TestMapPositionTable(unittest.TestCase):
         markers = frame.count("•") + frame.count("★")
         self.assertEqual(markers, len(self.game.game_map.rooms))
 
+class TestSnapshotShipsGridPositions(unittest.TestCase):
+    """The web map draws from these. It used to invent an alphabetical circle
+    of its own, which placed unrelated rooms adjacent and drew every corridor
+    as a chord across the middle."""
+
+    @classmethod
+    def setUpClass(cls):
+        from tests._helpers import build_real_game
+        cls.snapshot = build_real_game().snapshot()
+
+    def test_every_room_ships_a_grid_position(self):
+        for room in self.snapshot["rooms"]:
+            with self.subTest(room=room["id"]):
+                self.assertIn("grid", room)
+                self.assertIn("row", room["grid"])
+                self.assertIn("col", room["grid"])
+
+    def test_the_shipped_positions_match_the_ascii_map(self):
+        """One source of truth, so the two maps cannot drift apart."""
+        from computerquest.utils.map_renderer import MAP_POSITIONS
+        for room in self.snapshot["rooms"]:
+            with self.subTest(room=room["id"]):
+                row, col = MAP_POSITIONS[room["id"]]
+                self.assertEqual((room["grid"]["row"], room["grid"]["col"]), (row, col))
+
+    def test_no_two_rooms_ship_the_same_cell(self):
+        cells = [(r["grid"]["row"], r["grid"]["col"]) for r in self.snapshot["rooms"]]
+        self.assertEqual(len(cells), len(set(cells)))
 
 if __name__ == "__main__":
     unittest.main()

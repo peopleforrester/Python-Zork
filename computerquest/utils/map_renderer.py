@@ -30,6 +30,55 @@ _PART_START_ROWS = {
 }
 
 
+# Canonical (row, column) placement for every room, hand-laid so the picture
+# matches the architecture: each core sits beside its own caches, the DIMMs
+# stack, the PCIe slots run in a column. Shared rather than private because the
+# web map needs the same geometry; it used to invent an alphabetical circle of
+# its own, which put unrelated rooms next to each other and drew every edge as
+# a chord across the middle. Tests pin that no two rooms share a cell and that
+# every room has a position.
+MAP_POSITIONS: dict[str, tuple[int, int]] = {
+    "kernel": (7, 8),  # OS Kernel
+    "virtual_memory": (12, 8),  # Virtual Memory
+    "cpu_package": (7, 36),  # CPU Package
+    "core1": (9, 15),  # Core 1
+    "core1_cu": (10, 13),  # Core 1 CU
+    "core1_alu": (10, 17),  # Core 1 ALU
+    "core1_registers": (11, 13),  # Core 1 Registers
+    "core1_l1": (11, 17),  # Core 1 L1
+    "core2": (9, 38),  # Core 2
+    "core2_cu": (10, 36),  # Core 2 CU
+    "core2_alu": (10, 40),  # Core 2 ALU
+    "core2_registers": (11, 36),  # Core 2 Registers
+    "core2_l1": (11, 40),  # Core 2 L1
+    "l2_cache1": (15, 15),  # L2 Cache 1
+    "l2_cache2": (15, 38),  # L2 Cache 2
+    "l3_cache": (19, 30),  # L3 Cache
+    # Between the RAM DIMMs (col 8) and L3 (col 30), matching the role it
+    # plays between the cache hierarchy and main memory.
+    "memory_controller": (24, 20),  # Memory Controller
+    "ram_dimm1": (19, 8),  # RAM DIMM 1
+    "ram_dimm2": (23, 8),  # RAM DIMM 2
+    "ram_dimm3": (27, 8),  # RAM DIMM 3
+    "ram_dimm4": (31, 8),  # RAM DIMM 4
+    "pch": (29, 36),  # PCH
+    "storage_controller": (32, 15),  # Storage Controller
+    "pcie_controller": (32, 38),  # PCIe Controller
+    "network_interface": (37, 15),  # Network Interface
+    "bios": (37, 38),  # BIOS/UEFI
+    "ssd": (36, 8),  # SSD
+    "hdd": (40, 8),  # HDD
+    "sata_ports": (45, 16),  # SATA Ports
+    "usb_ports": (45, 36),  # USB Ports
+    "ethernet": (45, 51),  # Ethernet
+    "pcie_x16": (49, 28),  # PCIe x16 Slot
+    "gpu": (49, 8),  # GPU
+    "pcie_x1_1": (53, 28),  # PCIe x1 Slot 1
+    "pcie_x1_2": (57, 28),  # PCIe x1 Slot 2
+}
+
+
+
 def render_map(game, map_grid):
     """
     Render an ASCII map of the computer architecture
@@ -249,47 +298,7 @@ def render_map(game, map_grid):
     # Add title
     fog_map[1] = "|             KodeKloud Computer Quest Exploration Map          |"
 
-    # Dictionary of positions for each component in the map
-    # The position is (row, column) where the marker will be placed
-    positions = {
-        "kernel": (7, 8),  # OS Kernel
-        "virtual_memory": (12, 8),  # Virtual Memory
-        "cpu_package": (7, 36),  # CPU Package
-        "core1": (9, 15),  # Core 1
-        "core1_cu": (10, 13),  # Core 1 CU
-        "core1_alu": (10, 17),  # Core 1 ALU
-        "core1_registers": (11, 13),  # Core 1 Registers
-        "core1_l1": (11, 17),  # Core 1 L1
-        "core2": (9, 38),  # Core 2
-        "core2_cu": (10, 36),  # Core 2 CU
-        "core2_alu": (10, 40),  # Core 2 ALU
-        "core2_registers": (11, 36),  # Core 2 Registers
-        "core2_l1": (11, 40),  # Core 2 L1
-        "l2_cache1": (15, 15),  # L2 Cache 1
-        "l2_cache2": (15, 38),  # L2 Cache 2
-        "l3_cache": (19, 30),  # L3 Cache
-        # Between the RAM DIMMs (col 8) and L3 (col 30), matching the role it
-        # plays between the cache hierarchy and main memory.
-        "memory_controller": (24, 20),  # Memory Controller
-        "ram_dimm1": (19, 8),  # RAM DIMM 1
-        "ram_dimm2": (23, 8),  # RAM DIMM 2
-        "ram_dimm3": (27, 8),  # RAM DIMM 3
-        "ram_dimm4": (31, 8),  # RAM DIMM 4
-        "pch": (29, 36),  # PCH
-        "storage_controller": (32, 15),  # Storage Controller
-        "pcie_controller": (32, 38),  # PCIe Controller
-        "network_interface": (37, 15),  # Network Interface
-        "bios": (37, 38),  # BIOS/UEFI
-        "ssd": (36, 8),  # SSD
-        "hdd": (40, 8),  # HDD
-        "sata_ports": (45, 16),  # SATA Ports
-        "usb_ports": (45, 36),  # USB Ports
-        "ethernet": (45, 51),  # Ethernet
-        "pcie_x16": (49, 28),  # PCIe x16 Slot
-        "gpu": (49, 8),  # GPU
-        "pcie_x1_1": (53, 28),  # PCIe x1 Slot 1
-        "pcie_x1_2": (57, 28),  # PCIe x1 Slot 2
-    }
+    positions = MAP_POSITIONS
 
     # Component groups for revealing sections on the map
     component_groups = {
