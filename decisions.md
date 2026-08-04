@@ -597,3 +597,61 @@ and matches the contract's anti-goal that puzzles never gate movement, but it is
 unannounced and irreversible, and the five virus rooms hold only 8 of the 39
 puzzles, so a player can end well under half the content with no prompt. Which
 of the three options to take is a design call.
+
+## 2026-08-04T12:40:00Z · 2.3 · Showcase readiness: concurrency, mobile, idle, save isolation
+
+Four checks before putting the URL in front of a room. All run against
+production rather than locally, since the questions were about the deployment.
+
+**Concurrency holds at 20.** Twenty simultaneous sessions completed in seven
+seconds wall, each with its own turn count, location and solved set, every one
+solving the same puzzle id independently. Server latency was negligible; the
+per-session figures are dominated by deliberate sleeps in the harness. Sessions
+key off the socket id and that isolation is real.
+
+**Mobile input works, with a caveat about the evidence.** A synthetic TouchEvent
+does not focus xterm's helper textarea, which initially looked like "no keyboard
+on phones". Synthetic events are untrusted; a CDP-dispatched tap does focus it,
+and a full tap-then-type round trip reaches the game and echoes back. The
+evidence comes from Chrome under mobile emulation. Real iOS was never tested,
+and Safari is stricter about focus than emulation can model, so this is
+recorded as "works, unverified on a real device".
+
+**A 35-minute idle session survives**, responding at 5, 10, 20 and 35 minutes
+with state intact.
+
+The first idle run reported death at 20 minutes and was wrong: the deploy of
+the save-scoping fix restarted the container mid-probe. Socket.io auto-
+reconnected, so the probe still read `connected=True` while the game was gone,
+and the matcher did not recognise the server's reply as a response. Two lessons
+worth keeping. A long-running probe against production is invalidated by any
+deploy during it, so the probe and the deploy cannot share a window. And
+`connected` on a reconnecting client says nothing about whether the session
+behind it survived.
+
+That confound did establish the restart behaviour, which is fine: a player who
+types after a container restart gets "[server] no active game; click Start
+Game." Clear and actionable. It is emitted once per keystroke, so typing a word
+repeats it several times, which is cosmetic and left alone.
+
+**Saves were a single global namespace** across every player on the
+deployment. Verified before fixing, from two independent sessions: one could
+list, load, overwrite and delete another's saves, and two players choosing the
+same obvious name clobbered each other. Fixed by scoping the save directory to
+a browser-supplied key held in localStorage.
+
+localStorage rather than the session id because the socket id changes on every
+reload, and save-then-refresh-then-load had already been verified as the
+recovery path for an accidental refresh. Scoping by session id would have fixed
+the collision and broken that.
+
+The key is attacker-controlled and becomes a path component, so it is hashed
+rather than sanitised: hashing rules out traversal, separators and
+platform-reserved names by construction, where a blocklist has to be right about
+every platform. An absent key gets its own random scope, so an older client
+cannot reintroduce the shared root.
+
+Incidental finding: this vitest and jsdom environment provides no localStorage
+at all, undefined rather than throwing, so the no-storage fallback is the path
+the suite exercises by default. The guard now handles absence as well as
+throwing, and both are tested.
