@@ -32,6 +32,13 @@ Educational text-based adventure teaching computer architecture
 - **Deploy**: `uv run python scripts/deploy.py` (refuses to call a deploy done
   until `/api/health` reports the uploaded commit)
 
+## Live
+
+- **Play / demo**: https://zork.michaelrishiforrester.com
+- **Origin**: https://python-zork-production.up.railway.app (the custom domain
+  is a CNAME to this; `scripts/deploy.py` verifies against the origin so a DNS
+  problem can never look like a failed deploy)
+
 ## Adding a puzzle
 
 Binding is a literal list, so a new YAML file alone is unreachable:
