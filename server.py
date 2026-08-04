@@ -281,6 +281,20 @@ def start_game(data=None):
     key = data.get("save_key") if isinstance(data, dict) else None
     game.save_load.save_root = _save_root_for(sid, key)
     game.save_load.save_root.mkdir(parents=True, exist_ok=True)
+
+    # Resume from the blob the browser kept, so a refresh does not lose the
+    # game. The blob is client-supplied, and _apply validates every field
+    # before mutating anything, so a corrupt or hand-edited one leaves the
+    # fresh game untouched rather than half-applied.
+    restored = False
+    blob = data.get("restore") if isinstance(data, dict) else None
+    if isinstance(blob, dict):
+        try:
+            game.save_load._apply(blob)
+            restored = True
+        except Exception as exc:  # noqa: BLE001 — any bad blob starts fresh
+            logger.info("ignoring unusable restore blob: %s", exc)
+
     _sessions[sid] = game
     _input_buffers[sid] = ""
     _pending_pages.pop(sid, None)
@@ -288,10 +302,16 @@ def start_game(data=None):
     # the new game's input.
     _in_escape.pop(sid, None)
 
-    emit("game_started")
-    emit("terminal_output", {"output": game.welcome_text()})
+    emit("game_started", {"restored": restored})
+    if restored:
+        emit("terminal_output", {
+            "output": f"[resumed at turn {game.turns}; type 'look' to get your bearings]\n\r"
+        })
+    else:
+        emit("terminal_output", {"output": game.welcome_text()})
     emit("terminal_output", {"output": "\n\r> "})
     emit("game_state", game.snapshot())
+    _emit_state_blob(game)
 
 
 def paginate(text: str, rows: int | None) -> list[str]:
@@ -406,12 +426,31 @@ def _handle_line(sid: str, game: Game, line: str) -> None:
 
     logger.info("line handled for %s: %r -> turn=%d", sid, line, game.turns)
     emit("game_state", game.snapshot())
+    _emit_state_blob(game)
 
     if game.game_over:
         emit("game_ended", {"victory": game.victory})
     elif not _pending_pages.get(sid):
         # While pages are held the pager owns the prompt.
         emit("terminal_output", {"output": "\n\r> "})
+
+
+def _emit_state_blob(game) -> None:
+    """Push the browser a serialized save of the current game.
+
+    The browser keeps it in localStorage and hands it back on connect, so a
+    refresh resumes where the player left off. Client-side rather than a
+    server-side autosave because the container has no volume: a deploy or a
+    restart wipes anything written to its filesystem, and that is exactly when
+    a player is most likely to be mid-game.
+
+    Best effort. Serialization must never take the game down, so a failure here
+    costs the player their resume and nothing else.
+    """
+    try:
+        emit("state_blob", game.save_load._serialize("autosave"))
+    except Exception:  # noqa: BLE001 — persistence is a convenience, not the game
+        logger.exception("could not serialize state for the browser")
 
 
 @socketio.on("terminal_input")
@@ -533,6 +572,7 @@ def handle_query_state():
         return
     logger.info("query_state from %s: turn=%d", sid, game.turns)
     emit("game_state", game.snapshot())
+    _emit_state_blob(game)
 
 
 if __name__ == "__main__":

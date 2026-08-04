@@ -6,6 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import GameMap from './components/GameMap';
 import { LineMirror, remainderFor } from './completion';
 import { saveKey } from './saveKey';
+import { forget, hasSavedGame, recall, remember, type GameBlob } from './persistedGame';
 
 import 'xterm/css/xterm.css';
 
@@ -14,6 +15,8 @@ function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isGameRunning, setIsGameRunning] = useState(false);
+  // Whether this browser has a game to resume. Drives the button label.
+  const [hasSaved, setHasSaved] = useState(hasSavedGame);
   
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstance = useRef<Terminal | null>(null);
@@ -87,6 +90,13 @@ function App() {
     newSocket.on('game_started', () => {
       console.log('Game started');
       setIsGameRunning(true);
+    });
+
+    // The server pushes a serialized save after every state change; keeping it
+    // here is what makes a refresh resume rather than start over.
+    newSocket.on('state_blob', (blob: GameBlob) => {
+      remember(blob);
+      setHasSaved(true);
     });
     
     newSocket.on('game_ended', (data: { victory: boolean }) => {
@@ -211,10 +221,27 @@ function App() {
       // The key scopes this browser's saves server-side. It lives in
       // localStorage so a refresh, which mints a new socket id, still finds
       // the saves made before it.
-      socket.emit('start_game', { save_key: saveKey() });
+      socket.emit('start_game', {
+        save_key: saveKey(),
+        // Hand back whatever this browser remembers, so a refresh resumes.
+        restore: recall(),
+      });
     }
   };
   
+  /** Discard the remembered game and start clean. */
+  const newGame = () => {
+    forget();
+    setHasSaved(false);
+    if (socket && isConnected) {
+      if (terminalInstance.current) terminalInstance.current.clear();
+      pending.current.reset();
+      const rows = terminalInstance.current?.rows;
+      if (rows) socket.emit('terminal_size', { rows });
+      socket.emit('start_game', { save_key: saveKey(), restore: null });
+    }
+  };
+
   // Toggle map visibility
   const toggleMap = () => {
     setShowMap(!showMap);
@@ -224,8 +251,17 @@ function App() {
     <div className="terminal-container">
       <div className="controls">
         <button onClick={startGame} disabled={!isConnected || isGameRunning}>
-          {isGameRunning ? 'Game Running' : 'Start Game'}
+          {isGameRunning ? 'Game Running' : hasSaved ? 'Resume Game' : 'Start Game'}
         </button>
+        {hasSaved && (
+          <button
+            onClick={newGame}
+            disabled={!isConnected}
+            title="Discard the game saved in this browser and start over"
+          >
+            New Game
+          </button>
+        )}
         <button onClick={toggleMap}>
           {showMap ? 'Hide Map' : 'Show Map'}
         </button>
