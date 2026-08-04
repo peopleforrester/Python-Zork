@@ -5,6 +5,7 @@ import { WebLinksAddon } from 'xterm-addon-web-links';
 import { io, Socket } from 'socket.io-client';
 import GameMap from './components/GameMap';
 import { LineMirror, remainderFor } from './completion';
+import { saveKey } from './saveKey';
 
 import 'xterm/css/xterm.css';
 
@@ -207,7 +208,10 @@ function App() {
       if (rows) {
         socket.emit('terminal_size', { rows });
       }
-      socket.emit('start_game');
+      // The key scopes this browser's saves server-side. It lives in
+      // localStorage so a refresh, which mints a new socket id, still finds
+      // the saves made before it.
+      socket.emit('start_game', { save_key: saveKey() });
     }
   };
   

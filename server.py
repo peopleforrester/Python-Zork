@@ -1,14 +1,18 @@
 # ABOUTME: Flask + Socket.IO front-end that runs Game in-process and
 # ABOUTME: exposes a per-session terminal + structured snapshot. Dev-only.
 
+import hashlib
 import logging
 import os
 import threading
+import uuid
+from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 
+from computerquest.config import SAVE_DIR
 from computerquest.game import Game
 
 logger = logging.getLogger("python_zork.server")
@@ -138,6 +142,35 @@ _pending_pages: dict[str, list[str]] = {}
 _ESC_NONE, _ESC_SEEN, _ESC_CSI = 0, 1, 2
 _in_escape: dict[str, int] = {}
 
+# Save scope per session. Saves used to share one directory across every player
+# on the deployment, so any visitor could list, load, overwrite and delete
+# anyone else's, and two people picking the same obvious name clobbered each
+# other. The browser supplies a stable key it keeps in localStorage, which is
+# what lets a save survive a refresh: the socket id changes, the key does not.
+_save_scopes: dict[str, str] = {}
+
+
+def _save_scope(key: object) -> str:
+    """Directory name for a client's saves, derived from its key.
+
+    The key is attacker-controlled, arriving from the browser and becoming a
+    path component, so it is hashed rather than sanitised. Hashing means no
+    input can traverse, collide with a reserved name, or smuggle a separator,
+    without needing a blocklist that has to be right about every platform. An
+    absent key still gets a scope of its own rather than falling back to the
+    shared root, which is the bug being fixed.
+    """
+    text = str(key).strip() if key is not None else ""
+    if not text:
+        text = f"anonymous:{uuid.uuid4()}"
+    return hashlib.sha256(text.encode("utf-8", "replace")).hexdigest()[:16]
+
+
+def _save_root_for(sid: str, key: object) -> Path:
+    scope = _save_scope(key)
+    _save_scopes[sid] = scope
+    return Path.home() / SAVE_DIR / "saves" / scope
+
 # One lock per session. flask-socketio dispatches every event in its own thread
 # (async_handlers defaults on), so two keystrokes from one client can be handled
 # at the same time. Both read the line buffer and the later write wins, dropping
@@ -227,19 +260,27 @@ def handle_disconnect():
         _terminal_rows.pop(sid, None)
         _pending_pages.pop(sid, None)
         _in_escape.pop(sid, None)
+        _save_scopes.pop(sid, None)
         with _session_locks_guard:
             _session_locks.pop(sid, None)
     logger.info("Client disconnected: %s", sid)
 
 
 @socketio.on("start_game")
-def start_game():
-    """Create a fresh Game for this session and send the welcome + snapshot."""
+def start_game(data=None):
+    """Create a fresh Game for this session and send the welcome + snapshot.
+
+    `data.save_key` is the browser's stable identifier for itself; it scopes
+    this session's saves so players cannot see or overwrite each other's.
+    """
     sid = _session_id()
     if sid is None:
         return
 
     game = Game()
+    key = data.get("save_key") if isinstance(data, dict) else None
+    game.save_load.save_root = _save_root_for(sid, key)
+    game.save_load.save_root.mkdir(parents=True, exist_ok=True)
     _sessions[sid] = game
     _input_buffers[sid] = ""
     _pending_pages.pop(sid, None)

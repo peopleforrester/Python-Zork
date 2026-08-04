@@ -144,7 +144,10 @@ describe('App', () => {
       render(<App />);
       server('connect');
       await userEvent.click(screen.getByRole('button', { name: /start game/i }));
-      expect(emit).toHaveBeenCalledWith('start_game');
+      // Carries the browser's save key, which scopes saves server-side.
+      expect(emit).toHaveBeenCalledWith(
+        'start_game', expect.objectContaining({ save_key: expect.any(String) })
+      );
     });
 
     it('reports the viewport height first, so the first long output pages', async () => {
